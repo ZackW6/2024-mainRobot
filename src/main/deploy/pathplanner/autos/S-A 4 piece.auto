@@ -1,0 +1,61 @@
+{
+  "version": 1.0,
+  "startingPose": {
+    "position": {
+      "x": 1.477971343959805,
+      "y": 7.401248696933913
+    },
+    "rotation": 0
+  },
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "S-A Taxi - Shoot"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "S-A Taxi to 3"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "3 shot 3-2-1"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "3 shot to 2"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "2 shoot 3-2-1"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "2 shoot to 1"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "1 shoot 1-2-3"
+          }
+        }
+      ]
+    }
+  },
+  "folder": null,
+  "choreoAuto": false
+}

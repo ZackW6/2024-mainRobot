@@ -165,32 +165,28 @@ public class Arm extends SubsystemBase {
 
   MotionMagicTorqueCurrentFOC m_request = new MotionMagicTorqueCurrentFOC(.47);
   public Command setArmDegree(ArmPositions armPosition){
-  double degreeSet;
+  double rotSet;
       switch (armPosition){
         case Intake:
-          degreeSet=-35.28;
+          rotSet=-0.098;
           break;
         case Load:
-          degreeSet=169.2;
+          rotSet=.47;
           break;
         case Amp:
-          degreeSet=90;
+          rotSet=.25;
           break;
         default:
-          degreeSet=159.2;
+          rotSet=.4422222222;
           break;
       }
     return this.run(() -> {
-      armMotor.setControl(m_request.withPosition(Units.degreesToRotations(degreeSet)));
+      armMotor.setControl(m_request.withPosition(rotSet));
     });
   }
 
   @Override
   public void periodic() {
-    System.out.println();
-    if (Robot.isSimulation()){
-      simulationPeriodic();
-    }
     // This method will be called once per scheduler run
   }
 

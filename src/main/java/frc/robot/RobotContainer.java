@@ -7,6 +7,7 @@ package frc.robot;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveModule.DriveRequestType;
+import com.pathplanner.lib.auto.NamedCommands;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -14,6 +15,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.commands.GroupCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Arm.ArmPositions;
@@ -61,13 +63,17 @@ public class RobotContainer {
       drivetrain.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
     }
     drivetrain.registerTelemetry(logger::telemeterize);
-    joystick.leftBumper().whileTrue(arm.setArmDegree(ArmPositions.Amp));
-    joystick.a().onTrue(groupCommands.intake());//Cur commands
-    joystick.b().onTrue(groupCommands.loadAndShoot());
+    joystick.rightBumper().onTrue(groupCommands.intake());//Cur commands
+    joystick.x().onTrue(groupCommands.loadAndShoot());
+    joystick.y().onTrue(groupCommands.ampShot());
+    joystick.rightTrigger(.5).onTrue(groupCommands.intakeFromShooter());
   }
 
   public RobotContainer() {
     configureBindings();
+    NamedCommands.registerCommand("intake", groupCommands.intake());
+    NamedCommands.registerCommand("ampShot", groupCommands.ampShot());
+    NamedCommands.registerCommand("loadAndShoot", groupCommands.loadAndShoot());
   }
 
   public Command getAutonomousCommand() {

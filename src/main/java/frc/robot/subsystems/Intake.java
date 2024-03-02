@@ -35,28 +35,26 @@ public class Intake extends SubsystemBase{
     private final TalonFX intakeMotor;
     private final DigitalInput m_limit;
 
-    double intakeSpeed = 50.0;//In rps
-    double outtakeSpeed = -50.0;
+    double intakeSpeed = 20.0;//In amps
+    double outtakeSpeed = -35.0;
 
     public Intake(){
         intakeMotor = new TalonFX(IntakeConstants.intakeMotorID);
         m_limit = new DigitalInput(IntakeConstants.limitSwitchID);
         configMotors();
     }
-
-    TorqueCurrentFOC velocityRequest = new TorqueCurrentFOC(0);
+    TorqueCurrentFOC torqueCurrentFOC = new TorqueCurrentFOC(0);
     public Command intakePiece(){
-        return setVelocity(20).until(() -> m_limit.get())//BAD
-            .andThen(Commands.deadline(Commands.waitSeconds(.3),setVelocity(10)))
+        return setOutput(intakeSpeed).until(() -> m_limit.get())
+            .andThen(Commands.deadline(Commands.waitSeconds(.3),setOutput(10)))
             .andThen(stop());
     }
-
     public Command outtakePiece(){
-        return Commands.deadline((new WaitCommand(2)),setVelocity(-35)).andThen(stop());
+        return Commands.deadline((Commands.waitSeconds(2)),setOutput(outtakeSpeed)).andThen(stop());
     }
 
-    public Command setVelocity(double rps){
-        return this.run(() -> intakeMotor.setControl(velocityRequest.withOutput(rps)));
+    public Command setOutput(double amps){
+        return this.run(() -> intakeMotor.setControl(torqueCurrentFOC.withOutput(amps)));
     }
 
     public Command stop(){
@@ -69,7 +67,7 @@ public class Intake extends SubsystemBase{
 
     @Override
     public void periodic() {
-        System.out.println(m_limit.get());
+        // System.out.println(m_limit.get());
     }
     
 
