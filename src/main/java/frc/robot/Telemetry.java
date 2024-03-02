@@ -1,15 +1,20 @@
 package frc.robot;
 
+import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveDrivetrain.SwerveDriveState;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.DoubleArrayPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StringPublisher;
+import edu.wpi.first.networktables.StructArrayPublisher;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -26,13 +31,32 @@ public class Telemetry {
      */
     public Telemetry(double maxSpeed) {
         MaxSpeed = maxSpeed;
+        SignalLogger.start();
     }
-
+    
     /* What to publish over networktables for telemetry */
     private final NetworkTableInstance inst = NetworkTableInstance.getDefault();
 
     /* Robot pose for field positioning */
+    private final NetworkTable robot = inst.getTable("Robot");
+    private final NetworkTable swerve = robot.getSubTable("Swerve");
     private final NetworkTable table = inst.getTable("Pose");
+    private final NetworkTable vision = robot.getSubTable("Vision");
+
+    StructArrayPublisher<SwerveModuleState> moduleStates = swerve
+    .getStructArrayTopic("ModuleStates", SwerveModuleState.struct).publish();
+    StructArrayPublisher<SwerveModuleState> targetStates = swerve
+    .getStructArrayTopic("TargetStates", SwerveModuleState.struct).publish();
+    StructPublisher<Pose2d> pose2d = swerve
+    .getStructTopic("Pose2d",Pose2d.struct).publish();
+    StructPublisher<Rotation2d> rotation = swerve
+    .getStructTopic("Rotation",Rotation2d.struct).publish();
+
+    StructPublisher<Pose2d> visionPose = vision
+    .getStructTopic("VisionPose",Pose2d.struct).publish();
+    StructPublisher<Rotation2d> visionRotation = vision
+    .getStructTopic("visionRotation",Rotation2d.struct).publish();
+
     private final DoubleArrayPublisher fieldPub = table.getDoubleArrayTopic("robotPose").publish();
     private final StringPublisher fieldTypePub = table.getStringTopic(".type").publish();
 
@@ -98,6 +122,11 @@ public class Telemetry {
         velocityY.set(velocities.getY());
         odomPeriod.set(state.OdometryPeriod);
 
+        moduleStates.set(state.ModuleStates);
+        targetStates.set(state.ModuleTargets);
+        rotation.set(pose.getRotation());
+        pose2d.set(pose);
+        visionPose.set(pose);
         /* Telemeterize the module's states */
         for (int i = 0; i < 4; ++i) {
             m_moduleSpeeds[i].setAngle(state.ModuleStates[i].angle);
@@ -106,5 +135,9 @@ public class Telemetry {
 
             SmartDashboard.putData("Module " + i, m_moduleMechanisms[i]);
         }
+    }
+    public void registerVisionTelemetry(Pose2d pose){
+        visionPose.set(pose);
+        visionRotation.set(pose.getRotation());
     }
 }

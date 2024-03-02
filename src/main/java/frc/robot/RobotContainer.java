@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.commands.GroupCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Arm;
+import frc.robot.subsystems.Candle;
 import frc.robot.subsystems.Arm.ArmPositions;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
@@ -40,11 +41,13 @@ public class RobotContainer {
   private final Arm arm = new Arm();
   private final Shooter shooter = new Shooter();
   private final Intake intake = new Intake();
-  private GroupCommands groupCommands = new GroupCommands(arm, shooter, intake);
+  private final Candle candle = new Candle();
+  private GroupCommands groupCommands = new GroupCommands(arm, shooter, intake, candle);
 
   private void configureBindings() {
+    shooter.setTargetFlywheelSpeed(15);
     arm.setDefaultCommand(arm.setArmDegree(ArmPositions.Load));
-
+    intake.setDefaultCommand(intake.stop());
     drivetrain.setDefaultCommand( // Drivetrain will execute this command periodically
         drivetrain.applyRequest(() -> drive.withVelocityX(-joystick.getLeftY() * MaxSpeed) // Drive forward with
                                                                                            // negative Y (forward)
@@ -63,11 +66,14 @@ public class RobotContainer {
       drivetrain.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
     }
     drivetrain.registerTelemetry(logger::telemeterize);
+
     joystick.rightBumper().onTrue(groupCommands.intake());//Cur commands
     joystick.x().onTrue(groupCommands.loadAndShoot());
     joystick.y().onTrue(groupCommands.ampShot());
-    joystick.rightTrigger(.5).onTrue(groupCommands.intakeFromShooter());
+    joystick.rightTrigger(.5).onTrue(groupCommands.changeArmDefault());
+    // joystick.rightTrigger(.5).onTrue(groupCommands.intakeFromShooter());
   }
+
 
   public RobotContainer() {
     configureBindings();

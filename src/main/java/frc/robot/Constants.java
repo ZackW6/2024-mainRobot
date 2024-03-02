@@ -90,16 +90,17 @@ public final class Constants {
 
     public static class IntakeConstants{    
         public static final int intakeMotorID = 11;
-        public static final int limitSwitchID = 0;
+        public static final int limitSwitchID1 = 0;
+        public static final int  limitSwicthID2 = 1;
 
         //TODO: Run SysID for shooter
         //TODO: Tune Shooter PID
         // Add 0.25 V output to overcome static friction
 
         public static final double kS = 0; // An error of 1 rps results in 0.11 V output
-        public static final double kV = 10; // A velocity target of 1 rps results in 0.12 V output
+        public static final double kV = 0; // A velocity target of 1 rps results in 0.12 V output
         public static final double kA = 0; // An acceleration of 1 rps/s requires 0.01 V output
-        public static final double kP = .6; // This will need to be tuned after feedforward
+        public static final double kP = 10; // This will need to be tuned after feedforward
         public static final double kI = 0; // For flywheels, this should be 0
         public static final double kD = 0; // For flywheels, this should be 0
 
@@ -133,10 +134,10 @@ public final class Constants {
         public static final boolean shooterEnableCurrentLimit = true;
     }
     public class VisionConstants {
-        public static final String ShooterCamera = "OV9281";
+        public static final String ShooterCamera = "ShooterCam";
         // Cam mounted facing forward, half a meter forward of center, half a meter up from center.
         public static final Transform3d ShooterCamTransform =
-                new Transform3d(new Translation3d(-0.231775,0.1414018, 0.4977384), new Rotation3d(0, 0, 0));
+            new Transform3d(new Translation3d(-Units.feetToMeters(.75),-Units.feetToMeters(.9375), Units.feetToMeters(17.75/12)), new Rotation3d(0, 15, 180));
         // The layout of the AprilTags on the field
         public static final AprilTagFieldLayout kTagLayout = AprilTagFields.k2024Crescendo.loadAprilTagLayoutField();
         // The standard deviations of our vision estimated poses, which affect correction rate

@@ -9,6 +9,7 @@ import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
+import com.ctre.phoenix6.controls.MotionMagicVelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.TorqueCurrentFOC;
@@ -33,28 +34,30 @@ import frc.robot.Constants.ShooterConstants;
 
 public class Intake extends SubsystemBase{
     private final TalonFX intakeMotor;
-    private final DigitalInput m_limit;
+    private final DigitalInput limitSwicth1;
+    private final DigitalInput limitSwicth2;
 
-    double intakeSpeed = 20.0;//In amps
-    double outtakeSpeed = -35.0;
+    double intakeSpeed = 20.0;//In rps
+    double outtakeSpeed = -20.0;
 
     public Intake(){
         intakeMotor = new TalonFX(IntakeConstants.intakeMotorID);
-        m_limit = new DigitalInput(IntakeConstants.limitSwitchID);
+        limitSwicth1 = new DigitalInput(IntakeConstants.limitSwitchID1);
+        limitSwicth2 = new DigitalInput(IntakeConstants.limitSwicthID2);
         configMotors();
     }
-    TorqueCurrentFOC torqueCurrentFOC = new TorqueCurrentFOC(0);
+    MotionMagicVelocityTorqueCurrentFOC torqueCurrentFOC = new MotionMagicVelocityTorqueCurrentFOC(0);
     public Command intakePiece(){
-        return setOutput(intakeSpeed).until(() -> m_limit.get())
-            .andThen(Commands.deadline(Commands.waitSeconds(.3),setOutput(10)))
+        return setVelocity(intakeSpeed).until(() -> getLimitSwitch())
+            .andThen(Commands.deadline(Commands.waitSeconds(.3),setVelocity(10)))
             .andThen(stop());
     }
     public Command outtakePiece(){
-        return Commands.deadline((Commands.waitSeconds(2)),setOutput(outtakeSpeed)).andThen(stop());
+        return Commands.deadline((Commands.waitSeconds(2)),setVelocity(outtakeSpeed)).andThen(stop());
     }
 
-    public Command setOutput(double amps){
-        return this.run(() -> intakeMotor.setControl(torqueCurrentFOC.withOutput(amps)));
+    public Command setVelocity(double amps){
+        return this.run(() -> intakeMotor.setControl(torqueCurrentFOC.withVelocity(amps)));
     }
 
     public Command stop(){
@@ -62,12 +65,12 @@ public class Intake extends SubsystemBase{
     }
 
     public boolean getLimitSwitch(){
-        return m_limit.get();
+        return (!limitSwicth1.get() || !limitSwicth2.get());
     }
 
     @Override
     public void periodic() {
-        // System.out.println(m_limit.get());
+        System.out.println("GET LIMIT SWITCH: "+getLimitSwitch());
     }
     
 
@@ -85,8 +88,8 @@ public class Intake extends SubsystemBase{
 
         // set Motion Magic Velocity settings
         MotionMagicConfigs motionMagicConfigs = talonFXConfigs.MotionMagic;
-        motionMagicConfigs.MotionMagicAcceleration = 400; // Target acceleration of 400 rps/s (0.25 seconds to max)
-        motionMagicConfigs.MotionMagicJerk = 4000; // Target jerk of 4000 rps/s/s (0.1 seconds)
+        motionMagicConfigs.MotionMagicAcceleration = 10000; // Target acceleration of 400 rps/s (0.25 seconds to max)
+        motionMagicConfigs.MotionMagicJerk = 0; // Target jerk of 4000 rps/s/s (0.1 seconds)
     
         CurrentLimitsConfigs currentLimits = new CurrentLimitsConfigs();
         currentLimits.SupplyCurrentLimit = IntakeConstants.intakeCurrentLimit; // Limit to 1 amps

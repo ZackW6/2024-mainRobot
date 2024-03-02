@@ -12,6 +12,8 @@ import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import frc.robot.Constants.VisionConstants;
+import frc.robot.subsystems.Vision;
 
 /**
  * Class that extends the Phoenix SwerveDrivetrain class and implements subsystem
@@ -21,6 +23,7 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     private static final double kSimLoopPeriod = 0.005; // 5 ms
     private Notifier m_simNotifier = null;
     private double m_lastSimTime;
+    Vision vision = new Vision(VisionConstants.ShooterCamera,VisionConstants.ShooterCamTransform);
 
     public CommandSwerveDrivetrain(SwerveDrivetrainConstants driveTrainConstants, double OdometryUpdateFrequency, SwerveModuleConstants... modules) {
         super(driveTrainConstants, OdometryUpdateFrequency, modules);
@@ -52,5 +55,35 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
             updateSimState(deltaTime, RobotController.getBatteryVoltage());
         });
         m_simNotifier.startPeriodic(kSimLoopPeriod);
+    }
+    private void visionEstimation(){
+        var visionEst = vision.getEstimatedGlobalPose();
+        visionEst.ifPresent(
+                est -> {
+                    var estPose = est.estimatedPose.toPose2d();
+                    // Change our trust in the measurement based on the tags we can see
+                    var estStdDevs = vision.getEstimationStdDevs(estPose);
+
+                    addVisionMeasurement(
+                            est.estimatedPose.toPose2d(), est.timestampSeconds, estStdDevs);
+                    
+                });
+    //     // var visionEst2 = vision.getEstimatedGlobalPose();
+    //     // visionEst2.ifPresent(
+    //     //         est -> {
+    //     //             var estPose = est.estimatedPose.toPose2d();
+    //     //             // Change our trust in the measurement based on the tags we can see
+    //     //             var estStdDevs = vision2.getEstimationStdDevs(estPose);
+
+    //     //             addVisionMeasurement(
+    //     //                     est.estimatedPose.toPose2d(), est.timestampSeconds, estStdDevs);
+                    
+    //     //         });
+    }
+
+    @Override
+    public void periodic(){
+        // vision.logTelemetry();
+        visionEstimation();
     }
 }

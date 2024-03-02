@@ -13,6 +13,7 @@ import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.Slot1Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.DifferentialVoltage;
@@ -64,7 +65,6 @@ public class Arm extends SubsystemBase {
   private final TalonFX armMotor;
   private final CANcoder encoder;
 
-
   private ShuffleboardTab tab = Shuffleboard.getTab("Arm");
   // private GenericEntry armFeedForward;
   // private GenericEntry armP;
@@ -76,7 +76,6 @@ public class Arm extends SubsystemBase {
   private GenericEntry armVelocity;
   private GenericEntry armTemp;
   private GenericEntry armAngle;
-
   private final VoltageOut m_sysidControl = new VoltageOut(0);
   private final CurrentLimitsConfigs m_currentLimits = new CurrentLimitsConfigs();
   private SysIdRoutine m_SysIdRoutine;
@@ -85,7 +84,8 @@ public class Arm extends SubsystemBase {
   public enum ArmPositions {
     Intake,
     Load,
-    Amp
+    Amp,
+    AmpMove
   }
 
 
@@ -165,7 +165,7 @@ public class Arm extends SubsystemBase {
 
   MotionMagicTorqueCurrentFOC m_request = new MotionMagicTorqueCurrentFOC(.47);
   public Command setArmDegree(ArmPositions armPosition){
-  double rotSet;
+   double rotSet;
       switch (armPosition){
         case Intake:
           rotSet=-0.098;
@@ -174,16 +174,23 @@ public class Arm extends SubsystemBase {
           rotSet=.47;
           break;
         case Amp:
-          rotSet=.25;
+          rotSet=.266;
+          break;
+        case AmpMove:
+          rotSet= .26;
           break;
         default:
           rotSet=.4422222222;
           break;
       }
     return this.run(() -> {
-      armMotor.setControl(m_request.withPosition(rotSet));
+      // if (armPosition==ArmPositions.AmpMove){
+      //   armMotor.setControl(m_request.withPosition(rotSet).withSlot(1));
+      // }
+      armMotor.setControl(m_request.withPosition(rotSet).withSlot(0));
     });
   }
+
 
   @Override
   public void periodic() {
@@ -214,8 +221,16 @@ public class Arm extends SubsystemBase {
     slot0Configs.kD = ArmConstants.kD; // A velocity error of 1 rps results in 0.1 V output
     slot0Configs.kG = ArmConstants.kG;
     slot0Configs.GravityType = GravityTypeValue.Arm_Cosine;
-    talonFXConfigs.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-
+    Slot1Configs slot1Configs = talonFXConfigs.Slot1;
+    slot1Configs.kS = ArmConstants.kS; // Add 0.25 V output to overcome static friction
+    slot1Configs.kV = ArmConstants.kV; // A velocity target of 1 rps results in 0.12 V output
+    slot1Configs.kA = ArmConstants.kA; // An acceleration of 1 rps/s requires 0.01 V output
+    slot1Configs.kP = ArmConstants.kP; // A position error of 2.5 rotations results in 12 V output
+    slot1Configs.kI = ArmConstants.kI; // no output for integrated error
+    slot1Configs.kD = ArmConstants.kD; // A velocity error of 1 rps results in 0.1 V output
+    slot1Configs.kG = ArmConstants.kG;
+    slot1Configs.GravityType = GravityTypeValue.Arm_Cosine;
+    talonFXConfigs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
     talonFXConfigs.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;//InvertedValue.Clockwise_Positive
     talonFXConfigs.Feedback.FeedbackRemoteSensorID = encoder.getDeviceID();
@@ -250,5 +265,18 @@ public class Arm extends SubsystemBase {
   public double getArmDegrees() {
     //return Rotation2d.fromRotations(getCANcoder().getRotations());
     return getCANcoder().getDegrees();
+  }
+
+  public double getRotationTarget() {
+    return armMotor.getClosedLoopReference().getValueAsDouble();
+  }
+
+  public boolean isArmAtAngle(){
+    if (armMotor.getClosedLoopReference().getValueAsDouble()<=getRotationTarget()+.03 || armMotor.getClosedLoopReference().getValueAsDouble()<=getRotationTarget()-.03){
+      System.out.println("Arm is at pos");
+
+      return true;
+    } 
+    return false;
   }
 }
