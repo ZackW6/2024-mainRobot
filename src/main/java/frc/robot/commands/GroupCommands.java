@@ -4,17 +4,30 @@
 
 package frc.robot.commands;
 
+import java.util.function.DoubleSupplier;
+
+import com.ctre.phoenix6.mechanisms.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
+import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest.SwerveControlRequestParameters;
+
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
+import frc.robot.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Candle;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.Arm.ArmPositions;
+import frc.robot.subsystems.Arm.ArmState;
 
 public class GroupCommands  {
   private Arm arm;
@@ -22,11 +35,13 @@ public class GroupCommands  {
   private Intake intake;
   private Candle candle;
   private boolean bool = true;
-  public GroupCommands(Arm arm, Shooter shooter, Intake intake, Candle candle){
+  private CommandSwerveDrivetrain drivetrain;
+  public GroupCommands(Arm arm, Shooter shooter, Intake intake, Candle candle, CommandSwerveDrivetrain drivetrain){
     this.arm = arm;
     this.shooter = shooter;
     this.intake = intake;
     this.candle = candle;
+    this.drivetrain = drivetrain;
   }
   public Command intake(){
     return Commands.deadline(intake.intakePiece(),arm.setArmDegree(ArmPositions.Intake))
@@ -47,25 +62,18 @@ public class GroupCommands  {
     ,(arm.setArmDegree(ArmPositions.AmpMove))*/));
   }
 
-  public Command loadAndShoot(){
-    return Commands.deadline(Commands.waitSeconds(.01).andThen(Commands.waitUntil(()->shooter.isLeftFlywheelAtTargetSpeed()))
-    ,Commands.runOnce(()->shooter.setTargetFlywheelSpeed(100)))
-    .andThen(intake.outtakePiece())
-    .andThen(Commands.parallel(intake.stop()
-    , Commands.runOnce(()->shooter.setTargetFlywheelSpeed(15))));
+  public Command shoot() {
+    return arm.getCurrentArmState() == ArmState.Speaker ? loadAndShoot() : ampShot();
   }
-  public Command changeArmDefault(){
-    return Commands.runOnce(()->{
-      if (bool==true){
-        arm.setDefaultCommand(arm.setArmDegree(ArmPositions.Amp));
-        bool=false;
-      }else{
-        arm.setDefaultCommand(arm.setArmDegree(ArmPositions.Load));
-        bool=true;
-      }
-    });
+  public Command loadAndShoot(){
+    return Commands.run(() -> shooter.setTargetFlywheelSpeed(100));
+    // return Commands.deadline(Commands.waitSeconds(.01).andThen(Commands.waitUntil(() ->shooter.isLeftFlywheelAtTargetSpeed())),
+    // Commands.run(() -> shooter.setTargetFlywheelSpeed(80)))
+    // .andThen(intake.outtakePiece())
+    // .andThen(Commands.parallel(intake.stop()));
   }
   // public Command intakeFromShooter(){
+
   //   return Commands.deadline(Commands.runOnce(()->shooter.setTargetFlywheelSpeed(-15))
   //   .andThen(intake.intakePiece())
   //   .andThen(Commands.runOnce(()->shooter.setTargetFlywheelSpeed(15)))
@@ -82,5 +90,37 @@ public class GroupCommands  {
       intake.stop();
       shooter.setTargetFlywheelSpeed(40);// Default speed
     });
+  }
+
+  private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
+      .withDeadband(0).withRotationalDeadband(0) // Add a 10% deadband
+      .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
+
+  private final PIDController thetaController = new PIDController(.0001,0,10);
+  public Command alignToAmp(DoubleSupplier xAxis, DoubleSupplier yAxis) {
+    // thetaController.enableContinuousInput(-, Math.PI);
+    thetaController.reset();
+
+    // thetaController.setSetpoint(90);
+
+    DoubleSupplier rotationalVelocity = () -> -thetaController.calculate(drivetrain.getYaw().getDegrees(), 0);
+    
+    // System.out.println(rotationalVelocity);
+    return drivetrain.applyRequest(() -> drive.withVelocityX(-xAxis.getAsDouble()) 
+      .withVelocityY(-yAxis.getAsDouble())
+      .withRotationalRate(rotationalVelocity.getAsDouble()));
+  }
+
+  public Command alignToSpeaker(DoubleSupplier xAxis, DoubleSupplier yAxis) {
+    thetaController.reset();
+    
+
+    DoubleSupplier rotationalVelocity = () -> -thetaController.calculate(drivetrain.getYaw().getDegrees(), 
+                                      drivetrain.getAngleFromSpeaker().getDegrees());
+  
+    
+    return drivetrain.applyRequest(() -> drive.withVelocityX(-xAxis.getAsDouble()) 
+      .withVelocityY(-yAxis.getAsDouble())
+      .withRotationalRate(rotationalVelocity.getAsDouble()/12));
   }
 }

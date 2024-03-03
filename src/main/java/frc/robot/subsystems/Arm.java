@@ -80,7 +80,11 @@ public class Arm extends SubsystemBase {
   private final CurrentLimitsConfigs m_currentLimits = new CurrentLimitsConfigs();
   private SysIdRoutine m_SysIdRoutine;
   private TalonFXConfiguration talonFXConfigs = new TalonFXConfiguration();
-
+  private ArmState currentArmState = ArmState.Speaker; 
+  public enum ArmState {
+    Speaker,
+    Amp
+  } 
   public enum ArmPositions {
     Intake,
     Load,
@@ -195,6 +199,8 @@ public class Arm extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
+    ArmPositions defaultState = getCurrentArmState() == ArmState.Speaker ? ArmPositions.Load : ArmPositions.Amp;
+    setDefaultCommand(setArmDegree(defaultState));
   }
 
 
@@ -271,6 +277,13 @@ public class Arm extends SubsystemBase {
     return armMotor.getClosedLoopReference().getValueAsDouble();
   }
 
+  public ArmState getCurrentArmState() {
+      return currentArmState;
+  }
+
+  public void setCurrentArmState(ArmState armState) {
+    currentArmState = armState;
+  }
   public boolean isArmAtAngle(){
     if (armMotor.getClosedLoopReference().getValueAsDouble()<=getRotationTarget()+.03 || armMotor.getClosedLoopReference().getValueAsDouble()<=getRotationTarget()-.03){
       System.out.println("Arm is at pos");

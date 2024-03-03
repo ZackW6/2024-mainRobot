@@ -65,7 +65,7 @@ public class Shooter extends SubsystemBase{
     private SysIdRoutine m_SysIdRoutine;
 
     public Shooter(){
-
+        
         leftShooterMotor = new TalonFX(ShooterConstants.leftShooterMotorID);
         rightShooterMotor = new TalonFX(ShooterConstants.rightShooterMotorID);
         // TalonFXConfiguration talonFXConfigs = new TalonFXConfiguration();
