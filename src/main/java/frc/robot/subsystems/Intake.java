@@ -70,7 +70,7 @@ public class Intake extends SubsystemBase{
 
     @Override
     public void periodic() {
-        System.out.println("GET LIMIT SWITCH: "+getLimitSwitch());
+        // System.out.println("GET LIMIT SWITCH: "+getLimitSwitch());
     }
     
 

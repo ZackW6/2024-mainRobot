@@ -43,7 +43,7 @@ public class GroupCommands  {
     .andThen(Commands.waitUntil(()->arm.isArmAtAngle()))
     ,arm.setArmDegree(ArmPositions.Amp), intake.setVelocity(10))
     .andThen(Commands.waitSeconds(1))
-    .andThen(Commands.deadline(Commands.waitSeconds(.2),intake.setVelocity(-18)/* 
+    .andThen(Commands.deadline(Commands.waitSeconds(.2),intake.setVelocity(-18.25)/* 
     ,(arm.setArmDegree(ArmPositions.AmpMove))*/));
   }
 

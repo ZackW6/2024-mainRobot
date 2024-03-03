@@ -7,11 +7,14 @@ package frc.robot;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveModule.DriveRequestType;
+import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -24,6 +27,9 @@ import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
 
 public class RobotContainer {
+
+  private SendableChooser<Command> autoChooser;
+  
   private double MaxSpeed = TunerConstants.kSpeedAt12VoltsMps; // kSpeedAt12VoltsMps desired top speed
   private double MaxAngularRate = 1.5 * Math.PI; // 3/4 of a rotation per second max angular velocity
 
@@ -43,6 +49,10 @@ public class RobotContainer {
   private final Intake intake = new Intake();
   private final Candle candle = new Candle();
   private GroupCommands groupCommands = new GroupCommands(arm, shooter, intake, candle);
+
+
+
+
 
   private void configureBindings() {
     shooter.setTargetFlywheelSpeed(15);
@@ -76,13 +86,17 @@ public class RobotContainer {
 
 
   public RobotContainer() {
-    configureBindings();
+    drivetrain.configurePathPlanner();
     NamedCommands.registerCommand("intake", groupCommands.intake());
-    NamedCommands.registerCommand("ampShot", groupCommands.ampShot());
     NamedCommands.registerCommand("loadAndShoot", groupCommands.loadAndShoot());
+
+    autoChooser = AutoBuilder.buildAutoChooser("S A 4 piece");
+    SmartDashboard.putData("Auto Chooser", autoChooser);
+
+    configureBindings();
   }
 
   public Command getAutonomousCommand() {
-    return Commands.print("No autonomous command configured");
+    return autoChooser.getSelected();
   }
 }

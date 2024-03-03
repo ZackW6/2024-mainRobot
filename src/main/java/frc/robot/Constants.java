@@ -137,7 +137,7 @@ public final class Constants {
         public static final String ShooterCamera = "ShooterCam";
         // Cam mounted facing forward, half a meter forward of center, half a meter up from center.
         public static final Transform3d ShooterCamTransform =
-            new Transform3d(new Translation3d(-Units.feetToMeters(.75),-Units.feetToMeters(.9375), Units.feetToMeters(17.75/12)), new Rotation3d(0, 15, 180));
+            new Transform3d(new Translation3d(-.231775,-.290306, .431), new Rotation3d(0, Units.degreesToRadians(15), Units.degreesToRadians(180)));
         // The layout of the AprilTags on the field
         public static final AprilTagFieldLayout kTagLayout = AprilTagFields.k2024Crescendo.loadAprilTagLayoutField();
         // The standard deviations of our vision estimated poses, which affect correction rate
@@ -148,20 +148,11 @@ public final class Constants {
     
     
     
-        // public static final String IntakeCamera = "STUFFGOESHERE";
-        // // Cam mounted facing forward, half a meter forward of center, half a meter up from center.
-        // public static final Transform3d IntakeCamTransform =
-        //         new Transform3d(new Translation3d(0.231775, 0.3029966, 0.4007612), new Rotation3d(0, 0, Math.toRadians(180)));
-        // // The standard deviations of our vision estimated poses, which affect correction rate
-    
-    
-        // public static final AprilTagFieldLayout kTagLayout2;
-        // static {
-        //     kTagLayout2 = AprilTagFields.kDefaultField.loadAprilTagLayoutField();
-        // }
-        // // (Fake values. Experiment and determine estimation noise on an actual robot.)
-        // public static final Matrix<N3, N1> kSingleTagStdDevs2 = VecBuilder.fill(6, 6, 10);
-        // public static final Matrix<N3, N1> kMultiTagStdDevs2 = VecBuilder.fill(0.5, 0.5, 1);
+        public static final String IntakeCamera = "IntakeCamera";
+        // Cam mounted facing forward, half a meter forward of center, half a meter up from center.
+        public static final Transform3d IntakeCamTransform =
+                new Transform3d(new Translation3d(0.231775, -.139434, 0.538), new Rotation3d(0, 0, Math.toRadians(0)));
+        // The standard deviations of our vision estimated poses, which affect correction rate
     }
 
     public static final class LimelightConstants {

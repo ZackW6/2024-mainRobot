@@ -26,6 +26,8 @@
 package frc.robot.subsystems;
 
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+
 //import static frc.robot.Constants.Vision.*;
 
 
@@ -75,11 +77,12 @@ public class Vision extends SubsystemBase{
     // private VisionSystemSim visionSim;
 
 
-    public Vision(String cameraName, Transform3d robotToCam) {
+    public Vision(String cameraName, Transform3d transformation) {
+        VisionConstants.kTagLayout.setOrigin(AprilTagFieldLayout.OriginPosition.kBlueAllianceWallRightSide);
         camera = new PhotonCamera(cameraName);
        
         photonEstimator =
-                new PhotonPoseEstimator(VisionConstants.kTagLayout, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, camera, robotToCam);
+                new PhotonPoseEstimator(VisionConstants.kTagLayout, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, camera, transformation);
         photonEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
 
 
@@ -121,23 +124,12 @@ public class Vision extends SubsystemBase{
      *     used for estimation.
      */
     public Optional<EstimatedRobotPose> getEstimatedGlobalPose() {
-        // photonEstimator.setReferencePose(prevEstimatedRobotPose);
-        return photonEstimator.update();
-        // var visionEst = photonEstimator.update();
-        // double latestTimestamp = camera.getLatestResult().getTimestampSeconds();
-        // boolean newResult = Math.abs(latestTimestamp - lastEstTimestamp) > 1e-5;
-        // // if (Robot.isSimulation()) {
-        // //     visionEst.ifPresentOrElse(
-        // //             est ->
-        // //                     getSimDebugField()
-        // //                             .getObject("VisionEstimation")
-        // //                             .setPose(est.estimatedPose.toPose2d()),
-        // //             () -> {
-        // //                 if (newResult) getSimDebugField().getObject("VisionEstimation").setPoses();
-        // //             });
-        // // }
-        // if (newResult) lastEstTimestamp = latestTimestamp;
-        // return visionEst;
+
+        var visionEst = photonEstimator.update();
+        double latestTimestamp = camera.getLatestResult().getTimestampSeconds();
+        boolean newResult = Math.abs(latestTimestamp - lastEstTimestamp) > 1e-5;
+        if (newResult) lastEstTimestamp = latestTimestamp;
+        return visionEst;
     }
 
 
@@ -169,8 +161,8 @@ public class Vision extends SubsystemBase{
             estStdDevs = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
         else estStdDevs = estStdDevs.times(1 + (avgDist * avgDist / 30));
 
-
-        return estStdDevs;
+        return VecBuilder.fill(0, 0, 0);
+        // return estStdDevs;
     }
 
 
