@@ -15,6 +15,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -29,7 +30,6 @@ import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Candle;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
-import frc.robot.subsystems.Arm.ArmPositions;
 import frc.robot.subsystems.Arm.ArmState;
 
 public class GroupCommands  {
@@ -45,73 +45,75 @@ public class GroupCommands  {
     this.candle = candle;
     this.drivetrain = drivetrain;
   }
-  public Command intake(){
-    return Commands.deadline(intake.intakePiece(),Commands.runOnce(()->arm.setCurrentArmState(ArmState.Intake)))
-    .andThen(candle.pickUpLights())
-    .andThen(Commands.deadline(Commands.waitSeconds(1),intake.setVelocity(5),Commands.runOnce(()->arm.setCurrentArmState(arm.lastStateNotIntake()))))
-    .andThen(intake.stop())
-    .andThen(candle.idleLED());
-  }
-  public Command ampShot(){
-    // return Commands.deadline(Commands.waitSeconds(2)
-    // ,Commands.waitSeconds(1).alongWith(intake.setVelocity(-15)).andThen(intake.outtakePiece())
-    // ,arm.setArmDegree(ArmPositions.Amp)).andThen(intake.stop());
-    return Commands.deadline(Commands.waitSeconds(.2),intake.setVelocity(-17.5),Commands.runOnce(()->arm.setCurrentArmState(ArmState.AmpMove))).andThen(Commands.runOnce(()->arm.setCurrentArmState(ArmState.Amp)));
-  }
-  public Command ampShotSpeaker(){
-    // return Commands.deadline(Commands.waitSeconds(2)
-    // ,Commands.waitSeconds(1).alongWith(intake.setVelocity(-15)).andThen(intake.outtakePiece())
-    // ,arm.setArmDegree(ArmPositions.Amp)).andThen(intake.stop());
-    return Commands.deadline(Commands.waitSeconds(5),Commands.runOnce(()->arm.setCurrentArmState(ArmState.AmpMove)).andThen(Commands.waitUntil(()->arm.isArmAtAngle())).andThen(intake.setVelocity(-1000000)));
-  }
-
   public Command shoot() {
     return Commands.either(ampShot(), loadAndShoot(), ()->arm.isArmInAmpState()) ;
   }
   public Command loadAndShoot(){
-    // return Commands.run(() -> shooter.setTargetFlywheelSpeed(100));
-    return Commands.deadline(Commands.waitSeconds(.01).andThen(Commands.waitUntil(() ->shooter.isLeftFlywheelAtTargetSpeed())),
-    Commands.run(() -> shooter.setTargetFlywheelSpeed(80)))
+    return Commands.deadline(Commands.waitSeconds(.01).andThen(Commands.waitUntil(() ->shooter.isLeftFlywheelAtTargetSpeed()))
+    ,Commands.run(() -> shooter.setTargetFlywheelSpeed(80)), Commands.runOnce(()->shooter.disableDefault()))
     .andThen(intake.outtakePiece())
-    .andThen(intake.stop())
-    .andThen(Commands.runOnce(()->shooter.setTargetFlywheelSpeed(80)));
+    .andThen(resetAll());
   }
-  // public Command intakeFromShooter(){
+  public Command ampShot(){
+    return Commands.deadline(Commands.waitSeconds(.2)
+    ,intake.setVelocity(-17.5)
+    ,Commands.runOnce(()->arm.setCurrentArmState(ArmState.AmpMove)))
+    .andThen(resetAll());
+  }
+  public Command intake(){
+    return Commands.deadline(intake.intakePiece(),Commands.runOnce(()->arm.setCurrentArmState(ArmState.Intake)),Commands.runOnce(()->shooter.enableDefault()))
+    .andThen(candle.pickUpLights())
+    .andThen(Commands.deadline(/*Commands.waitSeconds(1)*/Commands.waitSeconds(0.001).andThen(Commands.waitUntil(()->arm.isArmAtAngle()))
+    ,intake.setVelocity(5)
+    ,Commands.runOnce(()->arm.setCurrentArmState(arm.lastMainState()))))
+    .andThen(intake.stop())
+    .andThen(candle.idleLED());
+  }
+  public Command resetAll(){
+    return Commands.runOnce(()->{
+      Commands.runOnce(()->arm.setCurrentArmState(arm.lastMainState()));
+      Commands.waitSeconds(.001).andThen(Commands.waitUntil(()->arm.isArmAtAngle()).andThen(intake.setVelocity(0)));
+      shooter.enableDefault();// Default speed
+    });
+  }
+  @Deprecated
+  public Command ampShotSpeaker(){//BROKEN, and probably not doing
+    return Commands.deadline(Commands.waitSeconds(5)
+    ,Commands.runOnce(()->arm.setCurrentArmState(ArmState.AmpMove))
+    .andThen(Commands.waitUntil(()->arm.isArmAtAngle()))
+    .andThen(intake.setVelocity(-1000000)));
+  }
+  // public Command intakeFromShooter(){//Probably not using
 
   //   return Commands.deadline(Commands.runOnce(()->shooter.setTargetFlywheelSpeed(-15))
   //   .andThen(intake.intakePiece())
   //   .andThen(Commands.runOnce(()->shooter.setTargetFlywheelSpeed(15)))
   //   ,arm.setArmDegree(ArmPositions.Load));
   // }
-  public Command speakerFromIntake(){
-    return Commands.deadline(Commands.waitSeconds(2)
-    ,Commands.waitSeconds(1).alongWith(intake.setVelocity(5)).andThen(intake.setVelocity(50))
-    ,Commands.runOnce(()->arm.setCurrentArmState(ArmState.Amp))).andThen(intake.stop());
-  }
-  public Command overrideAll(){ // I dont think this works, but some sort of thing like this should be implimented
-    return Commands.runOnce(()->{
-      Commands.runOnce(()->arm.setCurrentArmState(ArmState.Speaker));
-      intake.stop();
-      shooter.setTargetFlywheelSpeed(40);// Default speed
-    });
-  }
+  
 
   private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
       .withDeadband(0).withRotationalDeadband(0) // Add a 10% deadband
       .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
-  private final PIDController thetaController = new PIDController(.05,0,0);
+  private final PIDController thetaController = new PIDController(11,1.1,1);
   public Command alignToAmp(DoubleSupplier xAxis, DoubleSupplier yAxis) {
     // thetaController.enableContinuousInput(-, Math.PI);
     thetaController.reset();
-
     // thetaController.setSetpoint(90);
-
-    DoubleSupplier rotationalVelocity = () -> -thetaController.calculate(drivetrain.getYaw().getDegrees(), 0);
+    DoubleSupplier rotationalVelocity = () -> thetaController.calculate(correctYaw(drivetrain.getYaw().getDegrees()), 0);
     // System.out.println(rotationalVelocity);
-    return drivetrain.applyRequest(() -> drive.withVelocityX(-xAxis.getAsDouble()) 
-      .withVelocityY(-yAxis.getAsDouble())
-      .withRotationalRate(Units.degreesToRadians(rotationalVelocity.getAsDouble()))).alongWith(    Commands.run(()->System.out.println(rotationalVelocity.getAsDouble()))).alongWith(Commands.runOnce(()->System.out.println(thetaController.getSetpoint())));
+    return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble()) //was -xAxis, but in sim is this
+      .withVelocityY(yAxis.getAsDouble())//was -yAxis, but in sim is this
+      .withRotationalRate(Units.degreesToRadians(rotationalVelocity.getAsDouble()))).alongWith(Commands.run(()->System.out.println("Where it is: "+correctYaw(drivetrain.getYaw().getDegrees())+" WHERE IT WANTS TO BE: "+thetaController.getSetpoint())));
+  }
+  private double correctYaw(double x){
+    if (x>180){
+      x-=360;
+    }else if(x<-180){
+      x+=360;
+    }
+    return x;
   }
 
   public Command alignToSpeaker(DoubleSupplier xAxis, DoubleSupplier yAxis) {
@@ -128,7 +130,7 @@ public class GroupCommands  {
   }
 
   public Command switchModes(){
-    return new InstantCommand(() -> {
+    return Commands.runOnce(() -> {
       if (arm.getCurrentArmState()!=ArmState.Intake){
         ArmState prevState = arm.getCurrentArmState();
         ArmState setState;

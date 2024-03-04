@@ -25,6 +25,7 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableListener;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.Voltage;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
@@ -52,6 +53,7 @@ public class Shooter extends SubsystemBase{
     private final TalonFX leftShooterMotor;
     private final TalonFX  rightShooterMotor;
 
+    private boolean doDefault = true;
     private boolean flywheelDisabled = false;
     private double targetFlywheelSpeed;
     private double shootingOffset = 0.0;
@@ -166,9 +168,19 @@ public class Shooter extends SubsystemBase{
             rightShooterMotor.stopMotor();
         } else {
             // double feedForward = FLYWHEEL_VELOCITY_CONSTANT * targetFlywheelSpeed / 12.0;
-
-            leftShooterMotor.setControl(velocityRequest.withVelocity(targetFlywheelSpeed));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
-            rightShooterMotor.setControl(velocityRequest.withVelocity(targetFlywheelSpeed));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
+            if (doDefault){
+                if (DriverStation.isTeleop()){//THIS WILL BE USED TO CHANGE SPEED DEPENDING ON HOW CLOSE YOU ARE TO THE SPEAKER
+                    leftShooterMotor.setControl(velocityRequest.withVelocity(20));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
+                    rightShooterMotor.setControl(velocityRequest.withVelocity(20));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
+                }else if(DriverStation.isAutonomous()){//ALWAYS BE FAST IN AUTO
+                    leftShooterMotor.setControl(velocityRequest.withVelocity(80));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
+                    rightShooterMotor.setControl(velocityRequest.withVelocity(80));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
+                }
+            }else{
+                leftShooterMotor.setControl(velocityRequest.withVelocity(targetFlywheelSpeed));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
+                rightShooterMotor.setControl(velocityRequest.withVelocity(targetFlywheelSpeed));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
+            }
+            
         }
 
         // shootingOffset = shooterRPMOffsetEntry.getDouble(0.0);
@@ -220,6 +232,14 @@ public class Shooter extends SubsystemBase{
 
     public void enableFlywheel() {
         flywheelDisabled = false;
+    }
+    
+    public void enableDefault(){
+        doDefault = true;
+    }
+
+    public void disableDefault(){
+        doDefault = false;
     }
 
     private void configMotors(){

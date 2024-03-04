@@ -88,12 +88,6 @@ public class Arm extends SubsystemBase {
     Intake,
     AmpMove
   } 
-  public enum ArmPositions {
-    Intake,
-    Load,
-    Amp,
-    AmpMove
-  }
 
 
   public Arm() {
@@ -171,47 +165,21 @@ public class Arm extends SubsystemBase {
   // }
 
   MotionMagicTorqueCurrentFOC m_request = new MotionMagicTorqueCurrentFOC(.47);
-  // public Command setArmDegree(ArmPositions armPosition){
-  //  double rotSet;
-  //     switch (armPosition){
-  //       case Intake:
-  //         rotSet=-0.098;
-  //         break;
-  //       case Load:
-  //         rotSet=.47;
-  //         break;
-  //       case Amp:
-  //         rotSet=.266;
-  //         break;
-  //       case AmpMove:
-  //         rotSet= .26;
-  //         break;
-  //       default:
-  //         rotSet=.4422222222;
-  //         break;
-  //     }
-  //   return this.run(() -> {
-  //     // if (armPosition==ArmPositions.AmpMove){
-  //     //   armMotor.setControl(m_request.withPosition(rotSet).withSlot(1));
-  //     // }
-  //     armMotor.setControl(m_request.withPosition(rotSet).withSlot(0));
-  //   });
-  // }
 
-  private void setArmDegree(ArmPositions armPosition, boolean isActive){
+  private void setArmDegree(ArmState armPosition, boolean isActive){
    double rotSet;
       switch (armPosition){
         case Intake:
           rotSet=-0.098;
           break;
-        case Load:
+        case Speaker:
           rotSet=.47;
           break;
         case Amp:
-          rotSet=.307;
+          rotSet=.265;
           break;
         case AmpMove:
-          rotSet= .292;
+          rotSet= .262;
           break;
         default:
           rotSet=.4422222222;
@@ -232,20 +200,22 @@ public class Arm extends SubsystemBase {
     // setDefaultCommand(setArmDegree(ArmPositions.Amp));
     
     if (currentArmState == ArmState.Speaker) {
-      lastNotIntake = ArmState.Speaker;
-      setArmDegree(ArmPositions.Load, true);
+      lastMainState = ArmState.Speaker;
+      setArmDegree(ArmState.Speaker, true);
     } else if (currentArmState == ArmState.Amp){
-      lastNotIntake = ArmState.Amp;
-      setArmDegree(ArmPositions.Amp, true);
+      lastMainState = ArmState.Amp;
+      setArmDegree(ArmState.Amp, true);
     }else if (currentArmState == ArmState.Intake){
-      setArmDegree(ArmPositions.Intake, true);
+      setArmDegree(ArmState.Intake, true);
     }else{
-      setArmDegree(ArmPositions.AmpMove, true);
+      setArmDegree(ArmState.AmpMove, true);
     }
   }
-  private ArmState lastNotIntake = ArmState.Speaker;
-  public ArmState lastStateNotIntake(){
-    return lastNotIntake;
+
+  private ArmState lastMainState = ArmState.Speaker;
+
+  public ArmState lastMainState(){
+    return lastMainState;
   }
 
 
@@ -327,12 +297,12 @@ public class Arm extends SubsystemBase {
   }
 
   public void setCurrentArmState(ArmState armState) {
-    System.out.println(armState);
+    // System.out.println(armState);
     currentArmState = armState;
   }
   public boolean isArmAtAngle(){
     if (armMotor.getClosedLoopReference().getValueAsDouble()<=getRotationTarget()+.03 || armMotor.getClosedLoopReference().getValueAsDouble()<=getRotationTarget()-.03){
-      System.out.println("Arm is at pos");
+      // System.out.println("Arm is at pos");
 
       return true;
     } 
