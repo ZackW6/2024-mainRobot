@@ -60,6 +60,7 @@ public class RobotContainer {
 
 
   private void configureBindings() {
+    shooter.setTargetFlywheelSpeed(80);
     drivetrain.setDefaultCommand( // Drivetrain will execute this command periodically
         drivetrain.applyRequest(() -> drive.withVelocityX(-driverController.getLeftY() * MaxSpeed) // Drive forward with
                                                                                            // negative Y (forward)
@@ -85,7 +86,8 @@ public class RobotContainer {
     driverController.a().whileTrue(groupCommands.alignToAmp(() -> -driverController.getLeftY() * MaxSpeed, () -> -driverController.getLeftX() * MaxSpeed));
     driverController.rightTrigger(.5).whileTrue(drivetrain.applyRequest(() -> brake));
     driverController.x().whileTrue(groupCommands.alignToSpeaker(() -> -driverController.getLeftY() * MaxSpeed, () -> -driverController.getLeftX() * MaxSpeed));
-    driverController.b().whileTrue(groupCommands.loadAndShoot());
+    driverController.leftTrigger(.5).onTrue(groupCommands.ampShotSpeaker());
+    // driverController.b().whileTrue(groupCommands.shoot());
     // driverController.y().onTrue(groupCommands.ampShot());
     // driverController.rightTrigger(.5).onTrue(groupCommands.changeArmDefault());
 
@@ -97,13 +99,25 @@ public class RobotContainer {
 
 
     // joystick.rightTrigger(.5).onTrue(groupCommands.intakeFromShooter());
+    
+    
 
-    operatorController.a().debounce(.1).toggleOnTrue(new InstantCommand(() -> {
+    operatorController.a().onTrue(new InstantCommand(() -> {
+      if (arm.getCurrentArmState()!=ArmState.Intake){
         ArmState prevState = arm.getCurrentArmState();
-        ArmState setState = prevState == ArmState.Speaker ? ArmState.Amp : ArmState.Speaker; 
+        ArmState setState;
+        if (prevState == ArmState.Speaker){
+          shooter.disableFlywheel();
+          setState=ArmState.Amp;
+        }else{
+          shooter.enableFlywheel();
+          setState=ArmState.Speaker;
+        }
+        // System.out.println(setState);
         arm.setCurrentArmState(setState);
+      }
       }));
-
+    operatorController.b().onTrue(Commands.parallel(Commands.runOnce(()->arm.setCurrentArmState(arm.lastStateNotIntake())),intake.stop()));
     if (Utils.isSimulation()) {
       drivetrain.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
     }
@@ -124,6 +138,8 @@ public class RobotContainer {
   public void configureAutonomousCommands() {
     NamedCommands.registerCommand("intake", groupCommands.intake());
     NamedCommands.registerCommand("loadAndShoot", groupCommands.loadAndShoot());
+    NamedCommands.registerCommand("speakerFromIntake", groupCommands.ampShotSpeaker());
+    NamedCommands.registerCommand("switchModes", groupCommands.ampShotSpeaker());
   }
 
   public Command getAutonomousCommand() {

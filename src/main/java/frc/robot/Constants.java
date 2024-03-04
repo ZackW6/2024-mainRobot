@@ -78,8 +78,8 @@ public final class Constants {
         
 
         /* Arm Current Limiting */ //TODO: Change these values
-        public static final int armCurrentLimit = 65;
-        public static final int armSupplyCurrentThreshold = 10;
+        public static final int armCurrentLimit = 40;
+        public static final int armSupplyCurrentThreshold = 65;
         public static final int armCurrentThreshold = 70;
         public static final double armCurrentThresholdTime = 0.1;
         public static final boolean armEnableCurrentLimit = true;
@@ -137,8 +137,9 @@ public final class Constants {
         public static final String ShooterCamera = "ShooterCam";
         // Cam mounted facing forward, half a meter forward of center, half a meter up from center.
         public static final Transform3d ShooterCamTransform =
-            new Transform3d(new Translation3d(-.231775,-.290306, .431), new Rotation3d(0, Units.degreesToRadians(15), Units.degreesToRadians(180)));
+            new Transform3d(new Translation3d(.5-(0.3556*3.4),-.1, .466), new Rotation3d(0, Units.degreesToRadians(15), Units.degreesToRadians(180)));
         // The layout of the AprilTags on the field
+        // new Transform3d(new Translation3d(-.231775,-.290306, .466), new Rotation3d(0, Units.degreesToRadians(15), Units.degreesToRadians(180)));
         public static final AprilTagFieldLayout kTagLayout = AprilTagFields.k2024Crescendo.loadAprilTagLayoutField();
         // The standard deviations of our vision estimated poses, which affect correction rate
         // (Fake values. Experiment and determine estimation noise on an actual robot.)

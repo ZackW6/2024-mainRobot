@@ -161,8 +161,7 @@ public class Vision extends SubsystemBase{
             estStdDevs = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
         else estStdDevs = estStdDevs.times(1 + (avgDist * avgDist / 30));
 
-        return VecBuilder.fill(0, 0, 0);
-        // return estStdDevs;
+        return VecBuilder.fill(estStdDevs.get(0, 0), estStdDevs.get(1,0), 40);
     }
 
 
