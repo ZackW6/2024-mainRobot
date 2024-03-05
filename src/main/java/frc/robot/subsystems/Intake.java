@@ -49,15 +49,15 @@ public class Intake extends SubsystemBase{
     MotionMagicVelocityTorqueCurrentFOC torqueCurrentFOC = new MotionMagicVelocityTorqueCurrentFOC(0);
     public Command intakePiece(){
         return setVelocity(intakeSpeed).until(() -> getLimitSwitch())
-            .andThen(Commands.deadline(Commands.waitSeconds(.3),setVelocity(10)))
+            .andThen(Commands.deadline(Commands.waitSeconds(.3),setVelocity(20)))
             .andThen(stop());
     }
     public Command outtakePiece(){
         return Commands.deadline((Commands.waitSeconds(2)),setVelocity(outtakeSpeed)).andThen(stop());
     }
 
-    public Command setVelocity(double amps){
-        return this.run(() -> intakeMotor.setControl(torqueCurrentFOC.withVelocity(amps)));
+    public Command setVelocity(double rps){
+        return this.run(() -> intakeMotor.setControl(torqueCurrentFOC.withVelocity(rps)));
     }
 
     public Command stop(){

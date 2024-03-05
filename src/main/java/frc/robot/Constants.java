@@ -72,9 +72,9 @@ public final class Constants {
         public static final double cruiseVelocity = 400;
         public static final double maxAcceleration = 1000;
 		public static final double jerk = 9999;
-
         
-        public static final Rotation2d angleOffset = Rotation2d.fromRotations(.385);//.314);//
+        
+        public static final Rotation2d angleOffset = Rotation2d.fromRotations(.063);//.314);//
         
 
         /* Arm Current Limiting */ //TODO: Change these values

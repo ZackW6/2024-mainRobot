@@ -210,11 +210,18 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
         } else {
         speakerLocation = new Pose2d(16.579342, 5.547868, null);
         }
-
+        
         double currentPoseX = getPose().getX();
         double currentPoseY = getPose().getY();
+        double deltaX = currentPoseX - speakerLocation.getX();
+        double deltaY = currentPoseY - speakerLocation.getY();
 
-        return Rotation2d.fromRadians(Math.atan((currentPoseX - speakerLocation.getX())/(currentPoseY - speakerLocation.getY())));
+        double angleRadians = ((Math.atan2(deltaX, deltaY)*-1)-Math.PI/2)+Math.PI*1.5;
+
+        // Convert the angle to Rotation2d
+        Rotation2d rotation = Rotation2d.fromRadians(angleRadians);
+        // System.out.println(rotation.getDegrees());
+        return rotation;//Rotation2d.fromRadians(Math.atan((currentPoseX - speakerLocation.getX())/(currentPoseY - speakerLocation.getY())));
     }
 
     public double getDistanceFromSpeakerMeters() {

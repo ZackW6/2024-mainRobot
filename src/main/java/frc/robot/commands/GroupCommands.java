@@ -45,13 +45,15 @@ public class GroupCommands  {
     this.candle = candle;
     this.drivetrain = drivetrain;
   }
+
   public Command shoot() {
     return Commands.either(ampShot(), loadAndShoot(), ()->arm.isArmInAmpState()) ;
   }
+
   public Command loadAndShoot(){
     return Commands.deadline(Commands.waitSeconds(.01).andThen(Commands.waitUntil(() ->shooter.isLeftFlywheelAtTargetSpeed()))
     ,Commands.run(() -> shooter.setTargetFlywheelSpeed(80)), Commands.runOnce(()->shooter.disableDefault()))
-    .andThen(intake.outtakePiece())
+    .andThen(Commands.waitUntil(()->arm.isArmInSpeakerState())).andThen(intake.outtakePiece())
     .andThen(resetAll());
   }
   public Command ampShot(){
@@ -64,7 +66,7 @@ public class GroupCommands  {
     return Commands.deadline(intake.intakePiece(),Commands.runOnce(()->arm.setCurrentArmState(ArmState.Intake)),Commands.runOnce(()->shooter.enableDefault()))
     .andThen(candle.pickUpLights())
     .andThen(Commands.deadline(/*Commands.waitSeconds(1)*/Commands.waitSeconds(0.001).andThen(Commands.waitUntil(()->arm.isArmAtAngle()))
-    ,intake.setVelocity(5)
+    ,intake.setVelocity(15)
     ,Commands.runOnce(()->arm.setCurrentArmState(arm.lastMainState()))))
     .andThen(intake.stop())
     .andThen(candle.idleLED());
@@ -96,23 +98,28 @@ public class GroupCommands  {
       .withDeadband(0).withRotationalDeadband(0) // Add a 10% deadband
       .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
-  private final PIDController thetaController = new PIDController(11,1.1,1);
+  private final PIDController thetaController = new PIDController(12.2,1.1,.3);
   public Command alignToAmp(DoubleSupplier xAxis, DoubleSupplier yAxis) {
     // thetaController.enableContinuousInput(-, Math.PI);
     thetaController.reset();
     // thetaController.setSetpoint(90);
-    DoubleSupplier rotationalVelocity = () -> thetaController.calculate(correctYaw(drivetrain.getYaw().getDegrees()), 0);
+    DoubleSupplier rotationalVelocity = () -> thetaController.calculate(correctYaw(drivetrain.getYaw().getDegrees()%360,180), 180);
     // System.out.println(rotationalVelocity);
     return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble()) //was -xAxis, but in sim is this
       .withVelocityY(yAxis.getAsDouble())//was -yAxis, but in sim is this
-      .withRotationalRate(Units.degreesToRadians(rotationalVelocity.getAsDouble()))).alongWith(Commands.run(()->System.out.println("Where it is: "+correctYaw(drivetrain.getYaw().getDegrees())+" WHERE IT WANTS TO BE: "+thetaController.getSetpoint())));
+      .withRotationalRate(Units.degreesToRadians(rotationalVelocity.getAsDouble())));
   }
-  private double correctYaw(double x){
-    if (x>180){
+  private double correctYaw(double x, double setpoint){
+    if (x>180+setpoint){
       x-=360;
-    }else if(x<-180){
+    }else if(x<-180+setpoint){//if setpoint 0
       x+=360;
     }
+    // if (x>360){//if setpoint 180
+    //   x-=360;
+    // }else if(x<0){
+    //   x+=360;
+    // }
     return x;
   }
 
@@ -120,13 +127,12 @@ public class GroupCommands  {
     thetaController.reset();
     
 
-    DoubleSupplier rotationalVelocity = () -> -thetaController.calculate(drivetrain.getYaw().getDegrees(), 
-                                      drivetrain.getAngleFromSpeaker().getDegrees());
+    DoubleSupplier rotationalVelocity = () -> thetaController.calculate(correctYaw(drivetrain.getYaw().getDegrees()%360,drivetrain.getAngleFromSpeaker().getDegrees()), drivetrain.getAngleFromSpeaker().getDegrees());
   
     
-    return drivetrain.applyRequest(() -> drive.withVelocityX(-xAxis.getAsDouble()) 
-      .withVelocityY(-yAxis.getAsDouble())
-      .withRotationalRate(rotationalVelocity.getAsDouble()/12));
+    return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble()) 
+      .withVelocityY(yAxis.getAsDouble())
+      .withRotationalRate(rotationalVelocity.getAsDouble()/100));
   }
 
   public Command switchModes(){

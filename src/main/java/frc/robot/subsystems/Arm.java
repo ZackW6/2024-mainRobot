@@ -295,6 +295,9 @@ public class Arm extends SubsystemBase {
   public Boolean isArmInAmpState() {
       return currentArmState == ArmState.Amp;
   }
+  public Boolean isArmInSpeakerState() {
+      return currentArmState == ArmState.Speaker;
+  }
 
   public void setCurrentArmState(ArmState armState) {
     // System.out.println(armState);
