@@ -40,6 +40,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Vision;
+import frc.robot.util.ModifiedSignalLogger;
 
 /**
  * Class that extends the Phoenix SwerveDrivetrain class and implements subsystem
@@ -91,6 +92,7 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
             return;
         }
         addVisionMeasurement(visionEst1.get().estimatedPose.toPose2d(), visionEst1.get().timestampSeconds, vision1.getEstimationStdDevs(visionEst1.get().estimatedPose.toPose2d()));
+
 
         var visionEst2 = vision2.getEstimatedGlobalPose();
         if (visionEst2.isEmpty()){
@@ -215,12 +217,12 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
         double currentPoseY = getPose().getY();
         double deltaX = currentPoseX - speakerLocation.getX();
         double deltaY = currentPoseY - speakerLocation.getY();
-
+        System.out.println(deltaX);
         double angleRadians = ((Math.atan2(deltaX, deltaY)*-1)-Math.PI/2)+Math.PI*1.5;
 
         // Convert the angle to Rotation2d
         Rotation2d rotation = Rotation2d.fromRadians(angleRadians);
-        // System.out.println(rotation.getDegrees());
+        System.out.println(rotation.getDegrees());
         return rotation;//Rotation2d.fromRadians(Math.atan((currentPoseX - speakerLocation.getX())/(currentPoseY - speakerLocation.getY())));
     }
 

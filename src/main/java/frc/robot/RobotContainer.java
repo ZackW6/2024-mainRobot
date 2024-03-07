@@ -63,8 +63,8 @@ public class RobotContainer {
         drivetrain.applyRequest(() -> drive.withVelocityX(-driverController.getLeftY() * MaxSpeed) // Drive forward with
                                                                                            // negative Y (forward)
             .withVelocityY(-driverController.getLeftX() * MaxSpeed) // Drive left with negative X (left)
-            .withRotationalRate(-driverController.getRawAxis(2)*MaxAngularRate)
-            // .withRotationalRate(-driverController.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
+            // .withRotationalRate(-driverController.getRawAxis(2)*MaxAngularRate)
+            .withRotationalRate(-driverController.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
         ));
 
         // driverController.a().whileTrue(drivetrain.applyRequest(() -> brake));
@@ -121,7 +121,7 @@ public class RobotContainer {
 
   }
   public void configureAutonomousCommands() {
-    NamedCommands.registerCommand("intake", groupCommands.intake());
+    NamedCommands.registerCommand("intake", groupCommands.intakeMain());
     NamedCommands.registerCommand("loadAndShoot", groupCommands.loadAndShoot());
     // NamedCommands.registerCommand("speakerFromIntake", groupCommands.ampShotSpeaker()); //Probably not going to do
   }

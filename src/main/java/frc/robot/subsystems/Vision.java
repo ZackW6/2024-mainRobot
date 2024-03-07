@@ -26,6 +26,7 @@
 package frc.robot.subsystems;
 
 
+import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 
 //import static frc.robot.Constants.Vision.*;
@@ -48,7 +49,7 @@ import frc.robot.Robot;
 import frc.robot.Telemetry;
 import frc.robot.Constants.VisionConstants;
 
-
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -62,6 +63,7 @@ import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
 import org.photonvision.targeting.PhotonPipelineResult;
+import org.photonvision.targeting.PhotonTrackedTarget;
 
 import com.ctre.phoenix6.mechanisms.swerve.SwerveDrivetrain.SwerveDriveState;
 
@@ -161,7 +163,7 @@ public class Vision extends SubsystemBase{
             estStdDevs = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
         else estStdDevs = estStdDevs.times(1 + (avgDist * avgDist / 30));
 
-        return VecBuilder.fill(estStdDevs.get(0, 0), estStdDevs.get(1,0), 40);
+        return VecBuilder.fill(estStdDevs.get(0, 0), estStdDevs.get(1,0), 100);
     }
 
 
@@ -189,6 +191,36 @@ public class Vision extends SubsystemBase{
         return result.hasTargets();
     }
 
+    public void getTargetAngle(int target){
+        var result = camera.getLatestResult();
+        if (result.hasTargets()){
+            List<PhotonTrackedTarget> targets = result.getTargets();
+            PhotonTrackedTarget targetTag = targets.get(0);
+            for (int i=0;i<targets.size();i++){
+                if (targets.get(i).getFiducialId()==target){
+                    targetTag = targets.get(target);
+                }
+            }
+            if (targetTag.equals(targets.get(7))){
+
+            }
+        }
+    }
+    public void getTargetDist(int target){
+        var result = camera.getLatestResult();
+        if (result.hasTargets()){
+            List<PhotonTrackedTarget> targets = result.getTargets();
+            PhotonTrackedTarget targetTag = targets.get(0);
+            for (int i=0;i<targets.size();i++){
+                if (targets.get(i).getFiducialId()==target){
+                    targetTag = targets.get(target);
+                }
+            }
+            if (targetTag.equals(targets.get(7))){
+                
+            }
+        }
+    }
     // public void logTelemetry(Telemetry telemetry){
     //     telemetry.registerVisionTelemetry(getEstimatedGlobalPose().get().estimatedPose.toPose2d());
     // }

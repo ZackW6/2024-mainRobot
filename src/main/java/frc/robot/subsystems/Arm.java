@@ -173,13 +173,13 @@ public class Arm extends SubsystemBase {
           rotSet=-0.098;
           break;
         case Speaker:
-          rotSet=.47;
+          rotSet=.477;
           break;
         case Amp:
-          rotSet=.265;
+          rotSet=.255;
           break;
         case AmpMove:
-          rotSet= .262;
+          rotSet= .265;
           break;
         default:
           rotSet=.4422222222;
@@ -297,6 +297,9 @@ public class Arm extends SubsystemBase {
   }
   public Boolean isArmInSpeakerState() {
       return currentArmState == ArmState.Speaker;
+  }
+  public Boolean isArmInIntakeState() {
+      return currentArmState == ArmState.Intake;
   }
 
   public void setCurrentArmState(ArmState armState) {

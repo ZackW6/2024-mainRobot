@@ -72,7 +72,7 @@ public final class Constants {
         public static final double cruiseVelocity = 400;
         public static final double maxAcceleration = 1000;
 		public static final double jerk = 9999;
-        
+
         
         public static final Rotation2d angleOffset = Rotation2d.fromRotations(.063);//.314);//
         
@@ -97,11 +97,11 @@ public final class Constants {
         //TODO: Tune Shooter PID
         // Add 0.25 V output to overcome static friction
 
-        public static final double kS = 0; // An error of 1 rps results in 0.11 V output
-        public static final double kV = 0; // A velocity target of 1 rps results in 0.12 V output
+        public static final double kS = 8; // An error of 1 rps results in 0.11 V output
+        public static final double kV = 0.1175; // A velocity target of 1 rps results in 0.12 V output
         public static final double kA = 0; // An acceleration of 1 rps/s requires 0.01 V output
         public static final double kP = 10; // This will need to be tuned after feedforward
-        public static final double kI = 0; // For flywheels, this should be 0
+        public static final double kI = 0.1; // For flywheels, this should be 0
         public static final double kD = 0; // For flywheels, this should be 0
 
         /* Intake Current Limiting */
@@ -119,11 +119,11 @@ public final class Constants {
         //TODO: Run SysID for shooter
         //TODO: Tune Shooter PID https://docs.wpilib.org/en/latest/docs/software/advanced-controls/introduction/tuning-flywheel.html
      
-        public static final double kS = 0.240; // Add 0.25 V output to overcome static friction
-        public static final double kV = .11175; // A velocity target of 1 rps results in 0.12 V output
+        public static final double kS = 6.695; // Add 0.25 V output to overcome static friction
+        public static final double kV = .05115; // A velocity target of 1 rps results in 0.12 V output
         public static final double kA = 0; // An acceleration of 1 rps/s requires 0.01 V output
-        public static final double kP = 0.048; // This will need to be tuned after feedforward
-        public static final double kI = 0; // For flywheels, this should be 0
+        public static final double kP = 5.55; // This will need to be tuned after feedforward
+        public static final double kI = 0.25; // For flywheels, this should be 0
         public static final double kD = 0; // For flywheels, this should be 0
 
         /* Shooter Current Limiting */

@@ -11,6 +11,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.MotionMagicExpoDutyCycle;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
+import com.ctre.phoenix6.controls.MotionMagicVelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -42,7 +43,7 @@ import edu.wpi.first.units.Voltage;
 import static edu.wpi.first.units.Units.Volts;
 
 public class Shooter extends SubsystemBase{
-    private static final double FLYWHEEL_ALLOWABLE_ERROR = Units.rotationsPerMinuteToRadiansPerSecond(75);
+    private static final double FLYWHEEL_ALLOWABLE_ERROR = 3;
     private static final double FLYWHEEL_GEAR_REDUCTION = 1;
 
     private static final double FLYWHEEL_VELOCITY_CONSTANT = 0.028;
@@ -63,7 +64,7 @@ public class Shooter extends SubsystemBase{
     CommandSwerveDrivetrain drivetrain;
 
     private final VoltageOut m_sysidControl = new VoltageOut(0);
-    private final MotionMagicVelocityVoltage velocityRequest = new MotionMagicVelocityVoltage(0).withSlot(0);
+    private final MotionMagicVelocityTorqueCurrentFOC velocityRequest = new MotionMagicVelocityTorqueCurrentFOC(0).withSlot(0);
 
     private SysIdRoutine m_SysIdRoutine;
 
@@ -172,8 +173,8 @@ public class Shooter extends SubsystemBase{
             if (doDefault){
                 if (DriverStation.isTeleop()){//THIS WILL BE USED TO CHANGE SPEED DEPENDING ON HOW CLOSE YOU ARE TO THE SPEAKER
                     if (drivetrain!=null){
-                        leftShooterMotor.setControl(velocityRequest.withVelocity(drivetrain.getDistanceFromSpeakerMeters()*40));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
-                        rightShooterMotor.setControl(velocityRequest.withVelocity(drivetrain.getDistanceFromSpeakerMeters()*40));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
+                        leftShooterMotor.setControl(velocityRequest.withVelocity(20));//drivetrain.getDistanceFromSpeakerMeters()*40));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
+                        rightShooterMotor.setControl(velocityRequest.withVelocity(20));//drivetrain.getDistanceFromSpeakerMeters()*40));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
                     }else{
                         leftShooterMotor.setControl(velocityRequest.withVelocity(20));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
                         rightShooterMotor.setControl(velocityRequest.withVelocity(20));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;

@@ -50,22 +50,29 @@ public class GroupCommands  {
     return Commands.either(ampShot(), loadAndShoot(), ()->arm.isArmInAmpState()) ;
   }
 
+  public Command intake() {
+    return intakeMain();
+    // return Commands.either(resetAll(), intake(), ()->arm.isArmInIntakeState()) ;
+  }
+
   public Command loadAndShoot(){
     return Commands.deadline(Commands.waitSeconds(.01).andThen(Commands.waitUntil(() ->shooter.isLeftFlywheelAtTargetSpeed()))
-    ,Commands.run(() -> shooter.setTargetFlywheelSpeed(80)), Commands.runOnce(()->shooter.disableDefault()))
+    ,Commands.run(() -> shooter.setTargetFlywheelSpeed(85)), Commands.runOnce(()->shooter.disableDefault()))
     .andThen(Commands.waitUntil(()->arm.isArmInSpeakerState())).andThen(intake.outtakePiece())
     .andThen(resetAll());
   }
+  
+  
   public Command ampShot(){
-    return Commands.deadline(Commands.waitSeconds(.2)
-    ,intake.setVelocity(-17.5)
-    ,Commands.runOnce(()->arm.setCurrentArmState(ArmState.AmpMove)))
+    return Commands.deadline(Commands.waitSeconds(.3)
+    ,intake.setVelocity(-19))
+    // ,Commands.runOnce(()->arm.setCurrentArmState(ArmState.AmpMove)))
     .andThen(resetAll());
   }
-  public Command intake(){
+  public Command intakeMain(){
     return Commands.deadline(intake.intakePiece(),Commands.runOnce(()->arm.setCurrentArmState(ArmState.Intake)),Commands.runOnce(()->shooter.enableDefault()))
     .andThen(candle.pickUpLights())
-    .andThen(Commands.deadline(/*Commands.waitSeconds(1)*/Commands.waitSeconds(0.001).andThen(Commands.waitUntil(()->arm.isArmAtAngle()))
+    .andThen(Commands.deadline(Commands.waitSeconds(.5).andThen(Commands.waitUntil(()->arm.isArmAtAngle()))
     ,intake.setVelocity(15)
     ,Commands.runOnce(()->arm.setCurrentArmState(arm.lastMainState()))))
     .andThen(intake.stop())
@@ -73,10 +80,8 @@ public class GroupCommands  {
   }
   public Command resetAll(){
     return Commands.runOnce(()->{
-      Commands.runOnce(()->arm.setCurrentArmState(arm.lastMainState()));
-      Commands.waitSeconds(.001).andThen(Commands.waitUntil(()->arm.isArmAtAngle()).andThen(intake.setVelocity(0)));
-      shooter.enableDefault();// Default speed
-    });
+      shooter.enableDefault();
+    }).alongWith(intake.stop()).alongWith(Commands.runOnce(()->arm.setCurrentArmState(arm.lastMainState())));
   }
   @Deprecated
   public Command ampShotSpeaker(){//BROKEN, and probably not doing
@@ -127,12 +132,13 @@ public class GroupCommands  {
     thetaController.reset();
     
 
-    DoubleSupplier rotationalVelocity = () -> thetaController.calculate(correctYaw(drivetrain.getYaw().getDegrees()%360,drivetrain.getAngleFromSpeaker().getDegrees()), drivetrain.getAngleFromSpeaker().getDegrees());
+    DoubleSupplier rotationalVelocity = () -> thetaController.calculate(correctYaw(drivetrain.getYaw().getDegrees()%360,drivetrain.getAngleFromSpeaker().getDegrees())
+    , drivetrain.getAngleFromSpeaker().getDegrees());
   
     
     return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble()) 
       .withVelocityY(yAxis.getAsDouble())
-      .withRotationalRate(rotationalVelocity.getAsDouble()/100));
+      .withRotationalRate(rotationalVelocity.getAsDouble()/100)).alongWith(Commands.runOnce(()->System.out.println(drivetrain.getAngleFromSpeaker().getDegrees())));
   }
 
   public Command switchModes(){
