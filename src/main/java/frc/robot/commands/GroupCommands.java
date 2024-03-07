@@ -65,7 +65,7 @@ public class GroupCommands  {
   
   public Command ampShot(){
     return Commands.deadline(Commands.waitSeconds(.3)
-    ,intake.setVelocity(-19))
+    ,intake.setVelocity(-20))
     // ,Commands.runOnce(()->arm.setCurrentArmState(ArmState.AmpMove)))
     .andThen(resetAll());
   }

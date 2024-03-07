@@ -33,7 +33,7 @@
   "eventMarkers": [
     {
       "name": "Loaded Shot",
-      "waypointRelativePos": 0.95,
+      "waypointRelativePos": 0.9,
       "command": {
         "type": "sequential",
         "data": {

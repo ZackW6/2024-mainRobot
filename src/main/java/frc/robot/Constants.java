@@ -105,9 +105,9 @@ public final class Constants {
         public static final double kD = 0; // For flywheels, this should be 0
 
         /* Intake Current Limiting */
-        public static final int intakeCurrentLimit = 25;
-        public static final int intakeSupplyCurrentThreshold = 10;
-        public static final int intakeCurrentThreshold = 40;
+        public static final int intakeCurrentLimit = 30;
+        public static final int intakeSupplyCurrentThreshold = 65;
+        public static final int intakeCurrentThreshold = 65;
         public static final double intakeCurrentThresholdTime = 0.1;
         public static final boolean intakeEnableCurrentLimit = true;
     }

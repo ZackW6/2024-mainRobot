@@ -173,7 +173,7 @@ public class Arm extends SubsystemBase {
           rotSet=-0.098;
           break;
         case Speaker:
-          rotSet=.477;
+          rotSet=.494; // 0.477
           break;
         case Amp:
           rotSet=.255;

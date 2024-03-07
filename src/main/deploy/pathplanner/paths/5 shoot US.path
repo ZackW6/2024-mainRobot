@@ -8,28 +8,51 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 7.382231687540298,
-        "y": 3.4040952697290034
+        "x": 7.075751212843366,
+        "y": 3.7943110408332084
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 2.803970223325064,
-        "y": 5.3281491178366975
+        "x": 2.8598500563620233,
+        "y": 4.859997166499325
       },
       "prevControl": {
-        "x": 4.037338074676152,
-        "y": 5.663625173404192
+        "x": 4.651608047866594,
+        "y": 5.223033099418552
       },
       "nextControl": null,
       "isLocked": false,
       "linkedName": null
     }
   ],
-  "rotationTargets": [],
-  "constraintZones": [],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.9,
+      "rotationDegrees": 17.561994465441128,
+      "rotateFast": false
+    },
+    {
+      "waypointRelativePos": 0.6,
+      "rotationDegrees": -30.724123220400585,
+      "rotateFast": false
+    }
+  ],
+  "constraintZones": [
+    {
+      "name": "New Constraints Zone",
+      "minWaypointRelativePos": 0.9,
+      "maxWaypointRelativePos": 1.0,
+      "constraints": {
+        "maxVelocity": 1.0,
+        "maxAcceleration": 1.0,
+        "maxAngularVelocity": 540.0,
+        "maxAngularAcceleration": 720.0
+      }
+    }
+  ],
   "eventMarkers": [
     {
       "name": "Shoot 5",
@@ -50,14 +73,14 @@
     }
   ],
   "globalConstraints": {
-    "maxVelocity": 1.0,
-    "maxAcceleration": 1.0,
+    "maxVelocity": 3.0,
+    "maxAcceleration": 3.0,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -16.191108886712918,
+    "rotation": -10.30484646876609,
     "rotateFast": false
   },
   "reversed": false,
@@ -66,5 +89,5 @@
     "rotation": -26.565051177077947,
     "velocity": 0
   },
-  "useDefaultConstraints": true
+  "useDefaultConstraints": false
 }
