@@ -91,19 +91,19 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
         if (visionEst1.isEmpty()){
             return;
         }
-        addVisionMeasurement(visionEst1.get().estimatedPose.toPose2d(), visionEst1.get().timestampSeconds, vision1.getEstimationStdDevs(visionEst1.get().estimatedPose.toPose2d()));
+        // addVisionMeasurement(visionEst1.get().estimatedPose.toPose2d(), visionEst1.get().timestampSeconds, vision1.getEstimationStdDevs(visionEst1.get().estimatedPose.toPose2d()));
 
 
         var visionEst2 = vision2.getEstimatedGlobalPose();
         if (visionEst2.isEmpty()){
             return;
         }
-        addVisionMeasurement(visionEst2.get().estimatedPose.toPose2d(), visionEst2.get().timestampSeconds, vision2.getEstimationStdDevs(visionEst2.get().estimatedPose.toPose2d()));
+        // addVisionMeasurement(visionEst2.get().estimatedPose.toPose2d(), visionEst2.get().timestampSeconds, vision2.getEstimationStdDevs(visionEst2.get().estimatedPose.toPose2d()));
     }
 
     @Override
     public void periodic(){
-        visionEstimation();
+        // visionEstimation();
         // System.out.println("Speaker Distance " + getDistanceFromSpeakerMeters());
         // System.out.println("Rotation " + getAngleFromSpeaker());
     }

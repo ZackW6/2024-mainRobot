@@ -59,6 +59,7 @@ public class RobotContainer {
 
 
   private void configureBindings() {
+    shooter.enableDefault();
       drivetrain.setDefaultCommand( // Drivetrain will execute this command periodically
         drivetrain.applyRequest(() -> drive.withVelocityX(-driverController.getLeftY() * MaxSpeed) // Drive forward with
                                                                                            // negative Y (forward)

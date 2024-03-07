@@ -1,0 +1,55 @@
+{
+  "version": 1.0,
+  "startingPose": {
+    "position": {
+      "x": 1.4896821805055864,
+      "y": 1.4638545682226887
+    },
+    "rotation": -1.3019526725789157
+  },
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "S-L Taxi - 4"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "4 shoot"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "4 shoot to 5"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "5 shoot US"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "5 shoot US to 6"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "6 shoot"
+          }
+        }
+      ]
+    }
+  },
+  "folder": null,
+  "choreoAuto": false
+}

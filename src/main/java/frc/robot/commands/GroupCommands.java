@@ -57,7 +57,7 @@ public class GroupCommands  {
 
   public Command loadAndShoot(){
     return Commands.deadline(Commands.waitSeconds(.01).andThen(Commands.waitUntil(() ->shooter.isLeftFlywheelAtTargetSpeed()))
-    ,Commands.run(() -> shooter.setTargetFlywheelSpeed(85)), Commands.runOnce(()->shooter.disableDefault()))
+    ,Commands.run(() -> shooter.setTargetFlywheelSpeed(90)), Commands.runOnce(()->shooter.disableDefault()))
     .andThen(Commands.waitUntil(()->arm.isArmInSpeakerState())).andThen(intake.outtakePiece())
     .andThen(resetAll());
   }
