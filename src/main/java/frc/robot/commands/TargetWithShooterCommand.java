@@ -81,6 +81,6 @@ public class TargetWithShooterCommand extends Command {
     public void execute() {
         double distance = swerve.getDistanceFromSpeakerMeters();
         double power = distance;
-        shooter.setTargetFlywheelSpeed(power);
+        // shooter.setTargetFlywheelSpeed(power);
     }
 }

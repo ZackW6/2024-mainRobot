@@ -170,13 +170,13 @@ public class Arm extends SubsystemBase {
    double rotSet;
       switch (armPosition){
         case Intake:
-          rotSet=-0.098;
+          rotSet=-.098;//-0.07; // -0.098
           break;
         case Speaker:
-          rotSet=.494; // 0.477
+          rotSet=.477;//.490; // 0.477
           break;
         case Amp:
-          rotSet=.255;
+          rotSet=.26; // 0.255
           break;
         case AmpMove:
           rotSet= .265;

@@ -36,9 +36,9 @@ public class Intake extends SubsystemBase{
     private final TalonFX intakeMotor;
     private final DigitalInput limitSwicth1;
     private final DigitalInput limitSwicth2;
-
+    private double speed=0;
     double intakeSpeed = 20.0;//In rps
-    double outtakeSpeed = -20.0;
+    double outtakeSpeed = -60.0;
 
     public Intake(){
         intakeMotor = new TalonFX(IntakeConstants.intakeMotorID);
@@ -56,7 +56,8 @@ public class Intake extends SubsystemBase{
     }
 
     public Command setVelocity(double rps){
-        return this.run(() -> intakeMotor.setControl(torqueCurrentFOC.withVelocity(rps)));
+        speed=rps;
+        return this.run(() -> intakeMotor.setControl(torqueCurrentFOC.withVelocity(rps))).alongWith(Commands.runOnce(()->speed=rps));
     }
 
     public Command stop(){
@@ -69,6 +70,8 @@ public class Intake extends SubsystemBase{
 
     @Override
     public void periodic() {
+        // System.out.println(speed+ " INTAKE SPEED");
+
         // System.out.println("GET LIMIT SWITCH: "+getLimitSwitch());
     }
     

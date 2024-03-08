@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 7.993982141810438,
-        "y": 0.779488482053888
+        "x": 8.133921843169903,
+        "y": 0.7693172207222235
       },
       "prevControl": null,
       "nextControl": {
-        "x": 4.949164639907245,
-        "y": 1.1191027418815498
+        "x": 5.08910434126671,
+        "y": 1.1089314805498853
       },
       "isLocked": false,
       "linkedName": null
@@ -32,7 +32,7 @@
   "constraintZones": [
     {
       "name": "New Constraints Zone",
-      "minWaypointRelativePos": 0.85,
+      "minWaypointRelativePos": 1.0,
       "maxWaypointRelativePos": 1.0,
       "constraints": {
         "maxVelocity": 1.0,
@@ -45,7 +45,7 @@
   "eventMarkers": [
     {
       "name": "Shoot 4",
-      "waypointRelativePos": 0.85,
+      "waypointRelativePos": 0.6,
       "command": {
         "type": "parallel",
         "data": {
@@ -63,7 +63,7 @@
   ],
   "globalConstraints": {
     "maxVelocity": 5.0,
-    "maxAcceleration": 4.0,
+    "maxAcceleration": 5.0,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0
   },

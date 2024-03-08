@@ -122,7 +122,7 @@ public class RobotContainer {
 
   }
   public void configureAutonomousCommands() {
-    NamedCommands.registerCommand("intake", groupCommands.intakeMain());
+    NamedCommands.registerCommand("intake", groupCommands.intakeMainAuto());
     NamedCommands.registerCommand("loadAndShoot", groupCommands.loadAndShoot());
     // NamedCommands.registerCommand("speakerFromIntake", groupCommands.ampShotSpeaker()); //Probably not going to do
   }

@@ -201,47 +201,29 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     }
 
     public Rotation2d getAngleFromSpeaker() {
-        
-        Pose2d speakerLocation;
         var alliance = DriverStation.getAlliance();
         if (!alliance.isPresent()) {
             return new Rotation2d(0);
         }
         if (alliance.get() == DriverStation.Alliance.Blue) {
-        speakerLocation = new Pose2d(-0.0381, 5.547868, null);
+            System.out.println(vision1.getTargetAngle(9));
+            return Rotation2d.fromDegrees(vision1.getTargetAngle(9));
         } else {
-        speakerLocation = new Pose2d(16.579342, 5.547868, null);
+            return Rotation2d.fromDegrees(vision1.getTargetAngle(4));
         }
-        
-        double currentPoseX = getPose().getX();
-        double currentPoseY = getPose().getY();
-        double deltaX = currentPoseX - speakerLocation.getX();
-        double deltaY = currentPoseY - speakerLocation.getY();
-        System.out.println(deltaX);
-        double angleRadians = ((Math.atan2(deltaX, deltaY)*-1)-Math.PI/2)+Math.PI*1.5;
-
-        // Convert the angle to Rotation2d
-        Rotation2d rotation = Rotation2d.fromRadians(angleRadians);
-        System.out.println(rotation.getDegrees());
-        return rotation;//Rotation2d.fromRadians(Math.atan((currentPoseX - speakerLocation.getX())/(currentPoseY - speakerLocation.getY())));
     }
 
     public double getDistanceFromSpeakerMeters() {
-        Pose2d speakerLocation;
         var alliance = DriverStation.getAlliance();
         if (!alliance.isPresent()) {
             return 0;
         }
         if (alliance.get() == DriverStation.Alliance.Blue) {
-        speakerLocation = new Pose2d(-0.0381, 5.547868, null);
+            System.out.println(vision1.getTargetAngle(9));
+            return vision1.getTargetDist(9);
         } else {
-        speakerLocation = new Pose2d(16.579342, 5.547868, null);
+            return vision1.getTargetDist(4);
         }
-        
-        double currentPoseX = getPose().getX();
-        double currentPoseY = getPose().getY();
-
-        return Math.sqrt(Math.pow(currentPoseX - speakerLocation.getX(), 2) + Math.pow(currentPoseY - speakerLocation.getY(), 2));
     }
     // public void zeroGyroscope() {
     //     Alliance alliance = DriverStation.getAlliance().get();

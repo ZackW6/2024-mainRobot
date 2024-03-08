@@ -74,7 +74,7 @@ public final class Constants {
 		public static final double jerk = 9999;
 
         
-        public static final Rotation2d angleOffset = Rotation2d.fromRotations(.063);//.314);//
+        public static final Rotation2d angleOffset = Rotation2d.fromRotations(.603);//.592);//.063);//.314);//
         
 
         /* Arm Current Limiting */ //TODO: Change these values
@@ -123,13 +123,13 @@ public final class Constants {
         public static final double kV = .05115; // A velocity target of 1 rps results in 0.12 V output
         public static final double kA = 0; // An acceleration of 1 rps/s requires 0.01 V output
         public static final double kP = 5.55; // This will need to be tuned after feedforward
-        public static final double kI = 0.25; // For flywheels, this should be 0
+        public static final double kI = 0.35; // For flywheels, this should be 0
         public static final double kD = 0; // For flywheels, this should be 0
 
         /* Shooter Current Limiting */
-        public static final int shooterCurrentLimit = 25;
-        public static final int shooterSupplyCurrentThreshold = 10;
-        public static final int shooterCurrentThreshold = 40;
+        public static final int shooterCurrentLimit = 40;
+        public static final int shooterSupplyCurrentThreshold = 65;
+        public static final int shooterCurrentThreshold = 65;
         public static final double shooterCurrentThresholdTime = 0.1;
         public static final boolean shooterEnableCurrentLimit = true;
     }

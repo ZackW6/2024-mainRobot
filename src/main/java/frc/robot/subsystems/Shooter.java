@@ -43,7 +43,7 @@ import edu.wpi.first.units.Voltage;
 import static edu.wpi.first.units.Units.Volts;
 
 public class Shooter extends SubsystemBase{
-    private static final double FLYWHEEL_ALLOWABLE_ERROR = 3;
+    private static final double FLYWHEEL_ALLOWABLE_ERROR = 1.5;
     private static final double FLYWHEEL_GEAR_REDUCTION = 1;
 
     private static final double FLYWHEEL_VELOCITY_CONSTANT = 0.028;
@@ -57,7 +57,8 @@ public class Shooter extends SubsystemBase{
 
     private boolean doDefault = true;
     private boolean flywheelDisabled = false;
-    private double targetFlywheelSpeed;
+    private double targetFlywheelSpeedL;
+    private double targetFlywheelSpeedR;
     private double shootingOffset = 0.0;
 
     // private final NetworkTableEntry shooterRPMOffsetEntry;
@@ -84,7 +85,7 @@ public class Shooter extends SubsystemBase{
         shuffleboardTab.addNumber("Right Flywheel Speed",
                 () -> Units.radiansPerSecondToRotationsPerMinute(getRightFlywheelVelocity()));
         shuffleboardTab.addNumber("Target Flywheel Speed",
-                () -> Units.radiansPerSecondToRotationsPerMinute(getTargetFlywheelSpeed()));
+                () -> Units.radiansPerSecondToRotationsPerMinute(getTargetFlywheelSpeedL()));
         shuffleboardTab.addBoolean("Is Left Flywheel at Speed", this::isLeftFlywheelAtTargetSpeed);
         shuffleboardTab.addBoolean("Is Right Flywheel at Speed", this::isLeftFlywheelAtTargetSpeed);
         // shooterRPMOffsetEntry = Shuffleboard.getTab("Driver")
@@ -184,8 +185,8 @@ public class Shooter extends SubsystemBase{
                     rightShooterMotor.setControl(velocityRequest.withVelocity(80));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
                 }
             }else{
-                leftShooterMotor.setControl(velocityRequest.withVelocity(targetFlywheelSpeed));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
-                rightShooterMotor.setControl(velocityRequest.withVelocity(targetFlywheelSpeed));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
+                leftShooterMotor.setControl(velocityRequest.withVelocity(targetFlywheelSpeedL));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
+                rightShooterMotor.setControl(velocityRequest.withVelocity(targetFlywheelSpeedR));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
             }
             
         }
@@ -213,12 +214,17 @@ public class Shooter extends SubsystemBase{
         });
     }
 
-    public void setTargetFlywheelSpeed(double targetFlywheelSpeed) {
-        this.targetFlywheelSpeed = targetFlywheelSpeed;
+    public void setTargetFlywheelSpeed(double targetFlywheelSpeedL,double targetFlywheelSpeedR) {
+        this.targetFlywheelSpeedL = targetFlywheelSpeedL;
+        this.targetFlywheelSpeedR = targetFlywheelSpeedR;
     }
 
-    public double getTargetFlywheelSpeed() {
-        return targetFlywheelSpeed;
+    public double getTargetFlywheelSpeedL() {
+        return targetFlywheelSpeedL;
+    }
+
+    public double getTargetFlywheelSpeedR() {
+        return targetFlywheelSpeedR;
     }
 
     public double getLeftFlywheelVelocity(){
@@ -230,11 +236,11 @@ public class Shooter extends SubsystemBase{
     }
 
     public boolean isLeftFlywheelAtTargetSpeed() {
-        return Math.abs(getLeftFlywheelVelocity() - targetFlywheelSpeed) < FLYWHEEL_ALLOWABLE_ERROR;
+        return Math.abs(getLeftFlywheelVelocity() - targetFlywheelSpeedL) < FLYWHEEL_ALLOWABLE_ERROR;
     }
 
     public boolean isRightFlywheelAtTargetSpeed() {
-        return Math.abs(getRightFlywheelVelocity() - targetFlywheelSpeed) < FLYWHEEL_ALLOWABLE_ERROR;
+        return Math.abs(getRightFlywheelVelocity() - targetFlywheelSpeedR) < FLYWHEEL_ALLOWABLE_ERROR;
     }
 
     public void disableFlywheel() {

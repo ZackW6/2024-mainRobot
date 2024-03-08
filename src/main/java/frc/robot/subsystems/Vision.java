@@ -42,6 +42,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -58,6 +59,7 @@ import java.util.function.Consumer;
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
+import org.photonvision.PhotonUtils;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
@@ -190,36 +192,42 @@ public class Vision extends SubsystemBase{
         var result = camera.getLatestResult();
         return result.hasTargets();
     }
-
-    public void getTargetAngle(int target){
+    /**
+     * returns the angle from the target if visible, else it returns 361
+     * @param target
+     * @return
+     */
+    public double getTargetAngle(int target){
         var result = camera.getLatestResult();
         if (result.hasTargets()){
             List<PhotonTrackedTarget> targets = result.getTargets();
-            PhotonTrackedTarget targetTag = targets.get(0);
-            for (int i=0;i<targets.size();i++){
-                if (targets.get(i).getFiducialId()==target){
-                    targetTag = targets.get(target);
-                }
-            }
-            if (targetTag.equals(targets.get(7))){
-
+            var foundTargets = targets.stream().filter(t -> t.getFiducialId()==9).filter(t ->!t.equals(9) && t.getPoseAmbiguity() <= .2 && t.getPoseAmbiguity() !=-1).findFirst();
+            if (foundTargets.isPresent()){
+                System.out.println(foundTargets.get().getYaw());
+                return foundTargets.get().getYaw();
             }
         }
+        return 0;
     }
-    public void getTargetDist(int target){
+    /**
+     * returns the meters from the target if visible, else it returns 361
+     * @param target
+     * @return
+     */
+    public double getTargetDist(int target){
         var result = camera.getLatestResult();
         if (result.hasTargets()){
             List<PhotonTrackedTarget> targets = result.getTargets();
-            PhotonTrackedTarget targetTag = targets.get(0);
-            for (int i=0;i<targets.size();i++){
-                if (targets.get(i).getFiducialId()==target){
-                    targetTag = targets.get(target);
-                }
-            }
-            if (targetTag.equals(targets.get(7))){
-                
+            var foundTargets = targets.stream().filter(t -> t.getFiducialId()==4).filter(t ->!t.equals(4) && t.getPoseAmbiguity() <= .2 && t.getPoseAmbiguity() !=-1).findFirst();
+            if (foundTargets.isPresent()){
+                return PhotonUtils.calculateDistanceToTargetMeters(
+                    VisionConstants.ShooterCamTransform.getX(),
+                    VisionConstants.ShooterCamTransform.getY(),
+                    VisionConstants.ShooterCamTransform.getZ(),
+                    Units.degreesToRadians(result.getBestTarget().getPitch()));
             }
         }
+        return 0;
     }
     // public void logTelemetry(Telemetry telemetry){
     //     telemetry.registerVisionTelemetry(getEstimatedGlobalPose().get().estimatedPose.toPose2d());
