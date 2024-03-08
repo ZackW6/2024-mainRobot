@@ -20,8 +20,8 @@
         "y": 4.937263682356547
       },
       "prevControl": {
-        "x": 4.404124592275734,
-        "y": 5.300299615275773
+        "x": 4.491837785573555,
+        "y": 5.375482352388193
       },
       "nextControl": null,
       "isLocked": false,
@@ -30,20 +30,15 @@
   ],
   "rotationTargets": [
     {
-      "waypointRelativePos": 0.9,
-      "rotationDegrees": 17.561994465441128,
-      "rotateFast": false
-    },
-    {
       "waypointRelativePos": 0.6,
       "rotationDegrees": -30.724123220400585,
-      "rotateFast": false
+      "rotateFast": true
     }
   ],
   "constraintZones": [
     {
       "name": "New Constraints Zone",
-      "minWaypointRelativePos": 0.9,
+      "minWaypointRelativePos": 1.0,
       "maxWaypointRelativePos": 1.0,
       "constraints": {
         "maxVelocity": 1.0,
@@ -56,7 +51,7 @@
   "eventMarkers": [
     {
       "name": "Shoot 5",
-      "waypointRelativePos": 0.95,
+      "waypointRelativePos": 0.85,
       "command": {
         "type": "parallel",
         "data": {

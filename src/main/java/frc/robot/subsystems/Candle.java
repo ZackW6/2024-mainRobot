@@ -52,6 +52,10 @@ private Animation toAnimate;
     return this.runOnce(() -> toAnimate = new StrobeAnimation(157, 3, 252, 0, speed, LedCount));
   }
 
+  public Command inRangeLED() {
+    return this.runOnce(() -> toAnimate = new TwinkleOffAnimation(157, 40, 40, 0, 0.8, LedCount, TwinkleOffPercent.Percent100));
+  }
+
   public Command idleLED() {
     return this.runOnce(() -> toAnimate = new TwinkleOffAnimation(157, 3, 252, 0, 0.8, LedCount, TwinkleOffPercent.Percent100));
   }

@@ -170,7 +170,7 @@ public class Arm extends SubsystemBase {
    double rotSet;
       switch (armPosition){
         case Intake:
-          rotSet=-.098;//-0.07; // -0.098
+          rotSet=-.087;//-0.07; // -0.098
           break;
         case Speaker:
           rotSet=.477;//.490; // 0.477
@@ -303,7 +303,7 @@ public class Arm extends SubsystemBase {
   }
 
   public void setCurrentArmState(ArmState armState) {
-    // System.out.println(armState);
+    System.out.println(armState);
     currentArmState = armState;
   }
   public boolean isArmAtAngle(){

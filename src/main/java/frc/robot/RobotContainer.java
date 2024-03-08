@@ -16,8 +16,10 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.commands.GroupCommands;
@@ -76,16 +78,16 @@ public class RobotContainer {
     // shooter.setDefaultCommand(shooter.runOnce(() -> shooter.setTargetFlywheelSpeed(30)));
     intake.setDefaultCommand(intake.stop());
 
-    
+    Command candleDist = Commands.run(()->groupCommands.getDistCandle());
     // reset the field-centric heading on left bumper press
     // driverController.a()
 
     driverController.y().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldRelative()));
-    driverController.rightBumper().onTrue(groupCommands.intake());
+    driverController.rightBumper().whileTrue(groupCommands.intake()).whileFalse(Commands.runOnce(()->arm.setCurrentArmState(arm.lastMainState())));
     driverController.leftBumper().onTrue(groupCommands.shoot());
     driverController.a().whileTrue(groupCommands.alignToAmp(() -> -driverController.getLeftY() * MaxSpeed, () -> -driverController.getLeftX() * MaxSpeed));
     driverController.rightTrigger(.5).whileTrue(drivetrain.applyRequest(() -> brake));
-    driverController.x().whileTrue(groupCommands.alignToSpeaker(() -> -driverController.getLeftY() * MaxSpeed, () -> -driverController.getLeftX() * MaxSpeed));
+    driverController.x().whileTrue(groupCommands.alignToSpeaker(() -> -driverController.getLeftY() * MaxSpeed, () -> -driverController.getLeftX() * MaxSpeed));//.alongWith(candleDist));
     // driverController.leftTrigger(.5).onTrue(groupCommands.ampShotSpeaker());
     // driverController.b().whileTrue(groupCommands.shoot());
     // driverController.y().onTrue(groupCommands.ampShot());
@@ -101,14 +103,14 @@ public class RobotContainer {
     // joystick.rightTrigger(.5).onTrue(groupCommands.intakeFromShooter());
     
     
-
+    
     operatorController.a().onTrue(groupCommands.switchModes());
     operatorController.b().onTrue(groupCommands.resetAll());
+    operatorController.x().whileTrue(intake.setVelocity(15));
     if (Utils.isSimulation()) {
       drivetrain.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
     }
     drivetrain.registerTelemetry(logger::telemeterize);
-
   }
 
 

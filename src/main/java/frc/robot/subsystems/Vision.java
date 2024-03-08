@@ -201,7 +201,7 @@ public class Vision extends SubsystemBase{
         var result = camera.getLatestResult();
         if (result.hasTargets()){
             List<PhotonTrackedTarget> targets = result.getTargets();
-            var foundTargets = targets.stream().filter(t -> t.getFiducialId()==9).filter(t ->!t.equals(9) && t.getPoseAmbiguity() <= .2 && t.getPoseAmbiguity() !=-1).findFirst();
+            var foundTargets = targets.stream().filter(t -> t.getFiducialId()==target).filter(t ->!t.equals(target) && t.getPoseAmbiguity() <= .2 && t.getPoseAmbiguity() !=-1).findFirst();
             if (foundTargets.isPresent()){
                 System.out.println(foundTargets.get().getYaw());
                 return foundTargets.get().getYaw();
@@ -210,7 +210,7 @@ public class Vision extends SubsystemBase{
         return 0;
     }
     /**
-     * returns the meters from the target if visible, else it returns 361
+     * returns the meters from the target if visible, else it returns -1
      * @param target
      * @return
      */
@@ -218,7 +218,7 @@ public class Vision extends SubsystemBase{
         var result = camera.getLatestResult();
         if (result.hasTargets()){
             List<PhotonTrackedTarget> targets = result.getTargets();
-            var foundTargets = targets.stream().filter(t -> t.getFiducialId()==4).filter(t ->!t.equals(4) && t.getPoseAmbiguity() <= .2 && t.getPoseAmbiguity() !=-1).findFirst();
+            var foundTargets = targets.stream().filter(t -> t.getFiducialId()==target).filter(t ->!t.equals(target) && t.getPoseAmbiguity() <= .2 && t.getPoseAmbiguity() !=-1).findFirst();
             if (foundTargets.isPresent()){
                 return PhotonUtils.calculateDistanceToTargetMeters(
                     VisionConstants.ShooterCamTransform.getX(),
@@ -227,7 +227,7 @@ public class Vision extends SubsystemBase{
                     Units.degreesToRadians(result.getBestTarget().getPitch()));
             }
         }
-        return 0;
+        return -1;
     }
     // public void logTelemetry(Telemetry telemetry){
     //     telemetry.registerVisionTelemetry(getEstimatedGlobalPose().get().estimatedPose.toPose2d());

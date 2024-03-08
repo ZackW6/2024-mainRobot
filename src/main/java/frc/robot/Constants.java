@@ -74,7 +74,7 @@ public final class Constants {
 		public static final double jerk = 9999;
 
         
-        public static final Rotation2d angleOffset = Rotation2d.fromRotations(.603);//.592);//.063);//.314);//
+        public static final Rotation2d angleOffset = Rotation2d.fromRotations(.598);//.592);//.063);//.314);//
         
 
         /* Arm Current Limiting */ //TODO: Change these values
@@ -90,8 +90,8 @@ public final class Constants {
 
     public static class IntakeConstants{    
         public static final int intakeMotorID = 11;
-        public static final int limitSwitchID1 = 0;
-        public static final int  limitSwicthID2 = 1;
+        public static final int limitSwitchID1 = 3;
+        public static final int  limitSwicthID2 = 4;
 
         //TODO: Run SysID for shooter
         //TODO: Tune Shooter PID
@@ -128,7 +128,7 @@ public final class Constants {
 
         /* Shooter Current Limiting */
         public static final int shooterCurrentLimit = 40;
-        public static final int shooterSupplyCurrentThreshold = 65;
+        public static final int shooterSupplyCurrentThreshold = 40;
         public static final int shooterCurrentThreshold = 65;
         public static final double shooterCurrentThresholdTime = 0.1;
         public static final boolean shooterEnableCurrentLimit = true;

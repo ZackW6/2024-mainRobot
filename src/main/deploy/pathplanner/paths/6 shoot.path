@@ -46,13 +46,13 @@
   ],
   "rotationTargets": [
     {
-      "waypointRelativePos": 1.8,
-      "rotationDegrees": 11.832185169068392,
+      "waypointRelativePos": 1.0,
+      "rotationDegrees": -27.704909337362057,
       "rotateFast": false
     },
     {
-      "waypointRelativePos": 1.0,
-      "rotationDegrees": -28.926425835253713,
+      "waypointRelativePos": 1.8,
+      "rotationDegrees": -13.189992678423444,
       "rotateFast": false
     }
   ],
@@ -72,7 +72,7 @@
   "eventMarkers": [
     {
       "name": "Shoot 6",
-      "waypointRelativePos": 1.5,
+      "waypointRelativePos": 1.65,
       "command": {
         "type": "parallel",
         "data": {

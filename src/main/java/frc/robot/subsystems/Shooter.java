@@ -177,8 +177,8 @@ public class Shooter extends SubsystemBase{
                         leftShooterMotor.setControl(velocityRequest.withVelocity(20));//drivetrain.getDistanceFromSpeakerMeters()*40));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
                         rightShooterMotor.setControl(velocityRequest.withVelocity(20));//drivetrain.getDistanceFromSpeakerMeters()*40));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
                     }else{
-                        leftShooterMotor.setControl(velocityRequest.withVelocity(20));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
-                        rightShooterMotor.setControl(velocityRequest.withVelocity(20));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
+                        leftShooterMotor.setControl(velocityRequest.withVelocity(25));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
+                        rightShooterMotor.setControl(velocityRequest.withVelocity(25));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
                     }
                 }else if(DriverStation.isAutonomous()){//ALWAYS BE FAST IN AUTO
                     leftShooterMotor.setControl(velocityRequest.withVelocity(80));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
@@ -282,7 +282,7 @@ public class Shooter extends SubsystemBase{
         currentLimits.SupplyTimeThreshold = ShooterConstants.shooterCurrentThresholdTime; // For at least 1 second
         currentLimits.SupplyCurrentLimitEnable = ShooterConstants.shooterEnableCurrentLimit; // And enable it
 
-        currentLimits.StatorCurrentLimit = 20; // Limit stator to 20 amps
+        currentLimits.StatorCurrentLimit = 200; // Limit stator to 20 amps
         currentLimits.StatorCurrentLimitEnable = true; // And enable it
 
         talonFXConfigs.CurrentLimits = currentLimits;
