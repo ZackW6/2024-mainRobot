@@ -27,6 +27,7 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
+import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import frc.robot.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Candle;
@@ -53,21 +54,27 @@ public class GroupCommands extends SubsystemBase{
   }
 
   public Command intake() {
-    return intakeMain();
-    // return Commands.either(resetAll(), intake(), ()->arm.isArmInIntakeState()) ;
+    // return intakeMain();
+    return new ToggleCommand(intakeMain()).andThen(resetDefault());//either(resetDefault(), intakeMain(), ()->arm.isArmInIntakeState());
+  }
+
+  public Command intakeAuto() {
+    // return intakeMain();
+    return new ToggleCommand(intakeMain().andThen(Commands.waitSeconds(15))).andThen(resetDefault());//either(resetDefault(), intakeMain(), ()->arm.isArmInIntakeState());
   }
 
   public Command loadAndShoot(){
     return Commands.deadline(Commands.waitSeconds(.01).andThen(Commands.waitUntil(() ->shooter.isLeftFlywheelAtTargetSpeed()))
     ,Commands.run(() -> shooter.setTargetFlywheelSpeed(85,85)), Commands.runOnce(()->shooter.disableDefault()))
     .andThen(Commands.waitUntil(()->arm.isArmInSpeakerState())).andThen(intake.outtakePiece())
-    .andThen(resetAll());
+    .andThen(resetDefault());
   }
   
   public Command ampShot(){
     return Commands.deadline(Commands.waitSeconds(.3)
     ,intake.setVelocity(-22.5)).andThen(switchModes());
   } 
+
   public Command intakeMain(){
     return Commands.deadline(intake.intakePiece(),Commands.runOnce(()->arm.setCurrentArmState(ArmState.Intake)),Commands.runOnce(()->shooter.enableDefault()))
     .andThen(candle.pickUpLights())
@@ -78,18 +85,8 @@ public class GroupCommands extends SubsystemBase{
     .andThen(candle.idleLED());
   }
 
-  public Command intakeMainAuto(){
-    return Commands.race(Commands.waitSeconds(2.5)
-    ,Commands.deadline(intake.intakePiece(),Commands.runOnce(()->arm.setCurrentArmState(ArmState.Intake)),Commands.runOnce(()->shooter.enableDefault()))
-    .andThen(candle.pickUpLights()))
-    .andThen(Commands.deadline(Commands.waitSeconds(.5).andThen(Commands.waitUntil(()->arm.isArmAtAngle()))
-    ,intake.setVelocity(15)
-    ,Commands.runOnce(()->arm.setCurrentArmState(arm.lastMainState()))))
-    .andThen(intake.stop())
-    .andThen(candle.idleLED());
-  }
-
-  public Command resetAll(){
+  public Command resetDefault(){
+    // return Commands.runOnce(()->arm.setCurrentArmState(ArmState.Speaker));
     return Commands.runOnce(()->{
       shooter.enableDefault();
     }).andThen(intake.stop()).andThen(Commands.runOnce(()->arm.setCurrentArmState(ArmState.Speaker)));
@@ -136,21 +133,16 @@ public class GroupCommands extends SubsystemBase{
   private double correctYaw(double x, double setpoint){
     if (x>180+setpoint){
       x-=360;
-    }else if(x<-180+setpoint){//if setpoint 0
+    }else if(x<-180+setpoint){
       x+=360;
     }
-    // if (x>360){//if setpoint 180
-    //   x-=360;
-    // }else if(x<0){
-    //   x+=360;
-    // }
     return x;
   }
   private final PIDController thetaControllerSpeaker = new PIDController(.2,0,0);//(12.2,1.1,.4);
 
   public Command alignToSpeaker(DoubleSupplier xAxis, DoubleSupplier yAxis) {
     thetaControllerSpeaker.reset();
-    
+
 
     DoubleSupplier rotationalVelocity = () -> thetaControllerSpeaker.calculate(drivetrain.getAngleFromSpeaker().getDegrees(),8);
   
@@ -179,17 +171,17 @@ public class GroupCommands extends SubsystemBase{
   }
   private double lastDist = 100;
   public void getDistCandle(){
-    double curDist = drivetrain.getPose().getX();
+    // double curDist = drivetrain.getPose().getX();
 
-    // double curDist = drivetrain.getDistanceFromSpeakerMeters();
+    double curDist = drivetrain.getDistanceFromSpeakerMeters();
     if (lastDist>1.9 || lastDist<1.84){
       if (curDist<1.9 && curDist>1.84){
-        // System.out.println("In Range");
+        System.out.println("In Range");
         candle.inRangeLED();
       }
     }else if (lastDist<1.9 && lastDist>1.84){
       if (curDist<1.84 || curDist>1.9){
-        // System.out.println("Out Of Range");
+        System.out.println("Out Of Range");
         candle.idleLED();
       }
     }

@@ -83,7 +83,7 @@ public class RobotContainer {
     // driverController.a()
 
     driverController.y().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldRelative()));
-    driverController.rightBumper().whileTrue(groupCommands.intake()).whileFalse(Commands.runOnce(()->arm.setCurrentArmState(arm.lastMainState())));
+    driverController.rightBumper().onTrue(groupCommands.intake());//.whileFalse(Commands.runOnce(()->arm.setCurrentArmState(arm.lastMainState())));
     driverController.leftBumper().onTrue(groupCommands.shoot());
     driverController.a().whileTrue(groupCommands.alignToAmp(() -> -driverController.getLeftY() * MaxSpeed, () -> -driverController.getLeftX() * MaxSpeed));
     driverController.rightTrigger(.5).whileTrue(drivetrain.applyRequest(() -> brake));
@@ -105,7 +105,7 @@ public class RobotContainer {
     
     
     operatorController.a().onTrue(groupCommands.switchModes());
-    operatorController.b().onTrue(groupCommands.resetAll());
+    operatorController.b().onTrue(groupCommands.resetDefault());
     operatorController.x().whileTrue(intake.setVelocity(15));
     if (Utils.isSimulation()) {
       drivetrain.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
@@ -121,10 +121,9 @@ public class RobotContainer {
 
     autoChooser = AutoBuilder.buildAutoChooser();
     SmartDashboard.putData("Auto Chooser", autoChooser);
-
   }
   public void configureAutonomousCommands() {
-    NamedCommands.registerCommand("intake", groupCommands.intakeMainAuto());
+    NamedCommands.registerCommand("intake", groupCommands.intakeAuto());
     NamedCommands.registerCommand("loadAndShoot", groupCommands.loadAndShoot());
     // NamedCommands.registerCommand("speakerFromIntake", groupCommands.ampShotSpeaker()); //Probably not going to do
   }

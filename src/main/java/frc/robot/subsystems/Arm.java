@@ -299,11 +299,11 @@ public class Arm extends SubsystemBase {
       return currentArmState == ArmState.Speaker;
   }
   public Boolean isArmInIntakeState() {
+      System.out.println(currentArmState);
       return currentArmState == ArmState.Intake;
   }
 
   public void setCurrentArmState(ArmState armState) {
-    System.out.println(armState);
     currentArmState = armState;
   }
   public boolean isArmAtAngle(){

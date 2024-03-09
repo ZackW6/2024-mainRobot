@@ -61,6 +61,7 @@ public class Intake extends SubsystemBase{
     }
 
     public Command stop(){
+        speed = 0;
         return this.runOnce(()->intakeMotor.stopMotor());
     }
 
@@ -70,7 +71,7 @@ public class Intake extends SubsystemBase{
 
     @Override
     public void periodic() {
-        // System.out.println(speed+ " INTAKE SPEED");
+        System.out.println(speed+ " INTAKE SPEED");
 
         // System.out.println("GET LIMIT SWITCH: "+getLimitSwitch());
     }
