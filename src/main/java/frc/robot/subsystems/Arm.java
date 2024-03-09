@@ -5,6 +5,7 @@
 package frc.robot.subsystems;
 
 import java.util.Map;
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 import com.ctre.phoenix6.BaseStatusSignal;
@@ -80,13 +81,13 @@ public class Arm extends SubsystemBase {
   private final CurrentLimitsConfigs m_currentLimits = new CurrentLimitsConfigs();
   private SysIdRoutine m_SysIdRoutine;
   private TalonFXConfiguration talonFXConfigs = new TalonFXConfiguration();
-
-  public enum ArmPositions {
-    Intake,
-    Load,
+  private ArmState currentArmState = ArmState.Speaker; 
+  public enum ArmState {
+    Speaker,
     Amp,
+    Intake,
     AmpMove
-  }
+  } 
 
 
   public Arm() {
@@ -164,37 +165,57 @@ public class Arm extends SubsystemBase {
   // }
 
   MotionMagicTorqueCurrentFOC m_request = new MotionMagicTorqueCurrentFOC(.47);
-  public Command setArmDegree(ArmPositions armPosition){
+
+  private void setArmDegree(ArmState armPosition, boolean isActive){
    double rotSet;
       switch (armPosition){
         case Intake:
-          rotSet=-0.098;
+          rotSet=-.087;//-0.07; // -0.098
           break;
-        case Load:
-          rotSet=.47;
+        case Speaker:
+          rotSet=.477;//.490; // 0.477
           break;
         case Amp:
-          rotSet=.266;
+          rotSet=.26; // 0.255
           break;
         case AmpMove:
-          rotSet= .26;
+          rotSet= .265;
           break;
         default:
           rotSet=.4422222222;
           break;
       }
-    return this.run(() -> {
-      // if (armPosition==ArmPositions.AmpMove){
-      //   armMotor.setControl(m_request.withPosition(rotSet).withSlot(1));
-      // }
       armMotor.setControl(m_request.withPosition(rotSet).withSlot(0));
-    });
+  }
+  public ArmState getCurrentArmState(){
+    return currentArmState;
   }
 
 
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
+    // ArmPositions defaultState = getCurrentArmState() == ArmState.Speaker ? ArmPositions.Load : ArmPositions.Amp;
+    // System.out.println(getCurrentArmState());
+    // setDefaultCommand(setArmDegree(ArmPositions.Amp));
+    
+    if (currentArmState == ArmState.Speaker) {
+      lastMainState = ArmState.Speaker;
+      setArmDegree(ArmState.Speaker, true);
+    } else if (currentArmState == ArmState.Amp){
+      lastMainState = ArmState.Amp;
+      setArmDegree(ArmState.Amp, true);
+    }else if (currentArmState == ArmState.Intake){
+      setArmDegree(ArmState.Intake, true);
+    }else{
+      setArmDegree(ArmState.AmpMove, true);
+    }
+  }
+
+  private ArmState lastMainState = ArmState.Speaker;
+
+  public ArmState lastMainState(){
+    return lastMainState;
   }
 
 
@@ -271,9 +292,23 @@ public class Arm extends SubsystemBase {
     return armMotor.getClosedLoopReference().getValueAsDouble();
   }
 
+  public Boolean isArmInAmpState() {
+      return currentArmState == ArmState.Amp;
+  }
+  public Boolean isArmInSpeakerState() {
+      return currentArmState == ArmState.Speaker;
+  }
+  public Boolean isArmInIntakeState() {
+      return currentArmState == ArmState.Intake;
+  }
+
+  public void setCurrentArmState(ArmState armState) {
+    System.out.println(armState);
+    currentArmState = armState;
+  }
   public boolean isArmAtAngle(){
     if (armMotor.getClosedLoopReference().getValueAsDouble()<=getRotationTarget()+.03 || armMotor.getClosedLoopReference().getValueAsDouble()<=getRotationTarget()-.03){
-      System.out.println("Arm is at pos");
+      // System.out.println("Arm is at pos");
 
       return true;
     } 

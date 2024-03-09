@@ -50,31 +50,31 @@
         {
           "type": "path",
           "data": {
-            "pathName": "3 shot 1-2-3"
+            "pathName": "3 shoot 1-2-3"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "3 shot to 8"
+            "pathName": "3 shoot to 8"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "8 shot"
+            "pathName": "8 shoot"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "3 shot to 7"
+            "pathName": "3 shoot to 7"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "7 shot"
+            "pathName": "7 shoot"
           }
         }
       ]

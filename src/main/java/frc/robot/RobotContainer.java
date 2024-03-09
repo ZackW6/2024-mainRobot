@@ -16,13 +16,17 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.commands.GroupCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Candle;
-import frc.robot.subsystems.Arm.ArmPositions;
+import frc.robot.subsystems.Arm.ArmState;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
 
@@ -34,7 +38,9 @@ public class RobotContainer {
   private double MaxAngularRate = 1.5 * Math.PI; // 3/4 of a rotation per second max angular velocity
 
   /* Setting up bindings for necessary control of the swerve drive platform */
-  private final CommandXboxController joystick = new CommandXboxController(0); // My joystick
+  private final CommandXboxController driverController = new CommandXboxController(0);
+  private final CommandXboxController operatorController = new CommandXboxController(1);
+  
   private final CommandSwerveDrivetrain drivetrain = TunerConstants.DriveTrain; // My drivetrain
 
   private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
@@ -48,52 +54,79 @@ public class RobotContainer {
   private final Shooter shooter = new Shooter();
   private final Intake intake = new Intake();
   private final Candle candle = new Candle();
-  private GroupCommands groupCommands = new GroupCommands(arm, shooter, intake, candle);
+  private GroupCommands groupCommands = new GroupCommands(arm, shooter, intake, candle, drivetrain);
 
 
 
 
 
   private void configureBindings() {
-    shooter.setTargetFlywheelSpeed(15);
-    arm.setDefaultCommand(arm.setArmDegree(ArmPositions.Load));
-    intake.setDefaultCommand(intake.stop());
-    drivetrain.setDefaultCommand( // Drivetrain will execute this command periodically
-        drivetrain.applyRequest(() -> drive.withVelocityX(-joystick.getLeftY() * MaxSpeed) // Drive forward with
+    shooter.enableDefault();
+      drivetrain.setDefaultCommand( // Drivetrain will execute this command periodically
+        drivetrain.applyRequest(() -> drive.withVelocityX(-driverController.getLeftY() * MaxSpeed) // Drive forward with
                                                                                            // negative Y (forward)
-            .withVelocityY(-joystick.getLeftX() * MaxSpeed) // Drive left with negative X (left)
-            .withRotationalRate(-joystick.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
+            .withVelocityY(-driverController.getLeftX() * MaxSpeed) // Drive left with negative X (left)
+            // .withRotationalRate(-driverController.getRawAxis(2)*MaxAngularRate)
+            .withRotationalRate(-driverController.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
         ));
 
-    joystick.a().whileTrue(drivetrain.applyRequest(() -> brake));
-    joystick.b().whileTrue(drivetrain
-        .applyRequest(() -> point.withModuleDirection(new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))));
+        // driverController.a().whileTrue(drivetrain.applyRequest(() -> brake));
+        // driverController.b().whileTrue(drivetrain
+        // .applyRequest(() -> point.withModuleDirection(new Rotation2d(-driverController.getLeftY(), -driverController.getLeftX()))));
 
+
+    // shooter.setDefaultCommand(shooter.runOnce(() -> shooter.setTargetFlywheelSpeed(30)));
+    intake.setDefaultCommand(intake.stop());
+
+    Command candleDist = Commands.run(()->groupCommands.getDistCandle());
     // reset the field-centric heading on left bumper press
-    joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldRelative()));
+    // driverController.a()
 
+    driverController.y().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldRelative()));
+    driverController.rightBumper().whileTrue(groupCommands.intake()).whileFalse(Commands.runOnce(()->arm.setCurrentArmState(arm.lastMainState())));
+    driverController.leftBumper().onTrue(groupCommands.shoot());
+    driverController.a().whileTrue(groupCommands.alignToAmp(() -> -driverController.getLeftY() * MaxSpeed, () -> -driverController.getLeftX() * MaxSpeed));
+    driverController.rightTrigger(.5).whileTrue(drivetrain.applyRequest(() -> brake));
+    driverController.x().whileTrue(groupCommands.alignToSpeaker(() -> -driverController.getLeftY() * MaxSpeed, () -> -driverController.getLeftX() * MaxSpeed));//.alongWith(candleDist));
+    // driverController.leftTrigger(.5).onTrue(groupCommands.ampShotSpeaker());
+    // driverController.b().whileTrue(groupCommands.shoot());
+    // driverController.y().onTrue(groupCommands.ampShot());
+    // driverController.rightTrigger(.5).onTrue(groupCommands.changeArmDefault());
+
+    // driverController.back().and(driverController.y()).whileTrue(drivetrain.runDriveDynamTest(Direction.kForward));
+    // driverController.back().and(driverController.x()).whileTrue(drivetrain.runDriveDynamTest(Direction.kReverse));
+    // driverController.start().and(driverController.y()).whileTrue(drivetrain.runDriveQuasiTest(Direction.kForward));
+    // driverController.start().and(driverController.x()).whileTrue(drivetrain.runDriveQuasiTest(Direction.kReverse));
+    
+
+
+    // joystick.rightTrigger(.5).onTrue(groupCommands.intakeFromShooter());
+    
+    
+    
+    operatorController.a().onTrue(groupCommands.switchModes());
+    operatorController.b().onTrue(groupCommands.resetAll());
+    operatorController.x().whileTrue(intake.setVelocity(15));
     if (Utils.isSimulation()) {
       drivetrain.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
     }
     drivetrain.registerTelemetry(logger::telemeterize);
-
-    joystick.rightBumper().onTrue(groupCommands.intake());//Cur commands
-    joystick.x().onTrue(groupCommands.loadAndShoot());
-    joystick.y().onTrue(groupCommands.ampShot());
-    joystick.rightTrigger(.5).onTrue(groupCommands.changeArmDefault());
-    // joystick.rightTrigger(.5).onTrue(groupCommands.intakeFromShooter());
   }
 
 
   public RobotContainer() {
     drivetrain.configurePathPlanner();
-    NamedCommands.registerCommand("intake", groupCommands.intake());
-    NamedCommands.registerCommand("loadAndShoot", groupCommands.loadAndShoot());
+    configureBindings();
+    configureAutonomousCommands();
 
-    autoChooser = AutoBuilder.buildAutoChooser("S A 4 piece");
+    autoChooser = AutoBuilder.buildAutoChooser();
     SmartDashboard.putData("Auto Chooser", autoChooser);
 
-    configureBindings();
+  }
+  public void configureAutonomousCommands() {
+    NamedCommands.registerCommand("intake", groupCommands.intakeMainAuto());
+    NamedCommands.registerCommand("loadAndShoot", groupCommands.loadAndShoot());
+    // NamedCommands.registerCommand("speakerFromIntake", groupCommands.ampShotSpeaker()); //Probably not going to do
   }
 
   public Command getAutonomousCommand() {

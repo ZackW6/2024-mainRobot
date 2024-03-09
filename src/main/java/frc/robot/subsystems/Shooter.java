@@ -11,6 +11,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfigurator;
 import com.ctre.phoenix6.controls.MotionMagicExpoDutyCycle;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
+import com.ctre.phoenix6.controls.MotionMagicVelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -25,12 +26,14 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableListener;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.Voltage;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.CommandSwerveDrivetrain;
 import frc.robot.Constants;
 import frc.robot.Constants.ShooterConstants;
 
@@ -40,7 +43,7 @@ import edu.wpi.first.units.Voltage;
 import static edu.wpi.first.units.Units.Volts;
 
 public class Shooter extends SubsystemBase{
-    private static final double FLYWHEEL_ALLOWABLE_ERROR = Units.rotationsPerMinuteToRadiansPerSecond(75);
+    private static final double FLYWHEEL_ALLOWABLE_ERROR = 1.5;
     private static final double FLYWHEEL_GEAR_REDUCTION = 1;
 
     private static final double FLYWHEEL_VELOCITY_CONSTANT = 0.028;
@@ -52,20 +55,22 @@ public class Shooter extends SubsystemBase{
     private final TalonFX leftShooterMotor;
     private final TalonFX  rightShooterMotor;
 
+    private boolean doDefault = true;
     private boolean flywheelDisabled = false;
-    private double targetFlywheelSpeed;
+    private double targetFlywheelSpeedL;
+    private double targetFlywheelSpeedR;
     private double shootingOffset = 0.0;
 
     // private final NetworkTableEntry shooterRPMOffsetEntry;
-
+    CommandSwerveDrivetrain drivetrain;
 
     private final VoltageOut m_sysidControl = new VoltageOut(0);
-    private final MotionMagicVelocityVoltage velocityRequest = new MotionMagicVelocityVoltage(0).withSlot(0);
+    private final MotionMagicVelocityTorqueCurrentFOC velocityRequest = new MotionMagicVelocityTorqueCurrentFOC(0).withSlot(0);
 
     private SysIdRoutine m_SysIdRoutine;
 
     public Shooter(){
-
+        
         leftShooterMotor = new TalonFX(ShooterConstants.leftShooterMotorID);
         rightShooterMotor = new TalonFX(ShooterConstants.rightShooterMotorID);
         // TalonFXConfiguration talonFXConfigs = new TalonFXConfiguration();
@@ -80,7 +85,7 @@ public class Shooter extends SubsystemBase{
         shuffleboardTab.addNumber("Right Flywheel Speed",
                 () -> Units.radiansPerSecondToRotationsPerMinute(getRightFlywheelVelocity()));
         shuffleboardTab.addNumber("Target Flywheel Speed",
-                () -> Units.radiansPerSecondToRotationsPerMinute(getTargetFlywheelSpeed()));
+                () -> Units.radiansPerSecondToRotationsPerMinute(getTargetFlywheelSpeedL()));
         shuffleboardTab.addBoolean("Is Left Flywheel at Speed", this::isLeftFlywheelAtTargetSpeed);
         shuffleboardTab.addBoolean("Is Right Flywheel at Speed", this::isLeftFlywheelAtTargetSpeed);
         // shooterRPMOffsetEntry = Shuffleboard.getTab("Driver")
@@ -166,12 +171,31 @@ public class Shooter extends SubsystemBase{
             rightShooterMotor.stopMotor();
         } else {
             // double feedForward = FLYWHEEL_VELOCITY_CONSTANT * targetFlywheelSpeed / 12.0;
-
-            leftShooterMotor.setControl(velocityRequest.withVelocity(targetFlywheelSpeed));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
-            rightShooterMotor.setControl(velocityRequest.withVelocity(targetFlywheelSpeed));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
+            if (doDefault){
+                if (DriverStation.isTeleop()){//THIS WILL BE USED TO CHANGE SPEED DEPENDING ON HOW CLOSE YOU ARE TO THE SPEAKER
+                    if (drivetrain!=null){
+                        leftShooterMotor.setControl(velocityRequest.withVelocity(20));//drivetrain.getDistanceFromSpeakerMeters()*40));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
+                        rightShooterMotor.setControl(velocityRequest.withVelocity(20));//drivetrain.getDistanceFromSpeakerMeters()*40));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
+                    }else{
+                        leftShooterMotor.setControl(velocityRequest.withVelocity(25));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
+                        rightShooterMotor.setControl(velocityRequest.withVelocity(25));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
+                    }
+                }else if(DriverStation.isAutonomous()){//ALWAYS BE FAST IN AUTO
+                    leftShooterMotor.setControl(velocityRequest.withVelocity(80));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
+                    rightShooterMotor.setControl(velocityRequest.withVelocity(80));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
+                }
+            }else{
+                leftShooterMotor.setControl(velocityRequest.withVelocity(targetFlywheelSpeedL));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
+                rightShooterMotor.setControl(velocityRequest.withVelocity(targetFlywheelSpeedR));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
+            }
+            
         }
 
         // shootingOffset = shooterRPMOffsetEntry.getDouble(0.0);
+    }
+
+    public void setupDistToSpeakerSpeed(CommandSwerveDrivetrain swerve){
+        drivetrain = swerve;
     }
 
     @Deprecated
@@ -190,12 +214,17 @@ public class Shooter extends SubsystemBase{
         });
     }
 
-    public void setTargetFlywheelSpeed(double targetFlywheelSpeed) {
-        this.targetFlywheelSpeed = targetFlywheelSpeed;
+    public void setTargetFlywheelSpeed(double targetFlywheelSpeedL,double targetFlywheelSpeedR) {
+        this.targetFlywheelSpeedL = targetFlywheelSpeedL;
+        this.targetFlywheelSpeedR = targetFlywheelSpeedR;
     }
 
-    public double getTargetFlywheelSpeed() {
-        return targetFlywheelSpeed;
+    public double getTargetFlywheelSpeedL() {
+        return targetFlywheelSpeedL;
+    }
+
+    public double getTargetFlywheelSpeedR() {
+        return targetFlywheelSpeedR;
     }
 
     public double getLeftFlywheelVelocity(){
@@ -207,11 +236,11 @@ public class Shooter extends SubsystemBase{
     }
 
     public boolean isLeftFlywheelAtTargetSpeed() {
-        return Math.abs(getLeftFlywheelVelocity() - targetFlywheelSpeed) < FLYWHEEL_ALLOWABLE_ERROR;
+        return Math.abs(getLeftFlywheelVelocity() - targetFlywheelSpeedL) < FLYWHEEL_ALLOWABLE_ERROR;
     }
 
     public boolean isRightFlywheelAtTargetSpeed() {
-        return Math.abs(getRightFlywheelVelocity() - targetFlywheelSpeed) < FLYWHEEL_ALLOWABLE_ERROR;
+        return Math.abs(getRightFlywheelVelocity() - targetFlywheelSpeedR) < FLYWHEEL_ALLOWABLE_ERROR;
     }
 
     public void disableFlywheel() {
@@ -220,6 +249,14 @@ public class Shooter extends SubsystemBase{
 
     public void enableFlywheel() {
         flywheelDisabled = false;
+    }
+    
+    public void enableDefault(){
+        doDefault = true;
+    }
+
+    public void disableDefault(){
+        doDefault = false;
     }
 
     private void configMotors(){
@@ -245,7 +282,7 @@ public class Shooter extends SubsystemBase{
         currentLimits.SupplyTimeThreshold = ShooterConstants.shooterCurrentThresholdTime; // For at least 1 second
         currentLimits.SupplyCurrentLimitEnable = ShooterConstants.shooterEnableCurrentLimit; // And enable it
 
-        currentLimits.StatorCurrentLimit = 20; // Limit stator to 20 amps
+        currentLimits.StatorCurrentLimit = 200; // Limit stator to 20 amps
         currentLimits.StatorCurrentLimitEnable = true; // And enable it
 
         talonFXConfigs.CurrentLimits = currentLimits;

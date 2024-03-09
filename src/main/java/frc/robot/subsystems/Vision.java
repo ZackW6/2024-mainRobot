@@ -26,6 +26,7 @@
 package frc.robot.subsystems;
 
 
+import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 
 //import static frc.robot.Constants.Vision.*;
@@ -41,6 +42,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -48,7 +50,7 @@ import frc.robot.Robot;
 import frc.robot.Telemetry;
 import frc.robot.Constants.VisionConstants;
 
-
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -57,11 +59,13 @@ import java.util.function.Consumer;
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
+import org.photonvision.PhotonUtils;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
 import org.photonvision.targeting.PhotonPipelineResult;
+import org.photonvision.targeting.PhotonTrackedTarget;
 
 import com.ctre.phoenix6.mechanisms.swerve.SwerveDrivetrain.SwerveDriveState;
 
@@ -161,10 +165,9 @@ public class Vision extends SubsystemBase{
             estStdDevs = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
         else estStdDevs = estStdDevs.times(1 + (avgDist * avgDist / 30));
 
-        return VecBuilder.fill(0, 0, 0);
-        // return estStdDevs;
+        return VecBuilder.fill(estStdDevs.get(0, 0), estStdDevs.get(1,0), 100);
     }
-
+// fill(0,0,0);
 
     // ----- Simulation
 
@@ -189,7 +192,43 @@ public class Vision extends SubsystemBase{
         var result = camera.getLatestResult();
         return result.hasTargets();
     }
-
+    /**
+     * returns the angle from the target if visible, else it returns 361
+     * @param target
+     * @return
+     */
+    public double getTargetAngle(int target){
+        var result = camera.getLatestResult();
+        if (result.hasTargets()){
+            List<PhotonTrackedTarget> targets = result.getTargets();
+            var foundTargets = targets.stream().filter(t -> t.getFiducialId()==target).filter(t ->!t.equals(target) && t.getPoseAmbiguity() <= .2 && t.getPoseAmbiguity() !=-1).findFirst();
+            if (foundTargets.isPresent()){
+                System.out.println(foundTargets.get().getYaw());
+                return foundTargets.get().getYaw();
+            }
+        }
+        return 0;
+    }
+    /**
+     * returns the meters from the target if visible, else it returns -1
+     * @param target
+     * @return
+     */
+    public double getTargetDist(int target){
+        var result = camera.getLatestResult();
+        if (result.hasTargets()){
+            List<PhotonTrackedTarget> targets = result.getTargets();
+            var foundTargets = targets.stream().filter(t -> t.getFiducialId()==target).filter(t ->!t.equals(target) && t.getPoseAmbiguity() <= .2 && t.getPoseAmbiguity() !=-1).findFirst();
+            if (foundTargets.isPresent()){
+                return PhotonUtils.calculateDistanceToTargetMeters(
+                    VisionConstants.ShooterCamTransform.getX(),
+                    VisionConstants.ShooterCamTransform.getY(),
+                    VisionConstants.ShooterCamTransform.getZ(),
+                    Units.degreesToRadians(result.getBestTarget().getPitch()));
+            }
+        }
+        return -1;
+    }
     // public void logTelemetry(Telemetry telemetry){
     //     telemetry.registerVisionTelemetry(getEstimatedGlobalPose().get().estimatedPose.toPose2d());
     // }

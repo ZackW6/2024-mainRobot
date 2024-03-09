@@ -74,12 +74,12 @@ public final class Constants {
 		public static final double jerk = 9999;
 
         
-        public static final Rotation2d angleOffset = Rotation2d.fromRotations(.385);//.314);//
+        public static final Rotation2d angleOffset = Rotation2d.fromRotations(.598);//.592);//.063);//.314);//
         
 
         /* Arm Current Limiting */ //TODO: Change these values
-        public static final int armCurrentLimit = 65;
-        public static final int armSupplyCurrentThreshold = 10;
+        public static final int armCurrentLimit = 40;
+        public static final int armSupplyCurrentThreshold = 65;
         public static final int armCurrentThreshold = 70;
         public static final double armCurrentThresholdTime = 0.1;
         public static final boolean armEnableCurrentLimit = true;
@@ -90,24 +90,24 @@ public final class Constants {
 
     public static class IntakeConstants{    
         public static final int intakeMotorID = 11;
-        public static final int limitSwitchID1 = 0;
-        public static final int  limitSwicthID2 = 1;
+        public static final int limitSwitchID1 = 3;
+        public static final int  limitSwicthID2 = 4;
 
         //TODO: Run SysID for shooter
         //TODO: Tune Shooter PID
         // Add 0.25 V output to overcome static friction
 
-        public static final double kS = 0; // An error of 1 rps results in 0.11 V output
-        public static final double kV = 0; // A velocity target of 1 rps results in 0.12 V output
+        public static final double kS = 8; // An error of 1 rps results in 0.11 V output
+        public static final double kV = 0.1175; // A velocity target of 1 rps results in 0.12 V output
         public static final double kA = 0; // An acceleration of 1 rps/s requires 0.01 V output
         public static final double kP = 10; // This will need to be tuned after feedforward
-        public static final double kI = 0; // For flywheels, this should be 0
+        public static final double kI = 0.1; // For flywheels, this should be 0
         public static final double kD = 0; // For flywheels, this should be 0
 
         /* Intake Current Limiting */
-        public static final int intakeCurrentLimit = 25;
-        public static final int intakeSupplyCurrentThreshold = 10;
-        public static final int intakeCurrentThreshold = 40;
+        public static final int intakeCurrentLimit = 30;
+        public static final int intakeSupplyCurrentThreshold = 65;
+        public static final int intakeCurrentThreshold = 65;
         public static final double intakeCurrentThresholdTime = 0.1;
         public static final boolean intakeEnableCurrentLimit = true;
     }
@@ -119,17 +119,17 @@ public final class Constants {
         //TODO: Run SysID for shooter
         //TODO: Tune Shooter PID https://docs.wpilib.org/en/latest/docs/software/advanced-controls/introduction/tuning-flywheel.html
      
-        public static final double kS = 0.240; // Add 0.25 V output to overcome static friction
-        public static final double kV = .11175; // A velocity target of 1 rps results in 0.12 V output
+        public static final double kS = 6.695; // Add 0.25 V output to overcome static friction
+        public static final double kV = .05115; // A velocity target of 1 rps results in 0.12 V output
         public static final double kA = 0; // An acceleration of 1 rps/s requires 0.01 V output
-        public static final double kP = 0.048; // This will need to be tuned after feedforward
-        public static final double kI = 0; // For flywheels, this should be 0
+        public static final double kP = 5.55; // This will need to be tuned after feedforward
+        public static final double kI = 0.35; // For flywheels, this should be 0
         public static final double kD = 0; // For flywheels, this should be 0
 
         /* Shooter Current Limiting */
-        public static final int shooterCurrentLimit = 25;
-        public static final int shooterSupplyCurrentThreshold = 10;
-        public static final int shooterCurrentThreshold = 40;
+        public static final int shooterCurrentLimit = 40;
+        public static final int shooterSupplyCurrentThreshold = 40;
+        public static final int shooterCurrentThreshold = 65;
         public static final double shooterCurrentThresholdTime = 0.1;
         public static final boolean shooterEnableCurrentLimit = true;
     }
@@ -137,8 +137,9 @@ public final class Constants {
         public static final String ShooterCamera = "ShooterCam";
         // Cam mounted facing forward, half a meter forward of center, half a meter up from center.
         public static final Transform3d ShooterCamTransform =
-            new Transform3d(new Translation3d(-.231775,-.290306, .431), new Rotation3d(0, Units.degreesToRadians(15), Units.degreesToRadians(180)));
+            new Transform3d(new Translation3d(.5-(0.3556*3.4),-.1, .466), new Rotation3d(0, Units.degreesToRadians(15), Units.degreesToRadians(180)));
         // The layout of the AprilTags on the field
+        // new Transform3d(new Translation3d(-.231775,-.290306, .466), new Rotation3d(0, Units.degreesToRadians(15), Units.degreesToRadians(180)));
         public static final AprilTagFieldLayout kTagLayout = AprilTagFields.k2024Crescendo.loadAprilTagLayoutField();
         // The standard deviations of our vision estimated poses, which affect correction rate
         // (Fake values. Experiment and determine estimation noise on an actual robot.)

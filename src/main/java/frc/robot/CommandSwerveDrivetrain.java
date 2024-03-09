@@ -1,5 +1,9 @@
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Seconds;
+import static edu.wpi.first.units.Units.Volts;
+
+import java.sql.Driver;
 import java.util.function.Supplier;
 
 import org.photonvision.PhotonUtils;
@@ -16,18 +20,28 @@ import com.pathplanner.lib.util.PIDConstants;
 import com.pathplanner.lib.util.ReplanningConfig;
 
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.Measure;
+import edu.wpi.first.units.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Vision;
+import frc.robot.util.ModifiedSignalLogger;
 
 /**
  * Class that extends the Phoenix SwerveDrivetrain class and implements subsystem
@@ -38,7 +52,7 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     private Notifier m_simNotifier = null;
     private double m_lastSimTime;
     Vision vision1 = new Vision(VisionConstants.ShooterCamera,VisionConstants.ShooterCamTransform);
-    Vision vision2 = new Vision(VisionConstants.IntakeCamera, VisionConstants.IntakeCamTransform);
+    // Vision vision2 = new Vision(VisionConstants.IntakeCamera, VisionConstants.IntakeCamTransform);
     private final SwerveRequest.ApplyChassisSpeeds autoRequest = new SwerveRequest.ApplyChassisSpeeds();
 
 
@@ -80,21 +94,27 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
         }
         addVisionMeasurement(visionEst1.get().estimatedPose.toPose2d(), visionEst1.get().timestampSeconds, vision1.getEstimationStdDevs(visionEst1.get().estimatedPose.toPose2d()));
 
-        var visionEst2 = vision2.getEstimatedGlobalPose();
-        if (visionEst2.isEmpty()){
-            return;
-        }
-        addVisionMeasurement(visionEst2.get().estimatedPose.toPose2d(), visionEst2.get().timestampSeconds, vision2.getEstimationStdDevs(visionEst2.get().estimatedPose.toPose2d()));
+
+        // var visionEst2 = vision2.getEstimatedGlobalPose();
+        // if (visionEst2.isEmpty()){
+        //     return;
+        // }
+        // addVisionMeasurement(visionEst2.get().estimatedPose.toPose2d(), visionEst2.get().timestampSeconds, vision2.getEstimationStdDevs(visionEst2.get().estimatedPose.toPose2d()));
     }
 
     @Override
     public void periodic(){
-        // vision.logTelemetry();
         visionEstimation();
+        // System.out.println("Speaker Distance " + getDistanceFromSpeakerMeters());
+        // System.out.println("Rotation " + getAngleFromSpeaker());
+    }
+
+    public Pose2d getPose() {
+        return this.getState().Pose;
     }
 
     public void configurePathPlanner() {
-        double driveBaseRadius = 0;
+        double driveBaseRadius = 0.4;
         for (var moduleLocation : m_moduleLocations) {
             driveBaseRadius = Math.max(driveBaseRadius, moduleLocation.getNorm());
         }
@@ -104,8 +124,8 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
             this::seedFieldRelative,  // Consumer for seeding pose against auto
             this::getCurrentRobotChassisSpeeds,
             (speeds)->this.setControl(autoRequest.withSpeeds(speeds)), // Consumer of ChassisSpeeds to drive the robot
-            new HolonomicPathFollowerConfig(new PIDConstants(10, 0, 0),
-                                            new PIDConstants(10, 0, 0),
+            new HolonomicPathFollowerConfig(new PIDConstants(5, 0, 0),
+                                            new PIDConstants(5, 0, 0),
                     5.3,
             driveBaseRadius,
             new ReplanningConfig()),
@@ -123,6 +143,36 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
             // Reference to this subsystem to set requirements // Change this if the path needs to be flipped on red vs blue
             this); // Subsystem for requirements
     }
+
+    // @Override
+    // public void seedFieldRelative(Pose2d location) {
+    //     try {
+    //         m_stateLock.writeLock().lock();
+
+    //         m_odometry.resetPosition(Rotation2d.fromDegrees(m_yawGetter.getValue()), m_modulePositions, location);
+    //         seedFieldRelative();
+    //         // setYaw(location.getRotation());
+    //         /* We need to update our cached pose immediately so that race conditions don't happen */
+    //         m_cachedState.Pose = location;
+    //     } finally {
+    //         m_stateLock.writeLock().unlock();
+    //     }
+    // }
+
+    // @Override
+    // public void +() {
+    //     try {
+    //         m_stateLock.writeLock().lock();
+
+    //         m_fieldRelativeOffset = getState().Pose.getRotation();
+    //     } finally {
+    //         m_stateLock.writeLock().unlock();
+    //     }
+    // }
+
+    // private void setYaw(Rotation2d yaw) {
+    //     m_pigeon2.setYaw(yaw.getDegrees());
+    // }
     public Command getAutoPath(String pathName) {
         return new PathPlannerAuto(pathName);
     }
@@ -131,39 +181,80 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
         return m_kinematics.toChassisSpeeds(getState().ModuleStates);
     }
 
+    // private SwerveVoltageRequest driveVoltageRequest = new SwerveVoltageRequest(true);
 
-    // public Command aimAt(XboxController xboxController){
-    //         // Vision-alignment mode
-    //         // Query the latest result from PhotonVision
-    //         var result = vision2.getLatestResult();
-    //         double MaxSpeed = TunerConstants.kSpeedAt12VoltsMps; // kSpeedAt12VoltsMps desired top speed
-    //         double MaxAngularRate = 1.5 * Math.PI; // 3/4 of a rotation per second max angular velocity
-    //         if (result.hasTargets()) {
-    //             Units.degreesToRadians(result.getBestTarget().getPitch());
+    // private SysIdRoutine m_driveSysIdRoutine = new SysIdRoutine(
+    //         new SysIdRoutine.Config(null, null, null, ModifiedSignalLogger.logState()),
+    //         new SysIdRoutine.Mechanism(
+    //                 (Measure<Voltage> volts) -> setControl(driveVoltageRequest.withVoltage(volts.in(Volts))),
+    //                 null,
+    //                 this));
 
-    //             // Use this range as the measurement we give to the PID controller.
-    //             // -1.0 required to ensure positive PID controller effort _increases_ range
-    //             // Drivetrain will execute this command periodically
-    //             rotationSpeed = -turnController.calculate(result.getBestTarget().getYaw(), 0);
-    //             Commands.run(
-    //                 applyRequest(() -> withVelocityX(-xboxController.getLeftY() * MaxSpeed) // Drive forward with
-    //                                                                                                     // negative Y (forward)
-    //                         .withVelocityY(-xboxController.getLeftX() * MaxSpeed) // Drive left with negative X (left)
-    //                         .withRotationalRate(-xboxController.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
-    //             ));
-    //             // Also calculate angular power
-    //             // -1.0 required to ensure positive PID controller effort _increases_ yaw
-    //         } else {
-    //             // If we have no targets, stay still.
-    //             setDefaultCommand( // Drivetrain will execute this command periodically
-    //                 applyRequest(() -> drive.withVelocityX(-joystick.getLeftY() * MaxSpeed) // Drive forward with
-    //                                                                                                 // negative Y (forward)
-    //                     .withVelocityY(-joystick.getLeftX() * MaxSpeed) // Drive left with negative X (left)
-    //                     .withRotationalRate(-joystick.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
-    //                 ));
-    //         }
-    //         forwardSpeed = -xboxController.getRightY();
-    //         rotationSpeed = xboxController.getLeftX();
-    //     }
+    // private SwerveVoltageRequest steerVoltageRequest = new SwerveVoltageRequest(false);
+    
+    // private SysIdRoutine m_steerSysIdRoutine = new SysIdRoutine(
+    //         new SysIdRoutine.Config(null, null, null, ModifiedSignalLogger.logState()),
+    //         new SysIdRoutine.Mechanism(
+    //                 (Measure<Voltage> volts) -> setControl(steerVoltageRequest.withVoltage(volts.in(Volts))),
+    //                 null,
+    //                 this));
+
+    // private SysIdRoutine m_slipSysIdRoutine = new SysIdRoutine(
+    //         new SysIdRoutine.Config(Volts.of(0.25).per(Seconds.of(1)), null, null, ModifiedSignalLogger.logState()),
+    //         new SysIdRoutine.Mechanism(
+    //                 (Measure<Voltage> volts) -> setControl(driveVoltageRequest.withVoltage(volts.in(Volts))),
+    //                 null,
+    //                 this));
+
+    // public Command runDriveQuasiTest(Direction direction) {
+    //     return m_driveSysIdRoutine.quasistatic(direction);
+    // }
+
+    // public Command runDriveDynamTest(SysIdRoutine.Direction direction) {
+    //     return m_driveSysIdRoutine.dynamic(direction);
+    // }
+
+    // public Command runSteerQuasiTest(Direction direction) {
+    //     return m_steerSysIdRoutine.quasistatic(direction);
+    // }
+
+    // public Command runSteerDynamTest(SysIdRoutine.Direction direction) {
+    //     return m_steerSysIdRoutine.dynamic(direction);
+    // }
+
+    // public Command runDriveSlipTest() {
+    //     return m_slipSysIdRoutine.quasistatic(SysIdRoutine.Direction.kForward);
+    // }
+
+    public Rotation2d getYaw() {
+        return Rotation2d.fromDegrees(m_pigeon2.getYaw().getValueAsDouble());
+    }
+
+    public Rotation2d getAngleFromSpeaker() {
+        var alliance = DriverStation.getAlliance();
+        if (!alliance.isPresent()) {
+            return new Rotation2d(0);
+        }
+        if (alliance.get() == DriverStation.Alliance.Blue) {
+            System.out.println(vision1.getTargetAngle(7));
+            return Rotation2d.fromDegrees(vision1.getTargetAngle(7));
+        } else {
+            return Rotation2d.fromDegrees(vision1.getTargetAngle(4));
+        }
+    }
+
+    public double getDistanceFromSpeakerMeters() {
+        var alliance = DriverStation.getAlliance();
+        if (!alliance.isPresent()) {
+            return 0;
+        }
+        if (alliance.get() == DriverStation.Alliance.Blue) {
+            System.out.println(vision1.getTargetAngle(7));
+            return vision1.getTargetDist(7);
+        } else {
+            System.out.println(vision1.getTargetAngle(4));
+            return vision1.getTargetDist(4);
+        }
+    }
 
 }

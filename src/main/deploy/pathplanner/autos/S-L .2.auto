@@ -2,10 +2,10 @@
   "version": 1.0,
   "startingPose": {
     "position": {
-      "x": 1.4817998866766982,
-      "y": 7.36073933686329
+      "x": 1.254860202028098,
+      "y": 4.075047380863993
     },
-    "rotation": 0
+    "rotation": -49.63546342690271
   },
   "command": {
     "type": "sequential",
@@ -14,43 +14,61 @@
         {
           "type": "path",
           "data": {
-            "pathName": "S-A Taxi - Shoot"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "S-A Taxi to 3"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "3 shoot to 2"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "3 shoot 3-2-1"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "2 shoot 3-2-1"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "2 shoot to 1"
+            "pathName": "S-L Taxi - 1"
           }
         },
         {
           "type": "path",
           "data": {
             "pathName": "1 shoot 1-2-3"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "1 shoot to 2"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "2 shoot 1-2-3"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "2 shoot to 3"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "3 shoot 1-2-3"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "3 shoot to 8"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "8 shoot"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "3 shoot to 7"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "7 shoot"
           }
         }
       ]
