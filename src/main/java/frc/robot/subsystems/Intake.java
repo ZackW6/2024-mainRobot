@@ -37,7 +37,7 @@ public class Intake extends SubsystemBase{
     private final DigitalInput limitSwicth1;
     private final DigitalInput limitSwicth2;
     private double speed=0;
-    double intakeSpeed = 20.0;//In rps
+    double intakeSpeed = 23.0;//In rps
     double outtakeSpeed = -60.0;
 
     public Intake(){

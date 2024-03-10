@@ -65,9 +65,11 @@ public class GroupCommands extends SubsystemBase{
   }
   
   public Command ampShot(){
-    return Commands.deadline(Commands.waitSeconds(.3)
-    ,intake.setVelocity(-22.5)).andThen(switchModes());
+    return Commands.deadline(Commands.waitSeconds(.5)
+    ,Commands.waitSeconds(0.003).andThen(Commands.runOnce(()->arm.setCurrentArmState(ArmState.AmpMove)))
+    ,intake.setVelocity(-19.25/*-19.5*/)).andThen(switchModes());
   } 
+
   public Command intakeMain(){
     return Commands.deadline(intake.intakePiece(),Commands.runOnce(()->arm.setCurrentArmState(ArmState.Intake)),Commands.runOnce(()->shooter.enableDefault()))
     .andThen(candle.pickUpLights())
@@ -146,7 +148,7 @@ public class GroupCommands extends SubsystemBase{
     // }
     return x;
   }
-  private final PIDController thetaControllerSpeaker = new PIDController(.2,0,0);//(12.2,1.1,.4);
+  private final PIDController thetaControllerSpeaker = new PIDController(.05,0,0);//(12.2,1.1,.4);
 
   public Command alignToSpeaker(DoubleSupplier xAxis, DoubleSupplier yAxis) {
     thetaControllerSpeaker.reset();

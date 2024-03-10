@@ -74,7 +74,7 @@ public final class Constants {
 		public static final double jerk = 9999;
 
         
-        public static final Rotation2d angleOffset = Rotation2d.fromRotations(.598);//.592);//.063);//.314);//
+        public static final Rotation2d angleOffset = Rotation2d.fromRotations(-.068);//.592);//.063);//.314);//
         
 
         /* Arm Current Limiting */ //TODO: Change these values
