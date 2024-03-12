@@ -64,10 +64,6 @@ private Animation toAnimate;
     return this.runOnce(() -> toAnimate = new RainbowAnimation(1, 1, LedCount));
   }
 
-  public Command intake() {
-    return this.runOnce(() -> toAnimate = new ColorFlowAnimation(255, 255, 0, 0, 0.7, LedCount, Direction.Forward));
-  }
-
   public Command pickUpLights() {
     return this.runOnce(() ->{
         toAnimate = new StrobeAnimation(0, 255, 0, 0, 0.05, LedCount);
