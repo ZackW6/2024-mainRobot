@@ -45,12 +45,14 @@ public class RobotContainer {
   private final CommandSwerveDrivetrain drivetrain = TunerConstants.DriveTrain; // My drivetrain
 
   private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
-      .withDeadband(0).withRotationalDeadband(0) // Add a 10% deadband
-      .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // I want field-centric
-                                                               // driving in open loop
+      .withDeadband(TunerConstants.TRANSLATIONAL_DEADBAND).withRotationalDeadband(TunerConstants.ROTATIONAL_DEADBAND)
+      .withDriveRequestType(DriveRequestType.OpenLoopVoltage); 
   private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
   private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
   private final Telemetry logger = new Telemetry(MaxSpeed);
+
+
+  /* Subsystems */
   private final Arm arm = new Arm();
   private final Shooter shooter = new Shooter();
   private final Intake intake = new Intake();
@@ -76,7 +78,7 @@ public class RobotContainer {
         // .applyRequest(() -> point.withModuleDirection(new Rotation2d(-driverController.getLeftY(), -driverController.getLeftX()))));
     intake.setDefaultCommand(intake.stop());
 
-    Command candleDist = Commands.run(()->groupCommands.getDistCandle());
+    candle.setDefaultCommand(candle.idleLED());
     // reset the field-centric heading on left bumper press
     driverController.y().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldRelative()));
     driverController.rightBumper().whileTrue(groupCommands.intake()).whileFalse(Commands.runOnce(()->arm.setCurrentArmState(arm.lastMainState())));
