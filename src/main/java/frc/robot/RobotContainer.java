@@ -23,6 +23,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.commands.GroupCommands;
+import frc.robot.constants.GeneralConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Candle;
@@ -35,7 +36,7 @@ public class RobotContainer {
   private SendableChooser<Command> autoChooser;
   
   private double MaxSpeed = TunerConstants.kSpeedAt12VoltsMps; // kSpeedAt12VoltsMps desired top speed
-  private double MaxAngularRate = 2.2 * Math.PI; // 3/4 of a rotation per second max angular velocity
+  private double MaxAngularRate = GeneralConstants.MAX_ANGULAR_RATE; // 3/4 of a rotation per second max angular velocity
 
   /* Setting up bindings for necessary control of the swerve drive platform */
   private final CommandXboxController driverController = new CommandXboxController(0);
@@ -73,39 +74,19 @@ public class RobotContainer {
         // driverController.a().whileTrue(drivetrain.applyRequest(() -> brake));
         // driverController.b().whileTrue(drivetrain
         // .applyRequest(() -> point.withModuleDirection(new Rotation2d(-driverController.getLeftY(), -driverController.getLeftX()))));
-
-
-    // shooter.setDefaultCommand(shooter.runOnce(() -> shooter.setTargetFlywheelSpeed(30)));
     intake.setDefaultCommand(intake.stop());
 
     Command candleDist = Commands.run(()->groupCommands.getDistCandle());
     // reset the field-centric heading on left bumper press
-    // driverController.a()
-
     driverController.y().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldRelative()));
     driverController.rightBumper().whileTrue(groupCommands.intake()).whileFalse(Commands.runOnce(()->arm.setCurrentArmState(arm.lastMainState())));
     driverController.leftBumper().onTrue(groupCommands.shoot());
     driverController.a().whileTrue(groupCommands.alignToAmp(() -> -driverController.getLeftY() * MaxSpeed, () -> -driverController.getLeftX() * MaxSpeed));
     driverController.rightTrigger(.5).whileTrue(drivetrain.applyRequest(() -> brake));
-    driverController.x().whileTrue(groupCommands.alignToSpeaker(() -> -driverController.getLeftY() * MaxSpeed, () -> -driverController.getLeftX() * MaxSpeed));//.alongWith(candleDist));
-    // driverController.leftTrigger(.5).onTrue(groupCommands.ampShotSpeaker());
-    // driverController.b().whileTrue(groupCommands.shoot());
-    // driverController.y().onTrue(groupCommands.ampShot());
-    // driverController.rightTrigger(.5).onTrue(groupCommands.changeArmDefault());
-
-    // driverController.back().and(driverController.y()).whileTrue(drivetrain.runDriveDynamTest(Direction.kForward));
-    // driverController.back().and(driverController.x()).whileTrue(drivetrain.runDriveDynamTest(Direction.kReverse));
-    // driverController.start().and(driverController.y()).whileTrue(drivetrain.runDriveQuasiTest(Direction.kForward));
-    // driverController.start().and(driverController.x()).whileTrue(drivetrain.runDriveQuasiTest(Direction.kReverse));
-    
-
-
-    // joystick.rightTrigger(.5).onTrue(groupCommands.intakeFromShooter());
-    
+    driverController.x().whileTrue(groupCommands.alignToSpeaker(() -> -driverController.getLeftY() * MaxSpeed, () -> -driverController.getLeftX() * MaxSpeed));
     
     
     operatorController.a().onTrue(groupCommands.switchModes());
-    operatorController.b().onTrue(groupCommands.resetAll());
     operatorController.x().whileTrue(intake.setVelocity(15));
     if (Utils.isSimulation()) {
       drivetrain.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
@@ -126,7 +107,6 @@ public class RobotContainer {
   public void configureAutonomousCommands() {
     NamedCommands.registerCommand("intake", groupCommands.intakeMainAuto());
     NamedCommands.registerCommand("loadAndShoot", groupCommands.loadAndShoot());
-    // NamedCommands.registerCommand("speakerFromIntake", groupCommands.ampShotSpeaker()); //Probably not going to do
   }
 
   public Command getAutonomousCommand() {

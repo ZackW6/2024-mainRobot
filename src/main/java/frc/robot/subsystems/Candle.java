@@ -8,7 +8,7 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import frc.robot.Constants;
+import frc.robot.constants.GeneralConstants;
 
 import com.ctre.phoenix.led.*;
 import com.ctre.phoenix.led.CANdle.LEDStripType;
@@ -19,8 +19,8 @@ import com.ctre.phoenix.led.TwinkleAnimation.TwinklePercent;
 import com.ctre.phoenix.led.TwinkleOffAnimation.TwinkleOffPercent;
 
 public class Candle extends SubsystemBase {
-    CANdle candle1 = new CANdle(1, Constants.mainCanbus);
-    CANdle candle2 = new CANdle(2, Constants.mainCanbus);
+    CANdle candle1 = new CANdle(1, GeneralConstants.MAIN_CANBUS);
+    CANdle candle2 = new CANdle(2, GeneralConstants.MAIN_CANBUS);
 
     // CANdle candle2 = new CANdle(31, Constants.mainCanbus);
 

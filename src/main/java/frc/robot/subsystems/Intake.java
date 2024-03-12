@@ -28,8 +28,8 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
-import frc.robot.Constants.IntakeConstants;
-import frc.robot.Constants.ShooterConstants;
+import frc.robot.constants.IntakeConstants;
+import frc.robot.constants.ShooterConstants;
 
 
 public class Intake extends SubsystemBase{
@@ -41,9 +41,9 @@ public class Intake extends SubsystemBase{
     double outtakeSpeed = -60.0;
 
     public Intake(){
-        intakeMotor = new TalonFX(IntakeConstants.intakeMotorID);
-        limitSwicth1 = new DigitalInput(IntakeConstants.limitSwitchID1);
-        limitSwicth2 = new DigitalInput(IntakeConstants.limitSwicthID2);
+        intakeMotor = new TalonFX(IntakeConstants.INTAKE_MOTOR_ID);
+        limitSwicth1 = new DigitalInput(IntakeConstants.LIMIT_SWITCH_ID_1);
+        limitSwicth2 = new DigitalInput(IntakeConstants.LIMIT_SWITCH_ID_2);
         configMotors();
     }
     MotionMagicVelocityTorqueCurrentFOC torqueCurrentFOC = new MotionMagicVelocityTorqueCurrentFOC(0);
@@ -94,13 +94,13 @@ public class Intake extends SubsystemBase{
         motionMagicConfigs.MotionMagicJerk = 0; // Target jerk of 4000 rps/s/s (0.1 seconds)
     
         CurrentLimitsConfigs currentLimits = new CurrentLimitsConfigs();
-        currentLimits.SupplyCurrentLimit = IntakeConstants.intakeCurrentLimit; // Limit to 1 amps
-        currentLimits.SupplyCurrentThreshold = IntakeConstants.intakeCurrentThreshold ; // If we exceed 4 amps
-        currentLimits.SupplyTimeThreshold = IntakeConstants.intakeCurrentThresholdTime; // For at least 1 second
-        currentLimits.SupplyCurrentLimitEnable = IntakeConstants.intakeEnableCurrentLimit; // And enable it
+        currentLimits.SupplyCurrentLimit = IntakeConstants.INTAKE_CURRENT_LIMIT; // Limit to 1 amps
+        currentLimits.SupplyCurrentThreshold = IntakeConstants.INTAKE_CURRENT_THRESHOLD ; // If we exceed 4 amps
+        currentLimits.SupplyTimeThreshold = IntakeConstants.INTAKE_CURRENT_THRESHOLD_TIME; // For at least 1 second
+        currentLimits.SupplyCurrentLimitEnable = IntakeConstants.INTAKE_ENABLE_CURRENT_LIMIT; // And enable it
 
-        currentLimits.StatorCurrentLimit = 20; // Limit stator to 20 amps
-        currentLimits.StatorCurrentLimitEnable = true; // And enable it
+        currentLimits.StatorCurrentLimit = IntakeConstants.INTAKE_STATOR_CURRENT_LIMIT; // Limit stator to 20 amps
+        currentLimits.StatorCurrentLimitEnable = IntakeConstants.INTAKE_STATOR_CURRENT_LIMIT_ENABLE; // And enable it
 
         talonFXConfigs.CurrentLimits = currentLimits;
 

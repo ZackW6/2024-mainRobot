@@ -34,24 +34,13 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.CommandSwerveDrivetrain;
-import frc.robot.Constants;
-import frc.robot.Constants.ShooterConstants;
-
+import frc.robot.constants.ShooterConstants;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.Voltage;
 
 import static edu.wpi.first.units.Units.Volts;
 
 public class Shooter extends SubsystemBase{
-    private static final double FLYWHEEL_ALLOWABLE_ERROR = 1.5;
-    private static final double FLYWHEEL_GEAR_REDUCTION = 1;
-
-    private static final double FLYWHEEL_VELOCITY_CONSTANT = 0.028;
-    private static final double FLYWHEEL_ACCELERATION_CONSTANT = 0.0030108;
-    private static final double FLYWHEEL_SENSOR_POSITION_COEFFICIENT = (FLYWHEEL_GEAR_REDUCTION / 2048.0) * 2 * Math.PI;
-    private static final double FLYWHEEL_SENSOR_VELOCITY_COEFFICIENT = FLYWHEEL_SENSOR_POSITION_COEFFICIENT * 10.0;
-    public static final double FLYWHEEL_IDLE_SPEED = Units.rotationsPerMinuteToRadiansPerSecond(2000);
-
     private final TalonFX leftShooterMotor;
     private final TalonFX  rightShooterMotor;
 
@@ -71,8 +60,8 @@ public class Shooter extends SubsystemBase{
 
     public Shooter(){
         
-        leftShooterMotor = new TalonFX(ShooterConstants.leftShooterMotorID);
-        rightShooterMotor = new TalonFX(ShooterConstants.rightShooterMotorID);
+        leftShooterMotor = new TalonFX(ShooterConstants.LEFT_SHOOTER_MOTOR_ID);
+        rightShooterMotor = new TalonFX(ShooterConstants.RIGHT_SHOOTER_MOTOR_ID);
         // TalonFXConfiguration talonFXConfigs = new TalonFXConfiguration();
         // leftShooterMotor.getConfigurator().apply(talonFXConfigs);
         // leftShooterMotor.setInverted(true);
@@ -238,11 +227,11 @@ public class Shooter extends SubsystemBase{
     }
 
     public boolean isLeftFlywheelAtTargetSpeed() {
-        return Math.abs(getLeftFlywheelVelocity() - targetFlywheelSpeedL) < FLYWHEEL_ALLOWABLE_ERROR;
+        return Math.abs(getLeftFlywheelVelocity() - targetFlywheelSpeedL) < ShooterConstants.FLYWHEEL_ALLOWABLE_ERROR;
     }
 
     public boolean isRightFlywheelAtTargetSpeed() {
-        return Math.abs(getRightFlywheelVelocity() - targetFlywheelSpeedR) < FLYWHEEL_ALLOWABLE_ERROR;
+        return Math.abs(getRightFlywheelVelocity() - targetFlywheelSpeedR) < ShooterConstants.FLYWHEEL_ALLOWABLE_ERROR;
     }
 
     public void disableFlywheel() {
@@ -279,13 +268,13 @@ public class Shooter extends SubsystemBase{
         motionMagicConfigs.MotionMagicJerk = 4000; // Target jerk of 4000 rps/s/s (0.1 seconds)
     
         CurrentLimitsConfigs currentLimits = new CurrentLimitsConfigs();
-        currentLimits.SupplyCurrentLimit = ShooterConstants.shooterCurrentLimit; // Limit to 1 amps
-        currentLimits.SupplyCurrentThreshold = ShooterConstants.shooterCurrentThreshold; // If we exceed 4 amps
-        currentLimits.SupplyTimeThreshold = ShooterConstants.shooterCurrentThresholdTime; // For at least 1 second
-        currentLimits.SupplyCurrentLimitEnable = ShooterConstants.shooterEnableCurrentLimit; // And enable it
+        currentLimits.SupplyCurrentLimit = ShooterConstants.SHOOTER_CURRENT_LIMIT; // Limit to 1 amps
+        currentLimits.SupplyCurrentThreshold = ShooterConstants.SHOOTER_CURRENT_THRESHOLD; // If we exceed 4 amps
+        currentLimits.SupplyTimeThreshold = ShooterConstants.SHOOTER_CURRENT_THRESHOLD_TIME; // For at least 1 second
+        currentLimits.SupplyCurrentLimitEnable = ShooterConstants.SHOOTER_ENABLE_CURRENT_LIMIT; // And enable it
 
-        currentLimits.StatorCurrentLimit = 200; // Limit stator to 20 amps
-        currentLimits.StatorCurrentLimitEnable = true; // And enable it
+        currentLimits.StatorCurrentLimit = ShooterConstants.SHOOTER_STATOR_CURRENT_LIMIT; // Limit stator to 20 amps
+        currentLimits.StatorCurrentLimitEnable = ShooterConstants.SHOOTER_STATOR_CURRENT_LIMIT_ENABLE; // And enable it
 
         talonFXConfigs.CurrentLimits = currentLimits;
         

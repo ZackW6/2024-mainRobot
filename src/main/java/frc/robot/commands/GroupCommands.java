@@ -59,50 +59,50 @@ public class GroupCommands extends SubsystemBase{
 
   public Command loadAndShoot(){
     return Commands.deadline(Commands.waitSeconds(.01).andThen(Commands.waitUntil(() ->shooter.isLeftFlywheelAtTargetSpeed()))
-    ,Commands.run(() -> shooter.setTargetFlywheelSpeed(85,85)), Commands.runOnce(()->shooter.disableDefault()))
-    .andThen(Commands.waitUntil(()->arm.isArmInSpeakerState())).andThen(intake.outtakePiece())
-    .andThen(resetAll());
+      ,Commands.run(() -> shooter.setTargetFlywheelSpeed(85,85)), Commands.runOnce(()->shooter.disableDefault()))
+      .andThen(Commands.waitUntil(()->arm.isArmInSpeakerState())).andThen(intake.outtakePiece())
+      .andThen(resetAll());
   }
   
   public Command ampShot(){
     return Commands.deadline(Commands.waitSeconds(.5)
-    ,Commands.waitSeconds(0.003).andThen(Commands.runOnce(()->arm.setCurrentArmState(ArmState.AmpMove)))
-    ,intake.setVelocity(-19.25/*-19.5*/)).andThen(switchModes());
+      ,Commands.waitSeconds(0.003).andThen(Commands.runOnce(()->arm.setCurrentArmState(ArmState.AmpMove)))
+      ,intake.setVelocity(-19.25/*-19.5*/)).andThen(switchModes());
   } 
 
   public Command intakeMain(){
     return Commands.deadline(intake.intakePiece(),Commands.runOnce(()->arm.setCurrentArmState(ArmState.Intake)),Commands.runOnce(()->shooter.enableDefault()))
-    .andThen(candle.pickUpLights())
-    .andThen(Commands.deadline(Commands.waitSeconds(.5).andThen(Commands.waitUntil(()->arm.isArmAtAngle()))
-    ,intake.setVelocity(20)
-    ,Commands.runOnce(()->arm.setCurrentArmState(arm.lastMainState()))))
-    .andThen(intake.stop())
-    .andThen(candle.idleLED());
+      .andThen(candle.pickUpLights())
+      .andThen(Commands.deadline(Commands.waitSeconds(.5).andThen(Commands.waitUntil(()->arm.isArmAtAngle()))
+      ,intake.setVelocity(20)
+      ,Commands.runOnce(()->arm.setCurrentArmState(arm.lastMainState()))))
+      .andThen(intake.stop())
+      .andThen(candle.idleLED());
   }
 
   public Command intakeMainAuto(){
     return Commands.race(Commands.waitSeconds(2.5)
-    ,Commands.deadline(intake.intakePiece(),Commands.runOnce(()->arm.setCurrentArmState(ArmState.Intake)),Commands.runOnce(()->shooter.enableDefault()))
-    .andThen(candle.pickUpLights()))
-    .andThen(Commands.deadline(Commands.waitSeconds(.5).andThen(Commands.waitUntil(()->arm.isArmAtAngle()))
-    ,intake.setVelocity(15)
-    ,Commands.runOnce(()->arm.setCurrentArmState(arm.lastMainState()))))
-    .andThen(intake.stop())
-    .andThen(candle.idleLED());
+      ,Commands.deadline(intake.intakePiece(),Commands.runOnce(()->arm.setCurrentArmState(ArmState.Intake)),Commands.runOnce(()->shooter.enableDefault()))
+      .andThen(candle.pickUpLights()))
+      .andThen(Commands.deadline(Commands.waitSeconds(.5).andThen(Commands.waitUntil(()->arm.isArmAtAngle()))
+      ,intake.setVelocity(15)
+      ,Commands.runOnce(()->arm.setCurrentArmState(arm.lastMainState()))))
+      .andThen(intake.stop())
+      .andThen(candle.idleLED());
   }
 
   public Command resetAll(){
-    return Commands.runOnce(()->{
-      shooter.enableDefault();
-    }).andThen(intake.stop()).andThen(Commands.runOnce(()->arm.setCurrentArmState(ArmState.Speaker)));
+    return Commands.runOnce(()->shooter.enableDefault())
+      .andThen(intake.stop())
+      .andThen(Commands.runOnce(()->arm.setCurrentArmState(ArmState.Speaker)));
   }
   
   @Deprecated
   public Command ampShotSpeaker(){//BROKEN, and probably not doing
     return Commands.deadline(Commands.waitSeconds(5)
-    ,Commands.runOnce(()->arm.setCurrentArmState(ArmState.AmpMove))
-    .andThen(Commands.waitUntil(()->arm.isArmAtAngle()))
-    .andThen(intake.setVelocity(-1000000)));
+      ,Commands.runOnce(()->arm.setCurrentArmState(ArmState.AmpMove))
+      .andThen(Commands.waitUntil(()->arm.isArmAtAngle()))
+      .andThen(intake.setVelocity(-1000000)));
   }
   // public Command intakeFromShooter(){//Probably not using
 
@@ -130,7 +130,6 @@ public class GroupCommands extends SubsystemBase{
         return thetaControllerAmp.calculate(correctYaw(drivetrain.getYaw().getDegrees()%360,0), 0);
       }
     };
-    // System.out.println(rotationalVelocity);
     return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble()) //was -xAxis, but in sim is this
       .withVelocityY(yAxis.getAsDouble())//was -yAxis, but in sim is this
       .withRotationalRate(Units.degreesToRadians(rotationalVelocity.getAsDouble())));
@@ -138,14 +137,9 @@ public class GroupCommands extends SubsystemBase{
   private double correctYaw(double x, double setpoint){
     if (x>180+setpoint){
       x-=360;
-    }else if(x<-180+setpoint){//if setpoint 0
+    }else if(x<-180+setpoint){
       x+=360;
     }
-    // if (x>360){//if setpoint 180
-    //   x-=360;
-    // }else if(x<0){
-    //   x+=360;
-    // }
     return x;
   }
   private final PIDController thetaControllerSpeaker = new PIDController(.05,0,0);//(12.2,1.1,.4);
@@ -154,7 +148,7 @@ public class GroupCommands extends SubsystemBase{
     thetaControllerSpeaker.reset();
     
 
-    DoubleSupplier rotationalVelocity = () -> thetaControllerSpeaker.calculate(drivetrain.getAngleFromSpeaker().getDegrees(),8);
+    DoubleSupplier rotationalVelocity = () -> thetaControllerSpeaker.calculate(drivetrain.getAngleFromSpeaker().getDegrees(),0/*was 8? I have no clue why */);
   
     
     return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble()) 
@@ -181,9 +175,10 @@ public class GroupCommands extends SubsystemBase{
   }
   private double lastDist = 100;
   public void getDistCandle(){
-    double curDist = drivetrain.getPose().getX();
+    // double curDist = drivetrain.getPose().getX();
 
-    // double curDist = drivetrain.getDistanceFromSpeakerMeters();
+    double curDist = drivetrain.getDistanceFromSpeakerMeters();
+    System.out.println(curDist);
     if (lastDist>1.9 || lastDist<1.84){
       if (curDist<1.9 && curDist>1.84){
         // System.out.println("In Range");

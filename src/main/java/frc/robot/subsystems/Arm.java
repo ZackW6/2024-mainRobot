@@ -50,11 +50,8 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.robot.Constants;
 import frc.robot.Robot;
-import frc.robot.Constants.ArmConstants;
-
-
+import frc.robot.constants.ArmConstants;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 
 
@@ -92,8 +89,8 @@ public class Arm extends SubsystemBase {
 
   public Arm() {
 
-    armMotor = new TalonFX(ArmConstants.armMotorID);
-    encoder = new CANcoder(ArmConstants.CANCoderID);
+    armMotor = new TalonFX(ArmConstants.ARM_MOTOR_ID);
+    encoder = new CANcoder(ArmConstants.CAN_CODER_ID);
     //resetToAbsolute();
     configMotor();
     // angleTarget = tab
@@ -229,7 +226,7 @@ public class Arm extends SubsystemBase {
     
     canCoderConfigs.MagnetSensor.AbsoluteSensorRange = AbsoluteSensorRangeValue.Signed_PlusMinusHalf;
     canCoderConfigs.MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive;
-    canCoderConfigs.MagnetSensor.MagnetOffset = ArmConstants.angleOffset.getRotations();
+    canCoderConfigs.MagnetSensor.MagnetOffset = ArmConstants.ANGLE_OFFSET.getRotations();
     
     encoder.getConfigurator().apply(canCoderConfigs);
 
@@ -261,18 +258,18 @@ public class Arm extends SubsystemBase {
     
     /* Motion Magic Settings */
     var motionMagicConfigs = talonFXConfigs.MotionMagic;
-    motionMagicConfigs.MotionMagicCruiseVelocity = ArmConstants.cruiseVelocity; // Unlimited cruise velocity
-    motionMagicConfigs.MotionMagicAcceleration = ArmConstants.maxAcceleration;
-    motionMagicConfigs.MotionMagicJerk = ArmConstants.jerk;
+    motionMagicConfigs.MotionMagicCruiseVelocity = ArmConstants.CRUISE_VELOCITY; // Unlimited cruise velocity
+    motionMagicConfigs.MotionMagicAcceleration = ArmConstants.MAX_ACCELERATION;
+    motionMagicConfigs.MotionMagicJerk = ArmConstants.JERK;
     // motionMagicConfigs.MotionMagicExpo_kV = 0.12; // kV is around 0.12 V/rps
     // motionMagicConfigs.MotionMagicExpo_kA = 0.1; // Use a slower kA of 0.1 V/(rps/s
     /* Current Limits */
-    m_currentLimits.SupplyCurrentLimit = ArmConstants.armCurrentLimit; // Limit to 1 amps
-    m_currentLimits.SupplyCurrentThreshold = ArmConstants.armSupplyCurrentThreshold; // If we exceed 4 amps
-    m_currentLimits.SupplyTimeThreshold = ArmConstants.armCurrentThresholdTime; // For at least 1 second
-    m_currentLimits.SupplyCurrentLimitEnable = ArmConstants.armEnableCurrentLimit; // And enable it
-    m_currentLimits.StatorCurrentLimit = ArmConstants.armStatorCurrentLimit; // Limit stator to 20 amps
-    m_currentLimits.StatorCurrentLimitEnable = ArmConstants.armStatorCurrentLimitEnable; // And enable it
+    m_currentLimits.SupplyCurrentLimit = ArmConstants.ARM_CURRENT_LIMIT; // Limit to 1 amps
+    m_currentLimits.SupplyCurrentThreshold = ArmConstants.ARM_SUPPLY_CURRENT_THRESHOLD; // If we exceed 4 amps
+    m_currentLimits.SupplyTimeThreshold = ArmConstants.ARM_CURRENT_THRESHOLD_TIME; // For at least 1 second
+    m_currentLimits.SupplyCurrentLimitEnable = ArmConstants.ARM_ENABLE_CURRENT_LIMIT; // And enable it
+    m_currentLimits.StatorCurrentLimit = ArmConstants.ARM_STATOR_CURRENT_LIMIT; // Limit stator to 20 amps
+    m_currentLimits.StatorCurrentLimitEnable = ArmConstants.ARM_STATOR_CURRENT_LIMIT_ENABLE; // And enable it
 
     talonFXConfigs.CurrentLimits = m_currentLimits;
 

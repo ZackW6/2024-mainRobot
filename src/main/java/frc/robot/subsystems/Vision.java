@@ -48,7 +48,7 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
 import frc.robot.Telemetry;
-import frc.robot.Constants.VisionConstants;
+import frc.robot.constants.VisionConstants;
 
 import java.util.List;
 import java.util.Optional;
@@ -82,11 +82,11 @@ public class Vision extends SubsystemBase{
 
 
     public Vision(String cameraName, Transform3d transformation) {
-        VisionConstants.kTagLayout.setOrigin(AprilTagFieldLayout.OriginPosition.kBlueAllianceWallRightSide);
+        VisionConstants.K_TAG_LAYOUT.setOrigin(AprilTagFieldLayout.OriginPosition.kBlueAllianceWallRightSide);
         camera = new PhotonCamera(cameraName);
        
         photonEstimator =
-                new PhotonPoseEstimator(VisionConstants.kTagLayout, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, camera, transformation);
+                new PhotonPoseEstimator(VisionConstants.K_TAG_LAYOUT, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, camera, transformation);
         photonEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
 
 
@@ -145,7 +145,7 @@ public class Vision extends SubsystemBase{
      * @param estimatedPose The estimated pose to guess standard deviations for.
      */
     public Matrix<N3, N1> getEstimationStdDevs(Pose2d estimatedPose) {
-        var estStdDevs = VisionConstants.kSingleTagStdDevs;
+        var estStdDevs = VisionConstants.K_SINGLE_TAG_STD_DEVS;
         var targets = getLatestResult().getTargets();
         int numTags = 0;
         double avgDist = 0;
@@ -159,7 +159,7 @@ public class Vision extends SubsystemBase{
         if (numTags == 0) return estStdDevs;
         avgDist /= numTags;
         // Decrease std devs if multiple targets are visible
-        if (numTags > 1) estStdDevs = VisionConstants.kMultiTagStdDevs;
+        if (numTags > 1) estStdDevs = VisionConstants.K_MULTI_TAG_STD_DEVS;
         // Increase std devs based on (average) distance
         if (numTags == 1 && avgDist > 4)
             estStdDevs = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
@@ -222,9 +222,9 @@ public class Vision extends SubsystemBase{
             var foundTargets = targets.stream().filter(t -> t.getFiducialId()==target).filter(t ->!t.equals(target) && t.getPoseAmbiguity() <= .2 && t.getPoseAmbiguity() !=-1).findFirst();
             if (foundTargets.isPresent()){
                 return PhotonUtils.calculateDistanceToTargetMeters(
-                    VisionConstants.ShooterCamTransform.getX(),
-                    VisionConstants.ShooterCamTransform.getY(),
-                    VisionConstants.ShooterCamTransform.getZ(),
+                    VisionConstants.SHOOTER_CAMERA_TRANSFORM.getX(),
+                    VisionConstants.SHOOTER_CAMERA_TRANSFORM.getY(),
+                    VisionConstants.SHOOTER_CAMERA_TRANSFORM.getZ(),
                     Units.degreesToRadians(result.getBestTarget().getPitch()));
             }
         }
