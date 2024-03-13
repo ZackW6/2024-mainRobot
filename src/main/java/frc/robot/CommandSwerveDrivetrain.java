@@ -20,6 +20,7 @@ import com.pathplanner.lib.util.PIDConstants;
 import com.pathplanner.lib.util.ReplanningConfig;
 
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -105,6 +106,7 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     @Override
     public void periodic(){
         visionEstimation();
+        vision1.simulationPeriodic(getPose());
         // System.out.println("Speaker Distance " + getDistanceFromSpeakerMeters());
         // System.out.println("Rotation " + getAngleFromSpeaker());
     }

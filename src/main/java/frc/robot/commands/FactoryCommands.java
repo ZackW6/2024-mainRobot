@@ -34,13 +34,13 @@ import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.Arm.ArmState;
 
-public class GroupCommands extends SubsystemBase{
+public class FactoryCommands extends SubsystemBase{
   private Arm arm;
   private Shooter shooter;
   private Intake intake;
   private Candle candle;
   private CommandSwerveDrivetrain drivetrain;
-  public GroupCommands(Arm arm, Shooter shooter, Intake intake, Candle candle, CommandSwerveDrivetrain drivetrain){
+  public FactoryCommands(Arm arm, Shooter shooter, Intake intake, Candle candle, CommandSwerveDrivetrain drivetrain){
     this.arm = arm;
     this.shooter = shooter;
     this.intake = intake;

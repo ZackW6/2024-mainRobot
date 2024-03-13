@@ -34,15 +34,19 @@ import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
+import com.ctre.phoenix6.sim.CANcoderSimState;
 
-
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.Voltage;
 import edu.wpi.first.wpilibj.AnalogEncoder;
 import edu.wpi.first.wpilibj.CAN;
+import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.motorcontrol.PWMSparkMax;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -53,7 +57,16 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Robot;
 import frc.robot.constants.ArmConstants;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
-
+import edu.wpi.first.wpilibj.simulation.BatterySim;
+import edu.wpi.first.wpilibj.simulation.EncoderSim;
+import edu.wpi.first.wpilibj.simulation.RoboRioSim;
+import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
+import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj.util.Color8Bit;
 
 import static edu.wpi.first.units.Units.Volts;
 
@@ -79,12 +92,75 @@ public class Arm extends SubsystemBase {
   private SysIdRoutine m_SysIdRoutine;
   private TalonFXConfiguration talonFXConfigs = new TalonFXConfiguration();
   private ArmState currentArmState = ArmState.Speaker; 
+
+
+
+  private final DCMotor m_armGearbox = DCMotor.getFalcon500Foc(1);
+
+  // distance per pulse = (angle per revolution) / (pulses per revolution)
+  //  = (2 * PI rads) / (4096 pulses)
+  public static final double kArmEncoderDistPerPulse = 2.0 * Math.PI / 4096;
+
+  public static final double kArmReduction = 200;
+  public static final double kArmMass = 8.0; // Kilograms
+  public static final double kArmLength = Units.inchesToMeters(30);
+  public static final double kMinAngleRads = Units.degreesToRadians(-75);
+  public static final double kMaxAngleRads = Units.degreesToRadians(255);
+  private final SingleJointedArmSim m_armSim =
+      new SingleJointedArmSim(
+          m_armGearbox,
+          kArmReduction,
+          SingleJointedArmSim.estimateMOI(kArmLength, kArmMass),
+          kArmLength,
+          kMinAngleRads,
+          kMaxAngleRads,
+          true,
+          0,
+          VecBuilder.fill(kArmEncoderDistPerPulse) // Add noise with a std-dev of 1 tick
+          );
+  private final CANcoderSimState m_encoderSim;
+
+  // Create a Mechanism2d display of an Arm with a fixed ArmTower and moving Arm.
+  private final Mechanism2d m_mech2d = new Mechanism2d(60, 60);
+  private final MechanismRoot2d m_armPivot = m_mech2d.getRoot("ArmPivot", 30, 30);
+  private final MechanismLigament2d m_armTower =
+      m_armPivot.append(new MechanismLigament2d("ArmTower", 30, -90));
+  private final MechanismLigament2d m_arm =
+      m_armPivot.append(
+          new MechanismLigament2d(
+              "Arm",
+              30,
+              Units.radiansToDegrees(m_armSim.getAngleRads()),
+              6,
+              new Color8Bit(Color.kYellow)));
+
+  
   public enum ArmState {
     Speaker,
     Amp,
     Intake,
     AmpMove
   } 
+
+  /** Update the simulation model. */
+  public void simulationPeriodic() {
+    // In this method, we update our simulation of what our arm is doing
+    // First, we set our "inputs" (voltages)
+    System.out.println(armMotor.get());
+    m_armSim.setInput(armMotor.getSimState().getMotorVoltage() * RobotController.getBatteryVoltage());
+
+    // Next, we update it. The standard loop time is 20ms.
+    m_armSim.update(0.020);
+
+    // Finally, we set our simulated encoder's readings and simulated battery voltage
+    m_encoderSim.setRawPosition(m_armSim.getAngleRads());
+    // SimBattery estimates loaded battery voltages
+    RoboRioSim.setVInVoltage(
+        BatterySim.calculateDefaultBatteryLoadedVoltage(m_armSim.getCurrentDrawAmps()));
+
+    // Update the Mechanism Arm angle based on the simulated arm angle
+    m_arm.setAngle(Units.radiansToDegrees(m_armSim.getAngleRads()));
+  }
 
 
   public Arm() {
@@ -93,6 +169,10 @@ public class Arm extends SubsystemBase {
     encoder = new CANcoder(ArmConstants.CAN_CODER_ID);
     //resetToAbsolute();
     configMotor();
+
+    m_encoderSim = new CANcoderSimState(encoder);
+    SmartDashboard.putData("Arm Sim", m_mech2d);
+    m_armTower.setColor(new Color8Bit(Color.kBlue));
     // angleTarget = tab
     //   .add("angleTarget", 0)
     //   .withWidget(BuiltInWidgets.kNumberSlider)
@@ -182,6 +262,8 @@ public class Arm extends SubsystemBase {
           rotSet=.4422222222;
           break;
       }
+      // m_motor.setVoltage(rotSet);
+      // armMotor.setVoltage(rotSet);
       armMotor.setControl(m_request.withPosition(rotSet).withSlot(0));
   }
   public ArmState getCurrentArmState(){
@@ -207,6 +289,7 @@ public class Arm extends SubsystemBase {
     }else{
       setArmDegree(ArmState.AmpMove, true);
     }
+    simulationPeriodic();
   }
 
   private ArmState lastMainState = ArmState.Speaker;
