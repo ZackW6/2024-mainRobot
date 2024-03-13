@@ -80,9 +80,11 @@ public class RobotContainer {
     driverController.y().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldRelative()));
     driverController.rightBumper().whileTrue(groupCommands.intake()).whileFalse(Commands.runOnce(()->arm.setCurrentArmState(arm.lastMainState())));
     driverController.leftBumper().onTrue(groupCommands.shoot());
-    driverController.a().whileTrue(groupCommands.alignToAmp(() -> -driverController.getLeftY() * MaxSpeed, () -> -driverController.getLeftX() * MaxSpeed));
     driverController.rightTrigger(.5).whileTrue(drivetrain.applyRequest(() -> brake));
+
+
     driverController.x().whileTrue(groupCommands.alignToSpeaker(() -> -driverController.getLeftY() * MaxSpeed, () -> -driverController.getLeftX() * MaxSpeed));
+    driverController.a().whileTrue(groupCommands.alignToAmp(() -> -driverController.getLeftY() * MaxSpeed, () -> -driverController.getLeftX() * MaxSpeed)).and(() -> !driverController.x().getAsBoolean());
     // driverController.getHID().setRumble(RumbleType.kBothRumble, 1);
     
     operatorController.a().onTrue(groupCommands.switchModes());
