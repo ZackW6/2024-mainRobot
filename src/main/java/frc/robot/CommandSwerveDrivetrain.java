@@ -51,10 +51,9 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     private static final double kSimLoopPeriod = 0.005; // 5 ms
     private Notifier m_simNotifier = null;
     private double m_lastSimTime;
-    Vision vision1 = new Vision(VisionConstants.SHOOTER_CAMERA,VisionConstants.SHOOTER_CAMERA_TRANSFORM);
-    // Vision vision2 = new Vision(VisionConstants.IntakeCamera, VisionConstants.IntakeCamTransform);
+    private Vision vision = new Vision(VisionConstants.SHOOTER_CAMERA,VisionConstants.SHOOTER_CAMERA_TRANSFORM);
+    
     private final SwerveRequest.ApplyChassisSpeeds autoRequest = new SwerveRequest.ApplyChassisSpeeds();
-
 
     public CommandSwerveDrivetrain(SwerveDrivetrainConstants driveTrainConstants, double OdometryUpdateFrequency, SwerveModuleConstants... modules) {
         super(driveTrainConstants, OdometryUpdateFrequency, modules);
@@ -88,11 +87,11 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
         m_simNotifier.startPeriodic(kSimLoopPeriod);
     }
     private void visionEstimation(){
-        var visionEst1 = vision1.getEstimatedGlobalPose();
+        var visionEst1 = vision.getEstimatedGlobalPose();
         if (visionEst1.isEmpty()){
             return;
         }
-        addVisionMeasurement(visionEst1.get().estimatedPose.toPose2d(), visionEst1.get().timestampSeconds, vision1.getEstimationStdDevs(visionEst1.get().estimatedPose.toPose2d()));
+        addVisionMeasurement(visionEst1.get().estimatedPose.toPose2d(), visionEst1.get().timestampSeconds, vision.getEstimationStdDevs(visionEst1.get().estimatedPose.toPose2d()));
 
 
         // var visionEst2 = vision2.getEstimatedGlobalPose();
@@ -236,10 +235,10 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
             return new Rotation2d(0);
         }
         if (alliance.get() == DriverStation.Alliance.Blue) {
-            System.out.println(vision1.getTargetAngle(7));
-            return Rotation2d.fromDegrees(vision1.getTargetAngle(7));
+            System.out.println(vision.getTargetAngle(7));
+            return Rotation2d.fromDegrees(vision.getTargetAngle(7));
         } else {
-            return Rotation2d.fromDegrees(vision1.getTargetAngle(4));
+            return Rotation2d.fromDegrees(vision.getTargetAngle(4));
         }
     }
 
@@ -249,11 +248,11 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
             return 0;
         }
         if (alliance.get() == DriverStation.Alliance.Blue) {
-            System.out.println(vision1.getTargetAngle(7));
-            return vision1.getTargetDist(7);
+            System.out.println(vision.getTargetAngle(7));
+            return vision.getTargetDist(7);
         } else {
-            System.out.println(vision1.getTargetAngle(4));
-            return vision1.getTargetDist(4);
+            System.out.println(vision.getTargetAngle(4));
+            return vision.getTargetDist(4);
         }
     }
 

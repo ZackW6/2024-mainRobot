@@ -34,13 +34,13 @@ import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.Arm.ArmState;
 
-public class GroupCommands extends SubsystemBase{
+public class FactoryCommands extends SubsystemBase{
   private Arm arm;
   private Shooter shooter;
   private Intake intake;
   private Candle candle;
   private CommandSwerveDrivetrain drivetrain;
-  public GroupCommands(Arm arm, Shooter shooter, Intake intake, Candle candle, CommandSwerveDrivetrain drivetrain){
+  public FactoryCommands(Arm arm, Shooter shooter, Intake intake, Candle candle, CommandSwerveDrivetrain drivetrain){
     this.arm = arm;
     this.shooter = shooter;
     this.intake = intake;
@@ -96,22 +96,6 @@ public class GroupCommands extends SubsystemBase{
       .andThen(intake.stop())
       .andThen(Commands.runOnce(()->arm.setCurrentArmState(ArmState.Speaker)));
   }
-  
-  @Deprecated
-  public Command ampShotSpeaker(){//BROKEN, and probably not doing
-    return Commands.deadline(Commands.waitSeconds(5)
-      ,Commands.runOnce(()->arm.setCurrentArmState(ArmState.AmpMove))
-      .andThen(Commands.waitUntil(()->arm.isArmAtAngle()))
-      .andThen(intake.setVelocity(-1000000)));
-  }
-  // public Command intakeFromShooter(){//Probably not using
-
-  //   return Commands.deadline(Commands.runOnce(()->shooter.setTargetFlywheelSpeed(-15))
-  //   .andThen(intake.intakePiece())
-  //   .andThen(Commands.runOnce(()->shooter.setTargetFlywheelSpeed(15)))
-  //   ,arm.setArmDegree(ArmPositions.Load));
-  // }
-  
 
   private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
       .withDeadband(0).withRotationalDeadband(0) // Add a 10% deadband
@@ -168,28 +152,8 @@ public class GroupCommands extends SubsystemBase{
           shooter.enableFlywheel();
           setState=ArmState.Speaker;
         }
-        // System.out.println(setState);
         arm.setCurrentArmState(setState);
       }
       });
-  }
-  private double lastDist = 100;
-  public void getDistCandle(){
-    // double curDist = drivetrain.getPose().getX();
-
-    double curDist = drivetrain.getDistanceFromSpeakerMeters();
-    System.out.println(curDist);
-    if (lastDist>1.9 || lastDist<1.84){
-      if (curDist<1.9 && curDist>1.84){
-        // System.out.println("In Range");
-        candle.inRangeLED();
-      }
-    }else if (lastDist<1.9 && lastDist>1.84){
-      if (curDist<1.84 || curDist>1.9){
-        // System.out.println("Out Of Range");
-        candle.idleLED();
-      }
-    }
-    lastDist=curDist;
   }
 }
