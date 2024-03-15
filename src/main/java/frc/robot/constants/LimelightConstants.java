@@ -10,7 +10,7 @@ public class LimelightConstants {
     public static final String LIMELIGHT_NAME = "limelight";
     public static final double MAX_XY_ERROR = 1.0;
     public static final Transform3d LIMELIGHT_CAMERA_TRANSFORM =
-        new Transform3d(new Translation3d(0,0, 0), new Rotation3d(0, Units.degreesToRadians(0), Units.degreesToRadians(0)));
+        new Transform3d(new Translation3d(0,0, 0.25146), new Rotation3d(0, Units.degreesToRadians(30), Units.degreesToRadians(0)));
     public static final double[][] ONE_APRIL_TAG_LOOKUP_TABLE = {
       // {distance in meters, x std deviation, y std deviation, r (in degrees) std deviation}
       {0, 0.01, 0.01, 10},

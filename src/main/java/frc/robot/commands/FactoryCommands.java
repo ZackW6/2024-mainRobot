@@ -129,7 +129,7 @@ public class FactoryCommands extends SubsystemBase{
     }
     return x;
   }
-  private final PIDController thetaControllerSpeaker = new PIDController(10,0,0);//(12.2,1.1,.4);
+  //(12.2,1.1,.4);
 
   // public Command alignToSpeaker(DoubleSupplier xAxis, DoubleSupplier yAxis) {
   //   thetaControllerSpeaker.reset();
@@ -142,16 +142,25 @@ public class FactoryCommands extends SubsystemBase{
   //     .withVelocityY(yAxis.getAsDouble())
   //     .withRotationalRate(rotationalVelocity.getAsDouble()));//.alongWith(Commands.runOnce(()->System.out.println(drivetrain.getAngleFromSpeaker().getDegrees())));
   // }
+  private final PIDController thetaControllerSpeaker = new PIDController(.5,0,0);
+  private final PIDController distanceYController = new PIDController(.2, 0, 0);
   public Command alignToSpeaker(DoubleSupplier xAxis, DoubleSupplier yAxis) {
     thetaControllerSpeaker.reset();
     
 
-    DoubleSupplier rotationalVelocity = () -> thetaControllerSpeaker.calculate(correctYaw((drivetrain.getPose().getRotation().getDegrees()-90)%360,drivetrain.getAngleFromSpeaker().getDegrees()), drivetrain.getAngleFromSpeaker().getDegrees());
-  
+    DoubleSupplier rotationalVelocity = () -> {
+      if(drivetrain.getAngleFromSpeaker().getDegrees()>0){
+        return thetaControllerSpeaker.calculate(drivetrain.getAngleFromSpeaker().getDegrees(),0);//-7;
+      }else{
+        return thetaControllerSpeaker.calculate(drivetrain.getAngleFromSpeaker().getDegrees(),0);//+7;
+      }
+      
+    };
+    DoubleSupplier distanceYVelocity = ()-> -distanceYController.calculate(drivetrain.getDistanceFromSpeakerMeters(), 2);
     
-    return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble()) 
+    return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble()/*distanceYVelocity.getAsDouble()*/) 
       .withVelocityY(yAxis.getAsDouble())
-      .withRotationalRate(rotationalVelocity.getAsDouble()/100));
+      .withRotationalRate(Units.degreesToRadians(rotationalVelocity.getAsDouble())));
   }
 
   public Command switchModes(){
