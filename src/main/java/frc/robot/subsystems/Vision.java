@@ -203,7 +203,6 @@ public class Vision extends SubsystemBase{
             List<PhotonTrackedTarget> targets = result.getTargets();
             var foundTargets = targets.stream().filter(t -> t.getFiducialId()==target).filter(t ->!t.equals(target) && t.getPoseAmbiguity() <= .2 && t.getPoseAmbiguity() !=-1).findFirst();
             if (foundTargets.isPresent()){
-                System.out.println(foundTargets.get().getYaw());
                 return foundTargets.get().getYaw();
             }
         }
@@ -219,12 +218,15 @@ public class Vision extends SubsystemBase{
         var result = camera.getLatestResult();
         if (result.hasTargets()){
             List<PhotonTrackedTarget> targets = result.getTargets();
-            var foundTargets = targets.stream().filter(t -> t.getFiducialId()==target).filter(t ->!t.equals(target) && t.getPoseAmbiguity() <= .2 && t.getPoseAmbiguity() !=-1).findFirst();
-            if (foundTargets.isPresent()){
+            var foundTarget = targets.get(0);//targets.stream().filter(t -> t.getFiducialId()==target).findFirst();
+            if(targets.size() >=2 && targets.get(1).getFiducialId() == target){
+                foundTarget = targets.get(1);
+            }
+            if (foundTarget.getFiducialId() == target){
                 return PhotonUtils.calculateDistanceToTargetMeters(
-                    VisionConstants.SHOOTER_CAMERA_TRANSFORM.getX(),
-                    VisionConstants.SHOOTER_CAMERA_TRANSFORM.getY(),
                     VisionConstants.SHOOTER_CAMERA_TRANSFORM.getZ(),
+                    VisionConstants.K_TAG_LAYOUT.getTagPose(target).get().getZ(),
+                    VisionConstants.SHOOTER_CAMERA_TRANSFORM.getRotation().getY(),
                     Units.degreesToRadians(result.getBestTarget().getPitch()));
             }
         }

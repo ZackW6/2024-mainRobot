@@ -111,10 +111,10 @@ public class FactoryCommands extends SubsystemBase{
       return Commands.none();
     }
     DoubleSupplier rotationalVelocity = () -> {
-      if(DriverStation.Alliance.Blue == alliance.get()){
-        return thetaControllerAmp.calculate(correctYaw(drivetrain.getYaw().getDegrees()%360,270), 270);
+      if(DriverStation.Alliance.Blue.equals(alliance.get())){
+        return thetaControllerAmp.calculate(correctYaw((drivetrain.getPose().getRotation().getDegrees()-90)%360,270), 270);
       }else{
-        return thetaControllerAmp.calculate(correctYaw(drivetrain.getYaw().getDegrees()%360,0), 0);
+        return thetaControllerAmp.calculate(correctYaw((drivetrain.getPose().getRotation().getDegrees()-90)%360,0), 0);
       }
     };
     return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble()) //was -xAxis, but in sim is this
@@ -129,18 +129,29 @@ public class FactoryCommands extends SubsystemBase{
     }
     return x;
   }
-  private final PIDController thetaControllerSpeaker = new PIDController(.05,0,0);//(12.2,1.1,.4);
+  private final PIDController thetaControllerSpeaker = new PIDController(10,0,0);//(12.2,1.1,.4);
 
+  // public Command alignToSpeaker(DoubleSupplier xAxis, DoubleSupplier yAxis) {
+  //   thetaControllerSpeaker.reset();
+    
+
+  //   DoubleSupplier rotationalVelocity = () -> thetaControllerSpeaker.calculate(drivetrain.getAngleFromSpeaker().getDegrees(),0);
+  
+    
+  //   return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble()) 
+  //     .withVelocityY(yAxis.getAsDouble())
+  //     .withRotationalRate(rotationalVelocity.getAsDouble()));//.alongWith(Commands.runOnce(()->System.out.println(drivetrain.getAngleFromSpeaker().getDegrees())));
+  // }
   public Command alignToSpeaker(DoubleSupplier xAxis, DoubleSupplier yAxis) {
     thetaControllerSpeaker.reset();
     
 
-    DoubleSupplier rotationalVelocity = () -> thetaControllerSpeaker.calculate(drivetrain.getAngleFromSpeaker().getDegrees(),0/*was 8? I have no clue why */);
+    DoubleSupplier rotationalVelocity = () -> thetaControllerSpeaker.calculate(correctYaw((drivetrain.getPose().getRotation().getDegrees()-90)%360,drivetrain.getAngleFromSpeaker().getDegrees()), drivetrain.getAngleFromSpeaker().getDegrees());
   
     
     return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble()) 
       .withVelocityY(yAxis.getAsDouble())
-      .withRotationalRate(rotationalVelocity.getAsDouble())).alongWith(Commands.runOnce(()->System.out.println(drivetrain.getAngleFromSpeaker().getDegrees())));
+      .withRotationalRate(rotationalVelocity.getAsDouble()/100));
   }
 
   public Command switchModes(){

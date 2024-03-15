@@ -4,8 +4,10 @@ import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
 import java.sql.Driver;
+import java.util.Optional;
 import java.util.function.Supplier;
 
+import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonUtils;
 
 import com.ctre.phoenix6.Utils;
@@ -22,8 +24,12 @@ import com.pathplanner.lib.util.ReplanningConfig;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -38,6 +44,8 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+import frc.robot.LimelightHelpers.LimelightResults;
+import frc.robot.constants.LimelightConstants;
 import frc.robot.constants.VisionConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Vision;
@@ -51,7 +59,8 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     private static final double kSimLoopPeriod = 0.005; // 5 ms
     private Notifier m_simNotifier = null;
     private double m_lastSimTime;
-    private Vision vision = new Vision(VisionConstants.SHOOTER_CAMERA,VisionConstants.SHOOTER_CAMERA_TRANSFORM);
+    private Vision visionShooter = new Vision(VisionConstants.SHOOTER_CAMERA,VisionConstants.SHOOTER_CAMERA_TRANSFORM);
+    private Vision visionIntake = new Vision(VisionConstants.SHOOTER_CAMERA,VisionConstants.SHOOTER_CAMERA_TRANSFORM);
     
     private final SwerveRequest.ApplyChassisSpeeds autoRequest = new SwerveRequest.ApplyChassisSpeeds();
 
@@ -87,18 +96,26 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
         m_simNotifier.startPeriodic(kSimLoopPeriod);
     }
     private void visionEstimation(){
-        var visionEst1 = vision.getEstimatedGlobalPose();
-        if (visionEst1.isEmpty()){
-            return;
-        }
-        addVisionMeasurement(visionEst1.get().estimatedPose.toPose2d(), visionEst1.get().timestampSeconds, vision.getEstimationStdDevs(visionEst1.get().estimatedPose.toPose2d()));
-
+        // var visionEst1 = visionShooter.getEstimatedGlobalPose();
+        // if (visionEst1.isEmpty()){
+        //     return;
+        // }
+        // addVisionMeasurement(visionEst1.get().estimatedPose.toPose2d(), visionEst1.get().timestampSeconds, visionShooter.getEstimationStdDevs(visionEst1.get().estimatedPose.toPose2d()));
 
         // var visionEst2 = vision2.getEstimatedGlobalPose();
         // if (visionEst2.isEmpty()){
         //     return;
         // }
         // addVisionMeasurement(visionEst2.get().estimatedPose.toPose2d(), visionEst2.get().timestampSeconds, vision2.getEstimationStdDevs(visionEst2.get().estimatedPose.toPose2d()));
+        var visionEstShooter = visionShooter.getEstimatedGlobalPose();
+        if (visionEstShooter.isPresent()) {         
+            addVisionMeasurement(visionEstShooter.get().estimatedPose.toPose2d(), visionEstShooter.get().timestampSeconds, visionShooter.getEstimationStdDevs(visionEstShooter.get().estimatedPose.toPose2d()));
+        }
+
+        var visionEstIntake = visionIntake.getEstimatedGlobalPose();
+        if (visionEstIntake.isPresent()) {
+            addVisionMeasurement(visionEstIntake.get().estimatedPose.toPose2d(), visionEstIntake.get().timestampSeconds, visionIntake.getEstimationStdDevs(visionEstIntake.get().estimatedPose.toPose2d()));
+        }
     }
 
     @Override
@@ -142,22 +159,6 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
             // Reference to this subsystem to set requirements // Change this if the path needs to be flipped on red vs blue
             this); // Subsystem for requirements
     }
-
-    // @Override
-    // public void seedFieldRelative(Pose2d location) {
-    //     try {
-    //         m_stateLock.writeLock().lock();
-
-    //         m_odometry.resetPosition(Rotation2d.fromDegrees(m_yawGetter.getValue()), m_modulePositions, location);
-    //         seedFieldRelative();
-    //         // setYaw(location.getRotation());
-    //         /* We need to update our cached pose immediately so that race conditions don't happen */
-    //         m_cachedState.Pose = location;
-    //     } finally {
-    //         m_stateLock.writeLock().unlock();
-    //     }
-    // }
-
     // @Override
     // public void +() {
     //     try {
@@ -230,30 +231,86 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     }
 
     public Rotation2d getAngleFromSpeaker() {
-        var alliance = DriverStation.getAlliance();
-        if (!alliance.isPresent()) {
-            return new Rotation2d(0);
-        }
-        if (alliance.get() == DriverStation.Alliance.Blue) {
-            System.out.println(vision.getTargetAngle(7));
-            return Rotation2d.fromDegrees(vision.getTargetAngle(7));
-        } else {
-            return Rotation2d.fromDegrees(vision.getTargetAngle(4));
+        // var alliance = DriverStation.getAlliance();
+        // if (!alliance.isPresent()) {
+        //     return new Rotation2d(0);
+        // }
+        // if (alliance.get() == DriverStation.Alliance.Blue) {
+        //     System.out.println(visionShooter.getTargetAngle(7));
+        //     return Rotation2d.fromDegrees(visionShooter.getTargetAngle(7));
+        // } else {
+        //     return Rotation2d.fromDegrees(visionShooter.getTargetAngle(4));
+        // }
+        LimelightResults results =  LimelightHelpers.getLatestResults(LimelightConstants.LIMELIGHT_NAME);     
+
+        if (results.targetingResults.valid) {
+            return Rotation2d.fromDegrees(LimelightHelpers.getTX(LimelightConstants.LIMELIGHT_NAME));
+        }else{
+            Pose2d speakerLocation;
+            var alliance = DriverStation.getAlliance();
+            if (!alliance.isPresent()) {
+                return new Rotation2d(0);
+            }
+            if (alliance.get() == DriverStation.Alliance.Blue) {
+                speakerLocation = new Pose2d(-0.0381, 5.547868, null);
+            } else {
+                speakerLocation = new Pose2d(16.579342, 5.547868, null);
+            }
+            
+            double currentPoseX = getPose().getX();
+            double currentPoseY = getPose().getY();
+            double deltaX = currentPoseX - speakerLocation.getX();
+            double deltaY = currentPoseY - speakerLocation.getY();
+
+            double angleRadians = ((Math.atan2(deltaX, deltaY)*-1)-Math.PI/2)+Math.PI*1.5;
+
+            // Convert the angle to Rotation2d
+            Rotation2d rotation = Rotation2d.fromRadians(angleRadians);
+            // System.out.println(rotation.getDegrees());
+            return rotation;//Rotation2d.fromRadians(Math.atan((currentPoseX - speakerLocation.getX())/(currentPoseY - speakerLocation.getY())));
         }
     }
 
     public double getDistanceFromSpeakerMeters() {
-        var alliance = DriverStation.getAlliance();
-        if (!alliance.isPresent()) {
-            return 0;
-        }
-        if (alliance.get() == DriverStation.Alliance.Blue) {
-            System.out.println(vision.getTargetAngle(7));
-            return vision.getTargetDist(7);
-        } else {
-            System.out.println(vision.getTargetAngle(4));
-            return vision.getTargetDist(4);
+        LimelightResults results =  LimelightHelpers.getLatestResults(LimelightConstants.LIMELIGHT_NAME);     
+
+        if (results.targetingResults.valid) {
+            NetworkTable table = NetworkTableInstance.getDefault().getTable(LimelightConstants.LIMELIGHT_NAME);
+            NetworkTableEntry ty = table.getEntry("ty");
+            double targetOffsetAngle_Vertical = ty.getDouble(0.0);
+
+            // how many degrees back is your limelight rotated from perfectly vertical?
+            double limelightMountAngleDegrees = LimelightConstants.LIMELIGHT_CAMERA_TRANSFORM.getRotation().getY(); 
+
+            // distance from the center of the Limelight lens to the floor
+            double limelightLensHeightInches = LimelightConstants.LIMELIGHT_CAMERA_TRANSFORM.getZ(); 
+
+            // distance from the target to the floor
+            double goalHeightInches = VisionConstants.K_TAG_LAYOUT.getTagPose(7).get().getZ(); 
+
+            double angleToGoalDegrees = limelightMountAngleDegrees + targetOffsetAngle_Vertical;
+            double angleToGoalRadians = angleToGoalDegrees * (3.14159 / 180.0);
+
+            //calculate distance
+            double distanceFromLimelightToGoalInches = (goalHeightInches - limelightLensHeightInches) / Math.tan(angleToGoalRadians);
+            return distanceFromLimelightToGoalInches;
+        }else{
+            return -1;
         }
     }
 
+
+    public void seedFieldRelative(double degrees) {
+        try {
+            m_stateLock.writeLock().lock();
+
+            m_fieldRelativeOffset = new Rotation2d(Units.degreesToRadians(getState().Pose.getRotation().getDegrees()+degrees));
+        } finally {
+            m_stateLock.writeLock().unlock();
+        }
+    }
+    // public Rotation2d getYawNoOffset(){
+    //     return m_pigeon2.getRotation2d();
+    // }
+    
 }

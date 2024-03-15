@@ -1,4 +1,16 @@
-// Copyright (c) FIRST and other WPILib contributors.
+ // final Optional<EstimatedRobotPose> optionalEstimatedPoseRight = vision1.update();
+        // if (optionalEstimatedPoseRight.isPresent()) {
+        //     final EstimatedRobotPose estimatedPose = optionalEstimatedPoseRight.get();          
+        //     poseEstimator.updateVisionMeasurement(estimatedPose.toPose2d(), estimatedPose.timestampSeconds);
+        // }
+        
+        // final Optional<EstimatedRobotPose> optionalEstimatedPoseLeft = vision2.update();
+        // if (optionalEstimatedPoseLeft.isPresent()) {
+        //     final EstimatedRobotPose estimatedPose = optionalEstimatedPoseLeft.get();          
+        //     poseEstimator.updateVisionMeasurement(estimatedPose.toPose2d(), estimatedPose.timestampSeconds);
+        // }
+        
+        // poseEstimator.update(/*ccw gyro rotation*/, /*module positions array*/);// Copyright (c) FIRST and other WPILib contributors.
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
@@ -9,10 +21,15 @@ import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveModule.DriveRequestType;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
+import com.pathplanner.lib.path.PathConstraints;
+import com.pathplanner.lib.path.PathPlannerPath;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -22,6 +39,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.commands.FactoryCommands;
 import frc.robot.constants.GeneralConstants;
@@ -55,6 +73,7 @@ public class RobotContainer {
   private final Telemetry logger = new Telemetry(MaxSpeed);
 
 
+  public static Rotation2d autoAngleOffset;
   /* Subsystems */
   private final Arm arm = new Arm();
   private final Shooter shooter = new Shooter();
@@ -89,12 +108,35 @@ public class RobotContainer {
     
     operatorController.a().onTrue(groupCommands.switchModes());
     operatorController.x().whileTrue(intake.setVelocity(15));
+    operatorController.y().whileTrue(getAutoToPath());
+    operatorController.b().whileTrue(getAutoToPoint());
     if (Utils.isSimulation()) {
       drivetrain.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
     }
     drivetrain.registerTelemetry(logger::telemeterize);
+    // driverController.getHID().se\tRumble(RumbleType.kBothRumble, 1);
+    new Trigger(()-> drivetrain.getDistanceFromSpeakerMeters() < 100 && drivetrain.getDistanceFromSpeakerMeters() > 0)
+      .whileTrue(Commands.runOnce(()->driverController.getHID().setRumble(RumbleType.kBothRumble, 1)))
+      .whileFalse(Commands.runOnce(()->driverController.getHID().setRumble(RumbleType.kBothRumble, 0)));
 
-    // new Trigger()
+    new Trigger(()->DriverStation.isTeleop()).and(()->{
+
+      var alliance = DriverStation.getAlliance();
+      if (!alliance.isPresent()){
+        return true;
+      }
+      return DriverStation.getAlliance().get().equals(Alliance.Red);
+    }).onTrue(Commands.runOnce(()->drivetrain.seedFieldRelative(180-drivetrain.getPose().getRotation().getDegrees())))
+    .onFalse(Commands.runOnce(()->drivetrain.seedFieldRelative(360-drivetrain.getPose().getRotation().getDegrees())));
+    // new Trigger(()->DriverStation.isTeleop()).onTrue(Commands.runOnce(()->{
+
+      
+
+    // }));
+
+
+      // new Pose2d(drivetrain.getPose().getTranslation()
+      // ,new Rotation2d(drivetrain.getPose().getRotation().getRadians()+Math.PI/2))))).onTrue(Commands.runOnce(()->System.out.println("HI")));
   }
 
   public RobotContainer() {
@@ -113,5 +155,44 @@ public class RobotContainer {
 
   public Command getAutonomousCommand() {
     return autoChooser.getSelected();
+  }
+
+
+  private Command getAutoToPoint(){
+    Pose2d targetPose = new Pose2d(10, 5, Rotation2d.fromDegrees(180));
+
+
+    // Create the constraints to use while pathfinding
+    PathConstraints constraints = new PathConstraints(
+            3.0, 4.0,
+            Units.degreesToRadians(540), Units.degreesToRadians(720));
+
+
+    // Since AutoBuilder is configured, we can use it to build pathfinding commands
+    Command pathfindingCommand = AutoBuilder.pathfindToPose(
+            targetPose,
+            constraints,
+            0.0, // Goal end velocity in meters/sec
+            0.0 // Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate.
+    );
+    return pathfindingCommand;
+  }
+  private Command getAutoToPath(){
+    PathPlannerPath path = PathPlannerPath.fromPathFile("Rush Hour 1");
+
+
+    // Create the constraints to use while pathfinding. The constraints defined in the path will only be used for the path.
+    PathConstraints constraints = new PathConstraints(
+            3.0, 4.0,
+            Units.degreesToRadians(540), Units.degreesToRadians(720));
+
+
+    // Since AutoBuilder is configured, we can use it to build pathfinding commands
+    Command pathfindingCommand = AutoBuilder.pathfindThenFollowPath(
+            path,
+            constraints,
+            3.0 // Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate.
+    );
+    return pathfindingCommand;
   }
 }

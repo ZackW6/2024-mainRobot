@@ -193,7 +193,6 @@ public class Arm extends SubsystemBase {
   public void periodic() {
     // This method will be called once per scheduler run
     // ArmPositions defaultState = getCurrentArmState() == ArmState.Speaker ? ArmPositions.Load : ArmPositions.Amp;
-    // System.out.println(getCurrentArmState());
     // setDefaultCommand(setArmDegree(ArmPositions.Amp));
     
     if (currentArmState == ArmState.Speaker) {
@@ -300,13 +299,10 @@ public class Arm extends SubsystemBase {
   }
 
   public void setCurrentArmState(ArmState armState) {
-    System.out.println(armState);
     currentArmState = armState;
   }
   public boolean isArmAtAngle(){
     if (armMotor.getClosedLoopReference().getValueAsDouble()<=getRotationTarget()+.03 || armMotor.getClosedLoopReference().getValueAsDouble()<=getRotationTarget()-.03){
-      // System.out.println("Arm is at pos");
-
       return true;
     } 
     return false;
