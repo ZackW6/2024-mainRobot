@@ -102,7 +102,7 @@ public class RobotContainer {
     driverController.rightTrigger(.5).whileTrue(drivetrain.applyRequest(() -> brake));
 
 
-    driverController.x().whileTrue(groupCommands.alignToSpeaker(() -> -driverController.getLeftY() * MaxSpeed, () -> -driverController.getLeftX() * MaxSpeed));
+    driverController.rightStick().whileTrue(groupCommands.alignToSpeaker(() -> -driverController.getLeftY() * MaxSpeed, () -> -driverController.getLeftX() * MaxSpeed));
     driverController.a().whileTrue(groupCommands.alignToAmp(() -> -driverController.getLeftY() * MaxSpeed, () -> -driverController.getLeftX() * MaxSpeed)).and(() -> !driverController.x().getAsBoolean());
     // driverController.getHID().setRumble(RumbleType.kBothRumble, 1);
     

@@ -142,7 +142,7 @@ public class FactoryCommands extends SubsystemBase{
   //     .withVelocityY(yAxis.getAsDouble())
   //     .withRotationalRate(rotationalVelocity.getAsDouble()));//.alongWith(Commands.runOnce(()->System.out.println(drivetrain.getAngleFromSpeaker().getDegrees())));
   // }
-  private final PIDController thetaControllerSpeaker = new PIDController(.5,0,0);
+  private final PIDController thetaControllerSpeaker = new PIDController(0,0,0);
   private final PIDController distanceYController = new PIDController(.2, 0, 0);
   public Command alignToSpeaker(DoubleSupplier xAxis, DoubleSupplier yAxis) {
     thetaControllerSpeaker.reset();

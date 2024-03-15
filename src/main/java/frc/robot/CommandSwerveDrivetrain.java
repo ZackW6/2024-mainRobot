@@ -241,66 +241,81 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
         // } else {
         //     return Rotation2d.fromDegrees(visionShooter.getTargetAngle(4));
         // }
-        LimelightResults results =  LimelightHelpers.getLatestResults(LimelightConstants.LIMELIGHT_NAME);     
+        // if (results.targetingResults.valid) {
+        //     return Rotation2d.fromDegrees(LimelightHelpers.getTX(LimelightConstants.LIMELIGHT_NAME));
+        // }else{
+        //     Pose2d speakerLocation;
+        //     var alliance = DriverStation.getAlliance();
+        //     if (!alliance.isPresent()) {
+        //         return new Rotation2d(0);
+        //     }
+        //     if (alliance.get() == DriverStation.Alliance.Blue) {
+        //         speakerLocation = new Pose2d(-0.0381, 5.547868, null);
+        //     } else {
+        //         speakerLocation = new Pose2d(16.579342, 5.547868, null);
+        //     }
+            
+        //     double currentPoseX = getPose().getX();
+        //     double currentPoseY = getPose().getY();
+        //     double deltaX = currentPoseX - speakerLocation.getX();
+        //     double deltaY = currentPoseY - speakerLocation.getY();
 
-        if (results.targetingResults.valid) {
-            return Rotation2d.fromDegrees(LimelightHelpers.getTX(LimelightConstants.LIMELIGHT_NAME));
-        }else{
+        //     double angleRadians = ((Math.atan2(deltaX, deltaY)*-1)-Math.PI/2)+Math.PI*1.5;
+
+        //     // Convert the angle to Rotation2d
+        //     Rotation2d rotation = Rotation2d.fromRadians(angleRadians);
+        //     // System.out.println(rotation.getDegrees());
+        //     return rotation;//Rotation2d.fromRadians(Math.atan((currentPoseX - speakerLocation.getX())/(currentPoseY - speakerLocation.getY())));
+            LimelightResults results =  LimelightHelpers.getLatestResults(LimelightConstants.LIMELIGHT_NAME);     
+
+            if (results.targetingResults.valid) {
+                // System.out.println("Degrees: " + LimelightHelpers.getTX(LimelightConstants.LIMELIGHT_NAME));
+                return Rotation2d.fromDegrees(LimelightHelpers.getTX(LimelightConstants.LIMELIGHT_NAME));
+            }else{
             Pose2d speakerLocation;
+            double deltaX;
+            double deltaY;
             var alliance = DriverStation.getAlliance();
             if (!alliance.isPresent()) {
                 return new Rotation2d(0);
             }
-            if (alliance.get() == DriverStation.Alliance.Blue) {
-                speakerLocation = new Pose2d(-0.0381, 5.547868, null);
-            } else {
-                speakerLocation = new Pose2d(16.579342, 5.547868, null);
-            }
-            
             double currentPoseX = getPose().getX();
             double currentPoseY = getPose().getY();
-            double deltaX = currentPoseX - speakerLocation.getX();
-            double deltaY = currentPoseY - speakerLocation.getY();
+            
+            if (alliance.get() == DriverStation.Alliance.Blue) {
+                speakerLocation = new Pose2d(-0.0381, 5.547868, null);
+                deltaX = speakerLocation.getX() - currentPoseX;
+            deltaY = speakerLocation.getY() - currentPoseY;
 
-            double angleRadians = ((Math.atan2(deltaX, deltaY)*-1)-Math.PI/2)+Math.PI*1.5;
+            double angleRadians = ((Math.atan(deltaY/deltaX)));
 
             // Convert the angle to Rotation2d
-            Rotation2d rotation = Rotation2d.fromRadians(angleRadians);
-            // System.out.println(rotation.getDegrees());
-            return rotation;//Rotation2d.fromRadians(Math.atan((currentPoseX - speakerLocation.getX())/(currentPoseY - speakerLocation.getY())));
-            // if (results.targetingResults.valid) {
-            //     // System.out.println("Degrees: " + LimelightHelpers.getTX(LimelightConstants.LIMELIGHT_NAME));
-            //     return Rotation2d.fromDegrees(LimelightHelpers.getTX(LimelightConstants.LIMELIGHT_NAME));
-            // }else{
-            // Pose2d speakerLocation;
-            // double deltaX;
-            // double deltaY;
-            // var alliance = DriverStation.getAlliance();
-            // if (!alliance.isPresent()) {
-            //     return new Rotation2d(0);
-            // }
-            // double currentPoseX = getPose().getX();
-            // double currentPoseY = getPose().getY();
-            
-            // if (alliance.get() == DriverStation.Alliance.Blue) {
-            //     speakerLocation = new Pose2d(-0.0381, 5.547868, null);
-            // } else {
-            //     speakerLocation = new Pose2d(16.579342, 5.547868, null);
-            // }
-            // deltaX = speakerLocation.getX() - currentPoseX;
-            // deltaY = speakerLocation.getY() - currentPoseY;
+            Rotation2d rotation = Rotation2d.fromRadians(angleRadians - getPose().getRotation().getRadians());
 
-            // double angleRadians = ((Math.atan(deltaY/deltaX)));
-
-            // // Convert the angle to Rotation2d
-            // Rotation2d rotation = Rotation2d.fromRadians(angleRadians - getPose().getRotation().getRadians());
-            // if (alliance.get() == DriverStation.Alliance.Blue) {
-            //     rotation = Rotation2d.fromDegrees(correctYaw(rotation.getDegrees()-180,0));
-            // }
-            // System.out.println(angleRadians+"angleRot");
+            System.out.println(((rotation.getDegrees()))+"angleRot");
             // System.out.println(rotation+"ROTATION");
-            // // System.out.println(rotation.getDegrees());
-            // return rotation;//Rotation2d.fromRadians(Math.atan((currentPoseX - speakerLocation.getX())/(currentPoseY - speakerLocation.getY())));
+            // System.out.println(rotation.getDegrees());
+            return rotation;
+            } else {
+                speakerLocation = new Pose2d(16.579342, 5.547868, null);
+                deltaX = speakerLocation.getX() - currentPoseX;
+            deltaY = speakerLocation.getY() - currentPoseY;
+
+            double angleRadians = ((Math.atan(deltaY/deltaX)));
+            Rotation2d rotation;
+            // Convert the angle to Rotation2d
+            if (angleRadians > 0){
+                rotation = Rotation2d.fromRadians((angleRadians - getPose().getRotation().getRadians()) - Math.PI);
+            } else {
+                rotation = Rotation2d.fromRadians((angleRadians - getPose().getRotation().getRadians()) + Math.PI);
+            }
+            
+            System.out.println(((rotation.getDegrees()))+"angleRot");
+            // System.out.println(rotation+"ROTATION");
+            // System.out.println(rotation.getDegrees());
+            return rotation;
+            }
+            //Rotation2d.fromRadians(Math.atan((currentPoseX - speakerLocation.getX())/(currentPoseY - speakerLocation.getY())));
     
         }
     }
