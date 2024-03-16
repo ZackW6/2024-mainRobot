@@ -36,7 +36,7 @@ public class Intake extends SubsystemBase{
     private final TalonFX intakeMotor;
     private final DigitalInput limitSwicth1;
     private final DigitalInput limitSwicth2;
-    private double speed=0;
+    private double speed = 0;
     double intakeSpeed = 23.0;//In rps
     double outtakeSpeed = -60.0;
 
