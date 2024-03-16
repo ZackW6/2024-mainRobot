@@ -107,6 +107,9 @@ public class FactoryCommands extends SubsystemBase{
     thetaControllerAmp.reset();
     // thetaController.setSetpoint(90);
     var alliance = DriverStation.getAlliance();
+    if(!alliance.isPresent()) {
+      return Commands.none();
+    }
     DoubleSupplier rotationalVelocity = () -> {
       if(DriverStation.Alliance.Blue == alliance.get()){
         return thetaControllerAmp.calculate(correctYaw(drivetrain.getYaw().getDegrees()%360,270), 270);
