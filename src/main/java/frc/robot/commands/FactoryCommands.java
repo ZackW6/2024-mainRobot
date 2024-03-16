@@ -72,7 +72,18 @@ public class FactoryCommands extends SubsystemBase{
       .andThen(Commands.waitUntil(()->arm.isArmInSpeakerState())).andThen(intake.outtakePiece())
       .andThen(resetAll());
   }
-  
+  public Command loadAndShootAuto(){
+    return Commands.deadline(Commands.waitSeconds(.01).andThen(Commands.waitUntil(() ->shooter.isLeftFlywheelAtTargetSpeed()))
+      ,Commands.run(() -> shooter.setTargetFlywheelSpeed(85,85)), Commands.runOnce(()->shooter.disableDefault()))
+      .andThen(Commands.waitUntil(()->arm.isArmInSpeakerState())).andThen(intake.outtakePiece())
+      .andThen(resetAll());
+  }
+  public Command loadAndShootAutoSecondary(){
+    return Commands.deadline(Commands.waitSeconds(.01).andThen(Commands.waitUntil(() ->shooter.isLeftFlywheelAtTargetSpeed()))
+      ,Commands.run(() -> shooter.setTargetFlywheelSpeed(60,60)), Commands.runOnce(()->shooter.disableDefault()))
+      .andThen(Commands.waitUntil(()->arm.isArmInSpeakerState())).andThen(intake.outtakePiece())
+      .andThen(resetAll());
+  }
   public Command ampShot(){
     return Commands.deadline(Commands.waitSeconds(.5)
       ,Commands.waitSeconds(0.003).andThen(Commands.runOnce(()->arm.setCurrentArmState(ArmState.AmpMove)))

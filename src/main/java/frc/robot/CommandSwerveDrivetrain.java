@@ -121,7 +121,7 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     @Override
     public void periodic(){
         visionEstimation();
-        System.out.println(getPigeon2().getAngle());
+        // System.out.println(getPigeon2().getAngle());
         // System.out.println("Speaker Distance " + getDistanceFromSpeakerMeters());
         // System.out.println("Rotation " + getAngleFromSpeaker());
     }
@@ -258,7 +258,7 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
             // Convert the angle to Rotation2d
             Rotation2d rotation = Rotation2d.fromRadians(angleRadians - getPose().getRotation().getRadians());
 
-            System.out.println(((rotation.getDegrees()))+"angleRot");
+            // System.out.println(((rotation.getDegrees()))+"angleRot");
             // System.out.println(rotation+"ROTATION");
             // System.out.println(rotation.getDegrees());
             return rotation;
@@ -276,7 +276,7 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
                 rotation = Rotation2d.fromRadians((angleRadians - getPose().getRotation().getRadians()) + Math.PI);
             }
             
-            System.out.println(((correctYaw(rotation.getDegrees(),0)))+"angleRot");
+            // System.out.println(((correctYaw(rotation.getDegrees(),0)))+"angleRot");
             // System.out.println(rotation+"ROTATION");
             // System.out.println(rotation.getDegrees());
             return Rotation2d.fromDegrees(correctYaw(rotation.getDegrees(),0));
@@ -330,7 +330,7 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
                 speakerPose = VisionConstants.K_TAG_LAYOUT.getTagPose(4).get().toPose2d();
             }
             double distance = Math.sqrt(Math.pow(speakerPose.getX()-getPose().getX(),2)+Math.pow(speakerPose.getY()-getPose().getY(),2));
-            System.out.println(distance);
+            // System.out.println(distance);
             return distance;
         }
     }

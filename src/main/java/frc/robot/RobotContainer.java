@@ -115,7 +115,7 @@ public class RobotContainer {
     }
     drivetrain.registerTelemetry(logger::telemeterize);
     // driverController.getHID().se\tRumble(RumbleType.kBothRumble, 1);
-    new Trigger(()-> drivetrain.getDistanceFromSpeakerMeters() < 100 && drivetrain.getDistanceFromSpeakerMeters() > 0)
+    new Trigger(()-> drivetrain.getDistanceFromSpeakerMeters() < 1.5 && drivetrain.getDistanceFromSpeakerMeters() > 2.5)
       .whileTrue(Commands.runOnce(()->driverController.getHID().setRumble(RumbleType.kBothRumble, 1)))
       .whileFalse(Commands.runOnce(()->driverController.getHID().setRumble(RumbleType.kBothRumble, 0)));
 
@@ -149,7 +149,8 @@ public class RobotContainer {
 
   public void configureAutonomousCommands() {
     NamedCommands.registerCommand("intake", groupCommands.intakeMainAuto());
-    NamedCommands.registerCommand("loadAndShoot", groupCommands.loadAndShoot());
+    NamedCommands.registerCommand("loadAndShoot", groupCommands.loadAndShootAuto());
+    NamedCommands.registerCommand("loadAndShootThree", groupCommands.loadAndShootAutoSecondary());
   }
 
   public Command getAutonomousCommand() {
