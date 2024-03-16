@@ -121,6 +121,7 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     @Override
     public void periodic(){
         visionEstimation();
+        // System.out.println(getPigeon2().getAngle());
         // System.out.println("Speaker Distance " + getDistanceFromSpeakerMeters());
         // System.out.println("Rotation " + getAngleFromSpeaker());
     }
@@ -231,44 +232,66 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     }
 
     public Rotation2d getAngleFromSpeaker() {
-        // var alliance = DriverStation.getAlliance();
-        // if (!alliance.isPresent()) {
-        //     return new Rotation2d(0);
-        // }
-        // if (alliance.get() == DriverStation.Alliance.Blue) {
-        //     System.out.println(visionShooter.getTargetAngle(7));
-        //     return Rotation2d.fromDegrees(visionShooter.getTargetAngle(7));
-        // } else {
-        //     return Rotation2d.fromDegrees(visionShooter.getTargetAngle(4));
-        // }
-        LimelightResults results =  LimelightHelpers.getLatestResults(LimelightConstants.LIMELIGHT_NAME);     
+            LimelightResults results =  LimelightHelpers.getLatestResults(LimelightConstants.LIMELIGHT_NAME);     
 
-        if (results.targetingResults.valid) {
-            return Rotation2d.fromDegrees(LimelightHelpers.getTX(LimelightConstants.LIMELIGHT_NAME));
-        }else{
+            if (results.targetingResults.valid) {
+                // System.out.println("Degrees: " + LimelightHelpers.getTX(LimelightConstants.LIMELIGHT_NAME));
+                return Rotation2d.fromDegrees(LimelightHelpers.getTX(LimelightConstants.LIMELIGHT_NAME));
+            }else{
             Pose2d speakerLocation;
+            double deltaX;
+            double deltaY;
             var alliance = DriverStation.getAlliance();
             if (!alliance.isPresent()) {
                 return new Rotation2d(0);
             }
-            if (alliance.get() == DriverStation.Alliance.Blue) {
-                speakerLocation = new Pose2d(-0.0381, 5.547868, null);
-            } else {
-                speakerLocation = new Pose2d(16.579342, 5.547868, null);
-            }
-            
             double currentPoseX = getPose().getX();
             double currentPoseY = getPose().getY();
-            double deltaX = currentPoseX - speakerLocation.getX();
-            double deltaY = currentPoseY - speakerLocation.getY();
+            
+            if (alliance.get() == DriverStation.Alliance.Blue) {
+                speakerLocation = new Pose2d(-0.0381, 5.547868, null);
+                deltaX = speakerLocation.getX() - currentPoseX;
+            deltaY = speakerLocation.getY() - currentPoseY;
 
-            double angleRadians = ((Math.atan2(deltaX, deltaY)*-1)-Math.PI/2)+Math.PI*1.5;
+            double angleRadians = ((Math.atan(deltaY/deltaX)));
 
             // Convert the angle to Rotation2d
-            Rotation2d rotation = Rotation2d.fromRadians(angleRadians);
+            Rotation2d rotation = Rotation2d.fromRadians(angleRadians - getPose().getRotation().getRadians());
+
+            // System.out.println(((rotation.getDegrees()))+"angleRot");
+            // System.out.println(rotation+"ROTATION");
             // System.out.println(rotation.getDegrees());
-            return rotation;//Rotation2d.fromRadians(Math.atan((currentPoseX - speakerLocation.getX())/(currentPoseY - speakerLocation.getY())));
+            return rotation;
+            } else {
+                speakerLocation = new Pose2d(16.579342, 5.547868, null);
+                deltaX = speakerLocation.getX() - currentPoseX;
+            deltaY = speakerLocation.getY() - currentPoseY;
+
+            double angleRadians = ((Math.atan(deltaY/deltaX)));
+            Rotation2d rotation;
+            // Convert the angle to Rotation2d
+            if (angleRadians > 0){
+                rotation = Rotation2d.fromRadians((angleRadians - getPose().getRotation().getRadians()) - Math.PI);
+            } else {
+                rotation = Rotation2d.fromRadians((angleRadians - getPose().getRotation().getRadians()) + Math.PI);
+            }
+            
+            // System.out.println(((correctYaw(rotation.getDegrees(),0)))+"angleRot");
+            // System.out.println(rotation+"ROTATION");
+            // System.out.println(rotation.getDegrees());
+            return Rotation2d.fromDegrees(correctYaw(rotation.getDegrees(),0));
+            }
+            //Rotation2d.fromRadians(Math.atan((currentPoseX - speakerLocation.getX())/(currentPoseY - speakerLocation.getY())));
+    
         }
+    }
+    private double correctYaw(double x, double setpoint){
+        if (x>180+setpoint){
+          x-=360;
+        }else if(x<-180+setpoint){
+          x+=360;
+        }
+        return x;
     }
 
     public double getDistanceFromSpeakerMeters() {
@@ -280,22 +303,35 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
             double targetOffsetAngle_Vertical = ty.getDouble(0.0);
 
             // how many degrees back is your limelight rotated from perfectly vertical?
-            double limelightMountAngleDegrees = LimelightConstants.LIMELIGHT_CAMERA_TRANSFORM.getRotation().getY(); 
+            double limelightMountAngleDegrees = 35;//Units.radiansToDegrees(LimelightConstants.LIMELIGHT_CAMERA_TRANSFORM.getRotation().getY()); 
 
             // distance from the center of the Limelight lens to the floor
-            double limelightLensHeightInches = LimelightConstants.LIMELIGHT_CAMERA_TRANSFORM.getZ(); 
+            double limelightLensHeightInches = Units.metersToInches(LimelightConstants.LIMELIGHT_CAMERA_TRANSFORM.getZ()); 
 
             // distance from the target to the floor
-            double goalHeightInches = VisionConstants.K_TAG_LAYOUT.getTagPose(7).get().getZ(); 
+            double goalHeightInches = Units.metersToInches(VisionConstants.K_TAG_LAYOUT.getTagPose(7).get().getZ()); 
 
             double angleToGoalDegrees = limelightMountAngleDegrees + targetOffsetAngle_Vertical;
             double angleToGoalRadians = angleToGoalDegrees * (3.14159 / 180.0);
 
             //calculate distance
             double distanceFromLimelightToGoalInches = (goalHeightInches - limelightLensHeightInches) / Math.tan(angleToGoalRadians);
-            return distanceFromLimelightToGoalInches;
+            // System.out.println(distanceFromLimelightToGoalInches/12);
+            return Units.inchesToMeters(distanceFromLimelightToGoalInches);
         }else{
-            return -1;
+            var alliance  = DriverStation.getAlliance();
+            if (!alliance.isPresent()){
+                return -1;
+            }
+            Pose2d speakerPose;
+            if (alliance.get().equals(Alliance.Blue)){
+                speakerPose = VisionConstants.K_TAG_LAYOUT.getTagPose(7).get().toPose2d();
+            }else{
+                speakerPose = VisionConstants.K_TAG_LAYOUT.getTagPose(4).get().toPose2d();
+            }
+            double distance = Math.sqrt(Math.pow(speakerPose.getX()-getPose().getX(),2)+Math.pow(speakerPose.getY()-getPose().getY(),2));
+            // System.out.println(distance);
+            return distance;
         }
     }
 

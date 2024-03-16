@@ -48,7 +48,6 @@ public class Shooter extends SubsystemBase{
     private boolean flywheelDisabled = false;
     private double targetFlywheelSpeedL;
     private double targetFlywheelSpeedR;
-    private double shootingOffset = 0.0;
 
     // private final NetworkTableEntry shooterRPMOffsetEntry;
     CommandSwerveDrivetrain drivetrain;

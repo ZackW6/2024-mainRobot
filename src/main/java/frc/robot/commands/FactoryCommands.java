@@ -59,11 +59,31 @@ public class FactoryCommands extends SubsystemBase{
 
   public Command loadAndShoot(){
     return Commands.deadline(Commands.waitSeconds(.01).andThen(Commands.waitUntil(() ->shooter.isLeftFlywheelAtTargetSpeed()))
+      ,Commands.run(() -> {
+        double dist = drivetrain.getDistanceFromSpeakerMeters();
+        if (dist<=2 || dist ==-1){
+          shooter.setTargetFlywheelSpeed(85,85);
+        }else if(dist<=3){
+          shooter.setTargetFlywheelSpeed(75,75);
+        }else if(dist>3){
+          shooter.setTargetFlywheelSpeed(65,65);
+        }
+      }), Commands.runOnce(()->shooter.disableDefault()))
+      .andThen(Commands.waitUntil(()->arm.isArmInSpeakerState())).andThen(intake.outtakePiece())
+      .andThen(resetAll());
+  }
+  public Command loadAndShootAuto(){
+    return Commands.deadline(Commands.waitSeconds(.01).andThen(Commands.waitUntil(() ->shooter.isLeftFlywheelAtTargetSpeed()))
       ,Commands.run(() -> shooter.setTargetFlywheelSpeed(85,85)), Commands.runOnce(()->shooter.disableDefault()))
       .andThen(Commands.waitUntil(()->arm.isArmInSpeakerState())).andThen(intake.outtakePiece())
       .andThen(resetAll());
   }
-  
+  public Command loadAndShootAutoSecondary(){
+    return Commands.deadline(Commands.waitSeconds(.01).andThen(Commands.waitUntil(() ->shooter.isLeftFlywheelAtTargetSpeed()))
+      ,Commands.run(() -> shooter.setTargetFlywheelSpeed(60,60)), Commands.runOnce(()->shooter.disableDefault()))
+      .andThen(Commands.waitUntil(()->arm.isArmInSpeakerState())).andThen(intake.outtakePiece())
+      .andThen(resetAll());
+  }
   public Command ampShot(){
     return Commands.deadline(Commands.waitSeconds(.5)
       ,Commands.waitSeconds(0.003).andThen(Commands.runOnce(()->arm.setCurrentArmState(ArmState.AmpMove)))
@@ -129,29 +149,34 @@ public class FactoryCommands extends SubsystemBase{
     }
     return x;
   }
-  private final PIDController thetaControllerSpeaker = new PIDController(10,0,0);//(12.2,1.1,.4);
-
-  // public Command alignToSpeaker(DoubleSupplier xAxis, DoubleSupplier yAxis) {
-  //   thetaControllerSpeaker.reset();
-    
-
-  //   DoubleSupplier rotationalVelocity = () -> thetaControllerSpeaker.calculate(drivetrain.getAngleFromSpeaker().getDegrees(),0);
-  
-    
-  //   return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble()) 
-  //     .withVelocityY(yAxis.getAsDouble())
-  //     .withRotationalRate(rotationalVelocity.getAsDouble()));//.alongWith(Commands.runOnce(()->System.out.println(drivetrain.getAngleFromSpeaker().getDegrees())));
-  // }
+  private final PIDController thetaControllerSpeaker = new PIDController(7,0,0);
+  private final PIDController distanceYController = new PIDController(2, 0, 0);
   public Command alignToSpeaker(DoubleSupplier xAxis, DoubleSupplier yAxis) {
     thetaControllerSpeaker.reset();
     
 
-    DoubleSupplier rotationalVelocity = () -> thetaControllerSpeaker.calculate(correctYaw((drivetrain.getPose().getRotation().getDegrees()-90)%360,drivetrain.getAngleFromSpeaker().getDegrees()), drivetrain.getAngleFromSpeaker().getDegrees());
-  
+    DoubleSupplier rotationalVelocity = () -> {
+      if(drivetrain.getAngleFromSpeaker().getDegrees()>0){
+        return -thetaControllerSpeaker.calculate(drivetrain.getAngleFromSpeaker().getDegrees(),0);//-7;
+      }else{
+
+        return -thetaControllerSpeaker.calculate(drivetrain.getAngleFromSpeaker().getDegrees(),0);//+7;
+      }
+      
+    };
+    DoubleSupplier distanceYVelocity = ()-> distanceYController.calculate(drivetrain.getDistanceFromSpeakerMeters(), 2);
     
-    return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble()) 
+    DoubleSupplier offset=()->{
+      var alliance = DriverStation.getAlliance();
+      return alliance.isPresent() ? (alliance.get().equals(Alliance.Red) ? 180 : 360) : 360;
+    };
+    // drivetrain.seedFieldRelative(180-drivetrain.getPose().getRotation().getDegrees());
+    return drivetrain.applyRequest(() -> drive.withVelocityX(distanceYVelocity.getAsDouble()) 
       .withVelocityY(yAxis.getAsDouble())
-      .withRotationalRate(rotationalVelocity.getAsDouble()/100));
+      .withRotationalRate(Units.degreesToRadians(rotationalVelocity.getAsDouble())))
+      .alongWith(Commands.runOnce(()->{
+      drivetrain.seedFieldRelative(offset.getAsDouble()-drivetrain.getPose().getRotation().getDegrees());
+    }));
   }
 
   public Command switchModes(){
