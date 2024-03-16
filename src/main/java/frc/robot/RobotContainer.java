@@ -103,7 +103,7 @@ public class RobotContainer {
 
 
     driverController.rightStick().whileTrue(groupCommands.alignToSpeaker(() -> -driverController.getLeftY() * MaxSpeed, () -> -driverController.getLeftX() * MaxSpeed));
-    driverController.a().whileTrue(groupCommands.alignToAmp(() -> -driverController.getLeftY() * MaxSpeed, () -> -driverController.getLeftX() * MaxSpeed)).and(() -> !driverController.x().getAsBoolean());
+    driverController.a().whileTrue(groupCommands.alignToAmp(() -> -driverController.getLeftY() * MaxSpeed, () -> -driverController.getLeftX() * MaxSpeed));//.and(() -> driverController.x().getAsBoolean());
     // driverController.getHID().setRumble(RumbleType.kBothRumble, 1);
     
     operatorController.a().onTrue(groupCommands.switchModes());
@@ -120,7 +120,6 @@ public class RobotContainer {
       .whileFalse(Commands.runOnce(()->driverController.getHID().setRumble(RumbleType.kBothRumble, 0)));
 
     new Trigger(()->DriverStation.isTeleop()).and(()->{
-
       var alliance = DriverStation.getAlliance();
       if (!alliance.isPresent()){
         return true;
