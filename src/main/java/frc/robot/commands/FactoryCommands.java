@@ -27,7 +27,9 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.CommandSwerveDrivetrain;
+import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Candle;
 import frc.robot.subsystems.Intake;
@@ -40,12 +42,14 @@ public class FactoryCommands extends SubsystemBase{
   private Intake intake;
   private Candle candle;
   private CommandSwerveDrivetrain drivetrain;
-  public FactoryCommands(Arm arm, Shooter shooter, Intake intake, Candle candle, CommandSwerveDrivetrain drivetrain){
+  private CommandXboxController xboxController;
+  public FactoryCommands(Arm arm, Shooter shooter, Intake intake, Candle candle, CommandSwerveDrivetrain drivetrain, CommandXboxController xboxController){
     this.arm = arm;
     this.shooter = shooter;
     this.intake = intake;
     this.candle = candle;
     this.drivetrain = drivetrain;
+    this.xboxController = xboxController;
   }
 
   public Command shoot() {
@@ -117,12 +121,16 @@ public class FactoryCommands extends SubsystemBase{
       .andThen(Commands.runOnce(()->arm.setCurrentArmState(ArmState.Speaker)));
   }
 
+
+
   private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
       .withDeadband(0).withRotationalDeadband(0) // Add a 10% deadband
       .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
   private final PIDController thetaControllerAmp = new PIDController(12.2,0,.5);//(12.2,1.1,.4);
-  public Command alignToAmp(DoubleSupplier xAxis, DoubleSupplier yAxis) {
+  public Command alignToAmp() {
+    DoubleSupplier xAxis = () -> -xboxController.getLeftY() * TunerConstants.kSpeedAt12VoltsMps;
+    DoubleSupplier yAxis = () -> -xboxController.getLeftX() * TunerConstants.kSpeedAt12VoltsMps;
     // thetaController.enableContinuousInput(-, Math.PI);
     thetaControllerAmp.reset();
     // thetaController.setSetpoint(90);
@@ -150,33 +158,70 @@ public class FactoryCommands extends SubsystemBase{
     return x;
   }
   private final PIDController thetaControllerSpeaker = new PIDController(7,0,0);
-  private final PIDController distanceYController = new PIDController(2, 0, 0);
-  public Command alignToSpeaker(DoubleSupplier xAxis, DoubleSupplier yAxis) {
+  private final PIDController distanceController = new PIDController(5, 0, 0);
+  public Command alignToSpeaker() {
+    DoubleSupplier xAxis = () -> -xboxController.getLeftY() * TunerConstants.kSpeedAt12VoltsMps;
+    DoubleSupplier yAxis = () -> -xboxController.getLeftX() * TunerConstants.kSpeedAt12VoltsMps;
     thetaControllerSpeaker.reset();
-    
-
     DoubleSupplier rotationalVelocity = () -> {
       if(drivetrain.getAngleFromSpeaker().getDegrees()>0){
         return -thetaControllerSpeaker.calculate(drivetrain.getAngleFromSpeaker().getDegrees(),0);//-7;
       }else{
-
         return -thetaControllerSpeaker.calculate(drivetrain.getAngleFromSpeaker().getDegrees(),0);//+7;
       }
-      
     };
-    DoubleSupplier distanceYVelocity = ()-> distanceYController.calculate(drivetrain.getDistanceFromSpeakerMeters(), 2);
-    
-    DoubleSupplier offset=()->{
-      var alliance = DriverStation.getAlliance();
-      return alliance.isPresent() ? (alliance.get().equals(Alliance.Red) ? 180 : 360) : 360;
-    };
-    // drivetrain.seedFieldRelative(180-drivetrain.getPose().getRotation().getDegrees());
-    return drivetrain.applyRequest(() -> drive.withVelocityX(distanceYVelocity.getAsDouble()) 
+    return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble()) 
       .withVelocityY(yAxis.getAsDouble())
-      .withRotationalRate(Units.degreesToRadians(rotationalVelocity.getAsDouble())))
-      .alongWith(Commands.runOnce(()->{
-      drivetrain.seedFieldRelative(offset.getAsDouble()-drivetrain.getPose().getRotation().getDegrees());
-    }));
+      .withRotationalRate(Units.degreesToRadians(rotationalVelocity.getAsDouble())));
+  }
+  public Command getInRange() {
+    // DoubleSupplier xAxis = () -> -xboxController.getLeftY() * TunerConstants.kSpeedAt12VoltsMps;
+    // DoubleSupplier yAxis = () -> -xboxController.getLeftX() * TunerConstants.kSpeedAt12VoltsMps;
+    DoubleSupplier distanceSpeed = ()-> -distanceController.calculate(drivetrain.getDistanceFromSpeakerMeters(), 2);
+    DoubleSupplier redOrBlueSide = ()->{
+      var alliance = DriverStation.getAlliance();
+      if (!alliance.isPresent() || alliance.get().equals(Alliance.Blue)){
+        return 90;
+      }else{
+        return -90;
+      }
+    };
+    DoubleSupplier shareableNum = ()->(drivetrain.getYawOffsetDegrees().getDegrees()+redOrBlueSide.getAsDouble())*Math.PI/180;
+    DoubleSupplier xAxis = () -> 
+      (-Math.sin(shareableNum.getAsDouble()))*distanceSpeed.getAsDouble()
+      /Math.max(Math.max(Math.abs(xboxController.getLeftX()* TunerConstants.kSpeedAt12VoltsMps), Math.abs(xboxController.getLeftY()* TunerConstants.kSpeedAt12VoltsMps)),1)
+      -xboxController.getLeftY() * TunerConstants.kSpeedAt12VoltsMps;
+    DoubleSupplier yAxis = () -> 
+      (-Math.cos(shareableNum.getAsDouble()))*distanceSpeed.getAsDouble()
+      /Math.max(Math.max(Math.abs(xboxController.getLeftX()* TunerConstants.kSpeedAt12VoltsMps), Math.abs(xboxController.getLeftY()* TunerConstants.kSpeedAt12VoltsMps)),1)
+      -xboxController.getLeftX() * TunerConstants.kSpeedAt12VoltsMps;
+    // DoubleSupplier rotation = () -> -xboxController.getLeftX() * TunerConstants.kSpeedAt12VoltsMps;
+    thetaControllerSpeaker.reset();
+    DoubleSupplier rotationalVelocity = () -> {
+      if(drivetrain.getAngleFromSpeaker().getDegrees()>0){
+        return -thetaControllerSpeaker.calculate(drivetrain.getAngleFromSpeaker().getDegrees(),0);//-7;
+      }else{
+        return -thetaControllerSpeaker.calculate(drivetrain.getAngleFromSpeaker().getDegrees(),0);//+7;
+      }
+    };
+
+    return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble()) 
+          .withVelocityY(yAxis.getAsDouble())
+          .withRotationalRate(Units.degreesToRadians(rotationalVelocity.getAsDouble())));
+    // DoubleSupplier distanceYVelocity = ()-> distanceYController.calculate(drivetrain.getDistanceFromSpeakerMeters(), 2);
+    
+    // DoubleSupplier offset=()->{
+    //   var alliance = DriverStation.getAlliance();
+    //   return alliance.isPresent() ? (alliance.get().equals(Alliance.Red) ? 180 : 360) : 360;
+    // };
+    // drivetrain.seedFieldRelative(180-drivetrain.getPose().getRotation().getDegrees());
+    // return drivetrain.applyRequest(() -> drive.withVelocityX(distanceYVelocity.getAsDouble()) 
+    //   .withVelocityY(yAxis.getAsDouble())
+    //   .withRotationalRate(Units.degreesToRadians(rotationalVelocity.getAsDouble())))
+    //   .alongWith(Commands.runOnce(()->{
+    //   drivetrain.seedFieldRelative(offset.getAsDouble()-drivetrain.getPose().getRotation().getDegrees());
+    // }));
+    
   }
 
   public Command switchModes(){

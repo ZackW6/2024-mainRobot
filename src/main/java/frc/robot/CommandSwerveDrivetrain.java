@@ -36,6 +36,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -46,9 +47,9 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.LimelightHelpers.LimelightResults;
 import frc.robot.constants.LimelightConstants;
-import frc.robot.constants.VisionConstants;
+// import frc.robot.constants.VisionConstants;
 import frc.robot.generated.TunerConstants;
-import frc.robot.subsystems.Vision;
+// import frc.robot.subsystems.Vision;
 import frc.robot.util.ModifiedSignalLogger;
 
 /**
@@ -59,8 +60,8 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     private static final double kSimLoopPeriod = 0.005; // 5 ms
     private Notifier m_simNotifier = null;
     private double m_lastSimTime;
-    private Vision visionShooter = new Vision(VisionConstants.SHOOTER_CAMERA,VisionConstants.SHOOTER_CAMERA_TRANSFORM);
-    private Vision visionIntake = new Vision(VisionConstants.SHOOTER_CAMERA,VisionConstants.SHOOTER_CAMERA_TRANSFORM);
+    // private Vision visionShooter = new Vision(VisionConstants.SHOOTER_CAMERA,VisionConstants.SHOOTER_CAMERA_TRANSFORM);
+    // private Vision visionIntake = new Vision(VisionConstants.SHOOTER_CAMERA,VisionConstants.SHOOTER_CAMERA_TRANSFORM);
     
     private final SwerveRequest.ApplyChassisSpeeds autoRequest = new SwerveRequest.ApplyChassisSpeeds();
 
@@ -95,7 +96,7 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
         });
         m_simNotifier.startPeriodic(kSimLoopPeriod);
     }
-    private void visionEstimation(){
+    // private void visionEstimation(){
         // var visionEst1 = visionShooter.getEstimatedGlobalPose();
         // if (visionEst1.isEmpty()){
         //     return;
@@ -107,20 +108,23 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
         //     return;
         // }
         // addVisionMeasurement(visionEst2.get().estimatedPose.toPose2d(), visionEst2.get().timestampSeconds, vision2.getEstimationStdDevs(visionEst2.get().estimatedPose.toPose2d()));
-        var visionEstShooter = visionShooter.getEstimatedGlobalPose();
-        if (visionEstShooter.isPresent()) {         
-            addVisionMeasurement(visionEstShooter.get().estimatedPose.toPose2d(), visionEstShooter.get().timestampSeconds, visionShooter.getEstimationStdDevs(visionEstShooter.get().estimatedPose.toPose2d()));
-        }
+        // var visionEstShooter = visionShooter.getEstimatedGlobalPose();
+        // if (visionEstShooter.isPresent()) {         
+        //     addVisionMeasurement(visionEstShooter.get().estimatedPose.toPose2d(), visionEstShooter.get().timestampSeconds, visionShooter.getEstimationStdDevs(visionEstShooter.get().estimatedPose.toPose2d()));
+        // }
 
-        var visionEstIntake = visionIntake.getEstimatedGlobalPose();
-        if (visionEstIntake.isPresent()) {
-            addVisionMeasurement(visionEstIntake.get().estimatedPose.toPose2d(), visionEstIntake.get().timestampSeconds, visionIntake.getEstimationStdDevs(visionEstIntake.get().estimatedPose.toPose2d()));
-        }
-    }
+        // var visionEstIntake = visionIntake.getEstimatedGlobalPose();
+        // if (visionEstIntake.isPresent()) {
+        //     addVisionMeasurement(visionEstIntake.get().estimatedPose.toPose2d(), visionEstIntake.get().timestampSeconds, visionIntake.getEstimationStdDevs(visionEstIntake.get().estimatedPose.toPose2d()));
+        // }
+    // }
 
     @Override
     public void periodic(){
-        visionEstimation();
+        updateVisionPose(LimelightConstants.LIMELIGHT_NAME);
+        System.out.println(getPose().getRotation().getDegrees());
+        // updateVisionPose(SecondLimelightHere);
+        // visionEstimation();
         // System.out.println(getPigeon2().getAngle());
         // System.out.println("Speaker Distance " + getDistanceFromSpeakerMeters());
         // System.out.println("Rotation " + getAngleFromSpeaker());
@@ -309,7 +313,7 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
             double limelightLensHeightInches = Units.metersToInches(LimelightConstants.LIMELIGHT_CAMERA_TRANSFORM.getZ()); 
 
             // distance from the target to the floor
-            double goalHeightInches = Units.metersToInches(VisionConstants.K_TAG_LAYOUT.getTagPose(7).get().getZ()); 
+            double goalHeightInches = Units.metersToInches(LimelightConstants.K_TAG_LAYOUT.getTagPose(7).get().getZ()); 
 
             double angleToGoalDegrees = limelightMountAngleDegrees + targetOffsetAngle_Vertical;
             double angleToGoalRadians = angleToGoalDegrees * (3.14159 / 180.0);
@@ -325,9 +329,9 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
             }
             Pose2d speakerPose;
             if (alliance.get().equals(Alliance.Blue)){
-                speakerPose = VisionConstants.K_TAG_LAYOUT.getTagPose(7).get().toPose2d();
+                speakerPose = LimelightConstants.K_TAG_LAYOUT.getTagPose(7).get().toPose2d();
             }else{
-                speakerPose = VisionConstants.K_TAG_LAYOUT.getTagPose(4).get().toPose2d();
+                speakerPose = LimelightConstants.K_TAG_LAYOUT.getTagPose(4).get().toPose2d();
             }
             double distance = Math.sqrt(Math.pow(speakerPose.getX()-getPose().getX(),2)+Math.pow(speakerPose.getY()-getPose().getY(),2));
             // System.out.println(distance);
@@ -348,5 +352,37 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     // public Rotation2d getYawNoOffset(){
     //     return m_pigeon2.getRotation2d();
     // }
-    
+    private double[] currentVisionPose(String limelightName) {
+        return LimelightHelpers.getBotPose_wpiBlue(limelightName);
+    }
+
+    private void updateVisionPose(String limelightName) {
+        LimelightResults results =  LimelightHelpers.getLatestResults(limelightName);     
+
+        if (results.targetingResults.valid) {
+            double[] botpose = currentVisionPose(limelightName);
+            // System.out.println(getVisionTrust(botpose));
+            double latency = (Timer.getFPGATimestamp() - (botpose[6]/1000.0));
+           
+            Pose2d currentPose = new Pose2d(new Translation2d(botpose[0], botpose[1]), new Rotation2d(Units.degreesToRadians(botpose[5])));
+            double trustWorthiness = 1;
+            
+            if (Math.abs(currentPose.getX() - getPose().getX()) <= 1 && Math.abs(currentPose.getY() - getPose().getY()) <= 1) {
+                // System.out.println("Good Data");
+                double[] targetPose = LimelightHelpers.getTargetPose_RobotSpace(limelightName);
+                double targetDistance = Math.sqrt(Math.pow(targetPose[0], 2) + Math.pow(targetPose[1], 2) + Math.pow(targetPose[2], 2));
+                // double[] stddev = oneAprilTagLookupTable.getLookupValue(targetDistance);
+                // System.out.println("DistanceFromTarget: " + targetDistance);
+                // swerveDrivePoseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(stddev[0], stddev[1], Units.degreesToRadians(stddev[2])));
+                addVisionMeasurement(currentPose, latency, VecBuilder.fill(1,1,10));
+
+            } else {
+                System.out.println("Cannot add vision data - Pose is out of range");
+            }
+            // poseEstimator.addVisionMeasurement(currentPose, latency,VecBuilder.fill(0.9, 0.9, 0.1).times(1.0 / trustWorthiness));
+        }
+    }
+    public Rotation2d getYawOffsetDegrees(){
+        return m_fieldRelativeOffset;
+    }
 }

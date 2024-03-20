@@ -43,14 +43,12 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.commands.FactoryCommands;
 import frc.robot.constants.GeneralConstants;
-import frc.robot.constants.VisionConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Candle;
 import frc.robot.subsystems.Arm.ArmState;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
-import frc.robot.subsystems.Vision;
 
 public class RobotContainer {
 
@@ -79,7 +77,7 @@ public class RobotContainer {
   private final Shooter shooter = new Shooter();
   private final Intake intake = new Intake();
   private final Candle candle = new Candle();
-  private final FactoryCommands groupCommands = new FactoryCommands(arm, shooter, intake, candle, drivetrain);
+  private final FactoryCommands groupCommands = new FactoryCommands(arm, shooter, intake, candle, drivetrain, driverController);
   
 
   private void configureBindings() {
@@ -100,10 +98,10 @@ public class RobotContainer {
     driverController.rightBumper().whileTrue(groupCommands.intake()).whileFalse(Commands.runOnce(()->arm.setCurrentArmState(arm.lastMainState())));
     driverController.leftBumper().onTrue(groupCommands.shoot());
     driverController.rightTrigger(.5).whileTrue(drivetrain.applyRequest(() -> brake));
+    driverController.leftTrigger(.5).whileTrue(groupCommands.getInRange());
 
-
-    driverController.rightStick().whileTrue(groupCommands.alignToSpeaker(() -> -driverController.getLeftY() * MaxSpeed, () -> -driverController.getLeftX() * MaxSpeed));
-    driverController.a().whileTrue(groupCommands.alignToAmp(() -> -driverController.getLeftY() * MaxSpeed, () -> -driverController.getLeftX() * MaxSpeed));//.and(() -> driverController.x().getAsBoolean());
+    driverController.rightStick().whileTrue(groupCommands.alignToSpeaker());
+    driverController.a().whileTrue(groupCommands.alignToAmp());//.and(() -> driverController.x().getAsBoolean());
     // driverController.getHID().setRumble(RumbleType.kBothRumble, 1);
     
     operatorController.a().onTrue(groupCommands.switchModes());
