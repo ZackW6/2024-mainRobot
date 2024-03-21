@@ -2,15 +2,21 @@
   "version": 1.0,
   "startingPose": {
     "position": {
-      "x": 1.4817998866766982,
-      "y": 1.460307535999688
+      "x": 1.4642586550130365,
+      "y": 3.718741112695901
     },
-    "rotation": -1.3019526725789157
+    "rotation": 0.0
   },
   "command": {
     "type": "sequential",
     "data": {
       "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "S-L Taxi - shoot"
+          }
+        },
         {
           "type": "path",
           "data": {

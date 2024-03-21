@@ -140,9 +140,9 @@ public class FactoryCommands extends SubsystemBase{
     }
     DoubleSupplier rotationalVelocity = () -> {
       if(DriverStation.Alliance.Blue.equals(alliance.get())){
-        return thetaControllerAmp.calculate(correctYaw((drivetrain.getPose().getRotation().getDegrees()-90)%360,270), 270);
+        return thetaControllerAmp.calculate(correctYaw((drivetrain.getPose().getRotation().getDegrees())%360,90), 90);
       }else{
-        return thetaControllerAmp.calculate(correctYaw((drivetrain.getPose().getRotation().getDegrees()-90)%360,0), 0);
+        return thetaControllerAmp.calculate(correctYaw((drivetrain.getPose().getRotation().getDegrees())%360,90), 90);
       }
     };
     return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble()) //was -xAxis, but in sim is this
@@ -177,7 +177,7 @@ public class FactoryCommands extends SubsystemBase{
   public Command getInRange() {
     // DoubleSupplier xAxis = () -> -xboxController.getLeftY() * TunerConstants.kSpeedAt12VoltsMps;
     // DoubleSupplier yAxis = () -> -xboxController.getLeftX() * TunerConstants.kSpeedAt12VoltsMps;
-    DoubleSupplier distanceSpeed = ()-> -distanceController.calculate(drivetrain.getDistanceFromSpeakerMeters(), 2);
+    DoubleSupplier distanceSpeed = ()-> -distanceController.calculate(drivetrain.getDistanceFromSpeakerMeters(), 2.3);
     DoubleSupplier redOrBlueSide = ()->{
       var alliance = DriverStation.getAlliance();
       if (!alliance.isPresent() || alliance.get().equals(Alliance.Blue)){
@@ -186,7 +186,7 @@ public class FactoryCommands extends SubsystemBase{
         return -90;
       }
     };
-    DoubleSupplier shareableNum = ()->(drivetrain.getYawOffsetDegrees().getDegrees()+redOrBlueSide.getAsDouble())*Math.PI/180;
+    DoubleSupplier shareableNum = ()->(drivetrain.getYawOffsetDegrees().getDegrees()-drivetrain.getPoseAngleFromSpeaker().getDegrees()+redOrBlueSide.getAsDouble())*Math.PI/180;
     DoubleSupplier xAxis = () -> 
       (-Math.sin(shareableNum.getAsDouble()))*distanceSpeed.getAsDouble()
       /Math.max(Math.max(Math.abs(xboxController.getLeftX()* TunerConstants.kSpeedAt12VoltsMps), Math.abs(xboxController.getLeftY()* TunerConstants.kSpeedAt12VoltsMps)),1)

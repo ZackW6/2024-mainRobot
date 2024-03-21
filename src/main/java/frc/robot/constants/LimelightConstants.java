@@ -9,10 +9,10 @@ import edu.wpi.first.math.util.Units;
 
 public class LimelightConstants {
     /* 5027 https://github.com/FRC5727/SwervyBoi/blob/76bf195e5332ee201a1d0d766fbc0b57b428d485/src/main/java/frc/robot/Constants.java */
-    public static final String LIMELIGHT_NAME = "limelight";
+    public static final String LIMELIGHT_NAME = "";
     public static final double MAX_XY_ERROR = 1.0;
     public static final Transform3d LIMELIGHT_CAMERA_TRANSFORM =
-        new Transform3d(new Translation3d(0,0, 0.25146), new Rotation3d(0, Units.degreesToRadians(30), Units.degreesToRadians(0)));
+        new Transform3d(new Translation3d(0,-.297, 0.25146), new Rotation3d(0, Units.degreesToRadians(30), Units.degreesToRadians(0)));
 
     public static final String LIMELIGHT3G_NAME = "newLimelightCameraNameHere";
     public static final double MAX_XY_ERROR3G = 1.0;

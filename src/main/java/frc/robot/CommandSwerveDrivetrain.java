@@ -291,6 +291,40 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     
         }
     }
+    public Rotation2d getPoseAngleFromSpeaker() {
+            
+        Pose2d speakerLocation;
+        double deltaX;
+        double deltaY;
+        var alliance = DriverStation.getAlliance();
+        if (!alliance.isPresent()) {
+            return new Rotation2d(0);
+        }
+        double currentPoseX = getPose().getX();
+        double currentPoseY = getPose().getY();
+        
+        if (alliance.get() == DriverStation.Alliance.Blue) {
+            speakerLocation = new Pose2d(-0.0381, 5.547868, null);
+            deltaX = speakerLocation.getX() - currentPoseX;
+            deltaY = speakerLocation.getY() - currentPoseY;
+
+            double angleRadians = ((Math.atan(deltaY/deltaX)));
+            return Rotation2d.fromRadians(angleRadians);
+        } else {
+            speakerLocation = new Pose2d(16.579342, 5.547868, null);
+            deltaX = speakerLocation.getX() - currentPoseX;
+            deltaY = speakerLocation.getY() - currentPoseY;
+
+            double angleRadians = ((Math.atan(deltaY/deltaX)));
+        
+            // System.out.println(((correctYaw(rotation.getDegrees(),0)))+"angleRot");
+            // System.out.println(rotation+"ROTATION");
+            // System.out.println(rotation.getDegrees());
+            return Rotation2d.fromRadians(angleRadians);
+        }
+        //Rotation2d.fromRadians(Math.atan((currentPoseX - speakerLocation.getX())/(currentPoseY - speakerLocation.getY())));
+    
+    }
     private double correctYaw(double x, double setpoint){
         if (x>180+setpoint){
           x-=360;
@@ -360,7 +394,6 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
 
     private void updateVisionPose(String limelightName) {
         LimelightResults results =  LimelightHelpers.getLatestResults(limelightName);     
-
         if (results.targetingResults.valid) {
             double[] botpose = currentVisionPose(limelightName);
             // System.out.println(getVisionTrust(botpose));
