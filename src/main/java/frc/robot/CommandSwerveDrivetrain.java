@@ -122,6 +122,8 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     @Override
     public void periodic(){
         updateVisionPose(LimelightConstants.LIMELIGHT_NAME);
+        updateVisionPose(LimelightConstants.LIMELIGHT3G_NAME);
+
         System.out.println(getPose().getRotation().getDegrees());
         // updateVisionPose(SecondLimelightHere);
         // visionEstimation();
