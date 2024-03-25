@@ -171,8 +171,8 @@ public class Shooter extends SubsystemBase{
                         rightShooterMotor.setControl(velocityRequest.withVelocity(0));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
                     }
                 }else if(DriverStation.isAutonomous()){//ALWAYS BE FAST IN AUTO
-                    leftShooterMotor.setControl(velocityRequest.withVelocity(80));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
-                    rightShooterMotor.setControl(velocityRequest.withVelocity(80));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
+                    leftShooterMotor.setControl(velocityRequest.withVelocity(75));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
+                    rightShooterMotor.setControl(velocityRequest.withVelocity(75));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
                 }
             }else{
                 leftShooterMotor.setControl(velocityRequest.withVelocity(targetFlywheelSpeedL));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
@@ -205,6 +205,7 @@ public class Shooter extends SubsystemBase{
     }
 
     public void setTargetFlywheelSpeed(double targetFlywheelSpeedL,double targetFlywheelSpeedR) {
+        System.out.println(targetFlywheelSpeedL+"FLYWHEELSPEED");
         this.targetFlywheelSpeedL = targetFlywheelSpeedL;
         this.targetFlywheelSpeedR = targetFlywheelSpeedR;
     }

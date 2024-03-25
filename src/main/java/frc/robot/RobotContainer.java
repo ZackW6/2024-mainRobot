@@ -16,6 +16,8 @@
 
 package frc.robot;
 
+import java.util.function.DoubleSupplier;
+
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveModule.DriveRequestType;
@@ -88,8 +90,8 @@ public class RobotContainer {
     candle.setDefaultCommand(candle.idleLED());
     drivetrain.setDefaultCommand(
         drivetrain.applyRequest(() -> drive.withVelocityX(-driverController.getLeftY() * MaxSpeed)
-            .withVelocityY(-driverController.getLeftX() * MaxSpeed)
-            .withRotationalRate(-driverController.getRightX() * MaxAngularRate)
+            .withVelocityY(-driverController.getLeftX() * 0.85 * MaxSpeed)
+            .withRotationalRate(-driverController.getRightX() *2/3 * MaxAngularRate)
     ));
 
     /* Controller Bindings */
@@ -113,7 +115,15 @@ public class RobotContainer {
     }
     drivetrain.registerTelemetry(logger::telemeterize);
     // driverController.getHID().se\tRumble(RumbleType.kBothRumble, 1);
-    new Trigger(()-> drivetrain.getDistanceFromSpeakerMeters() < 1.5 && drivetrain.getDistanceFromSpeakerMeters() > 2.5)
+    DoubleSupplier teamID = ()->{
+      if (DriverStation.getAlliance().isPresent()){
+        if(DriverStation.getAlliance().get().equals(Alliance.Red)){
+          return 4;
+        }
+      }
+      return 7;
+    };
+    new Trigger(()-> drivetrain.getDistanceFromTagMeters(teamID.getAsDouble()) > 1.95072 && drivetrain.getDistanceFromTagMeters(teamID.getAsDouble()) < 2.7432)
       .whileTrue(Commands.runOnce(()->driverController.getHID().setRumble(RumbleType.kBothRumble, 1)))
       .whileFalse(Commands.runOnce(()->driverController.getHID().setRumble(RumbleType.kBothRumble, 0)));
 
@@ -148,6 +158,7 @@ public class RobotContainer {
   public void configureAutonomousCommands() {
     NamedCommands.registerCommand("intake", groupCommands.intakeMainAuto());
     NamedCommands.registerCommand("loadAndShoot", groupCommands.loadAndShootAuto());
+    NamedCommands.registerCommand("loadAndShootLinear", groupCommands.loadAndShoot());
     NamedCommands.registerCommand("loadAndShootThree", groupCommands.loadAndShootAutoSecondary());
   }
 

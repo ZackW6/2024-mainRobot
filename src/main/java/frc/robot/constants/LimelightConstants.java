@@ -10,10 +10,10 @@ import frc.robot.util.MultiLinearInterpolator;
 
 public class LimelightConstants {
     /* 5027 https://github.com/FRC5727/SwervyBoi/blob/76bf195e5332ee201a1d0d766fbc0b57b428d485/src/main/java/frc/robot/Constants.java */
-    public static final String LIMELIGHT_NAME = "";
+    public static final String LIMELIGHT_NAME = "limelight";
     public static final double MAX_XY_ERROR = 1.0;
     public static final Transform3d LIMELIGHT_CAMERA_TRANSFORM =
-        new Transform3d(new Translation3d(0,-.297, 0.25146), new Rotation3d(0, Units.degreesToRadians(30), Units.degreesToRadians(0)));
+        new Transform3d(new Translation3d(0,-.297, 0.25146), new Rotation3d(0, Units.degreesToRadians(33.5), Units.degreesToRadians(0)));
 
     public static final String LIMELIGHT3G_NAME = "newLimelightCameraNameHere";
     public static final double MAX_XY_ERROR3G = 1.0;
@@ -25,21 +25,21 @@ public class LimelightConstants {
 
     public static final double[][] ONE_APRIL_TAG_LOOKUP_TABLE = {
       // {distance in meters, x std deviation, y std deviation, r (in degrees) std deviation}
-      {0, 0.01, 0.01, 10},
-      {1.5, 0.01, 0.01, 10},
-      {3, 0.145, 1.20, 30},
-      {4.5, 0.75, 5.0, 90},
-      {6, 1.0, 8.0, 180}
+      {0, 0.001, 0.001, 100},
+      {1.5, 0.01, 0.01, 100},
+      {3, 0.7, 0.7, 300},
+      {4.5, 3, 3, 900},
+      {6, 5, 5, 1800}
     };
     public static final MultiLinearInterpolator ONE_APRIL_TAG_LINEAR_INTERPOLATOR = new MultiLinearInterpolator(ONE_APRIL_TAG_LOOKUP_TABLE);
 
     public static final double[][] TWO_APRIL_TAG_LOOKUP_TABLE = {
       // {distance in meters, x std deviation, y std deviation, r (in degrees) std deviation}
-      {0, 0.01, 0.01, 5},
-      {1.5, 0.02, 0.02, 5},
-      {3, 0.04, 0.04, 15},
-      {4.5, 0.1, 0.1, 30},
-      {6, 0.3, 0.3, 60}
+      {0, 0.001, 0.001, 50},
+      {1.5, 0.01, 0.01, 50},
+      {3, 0.4, 0.4, 150},
+      {4.5, 2, 2, 300},
+      {6, 3, 3, 600}
     };
     public static final MultiLinearInterpolator TWO_APRIL_TAG_LINEAR_INTERPOLATOR = new MultiLinearInterpolator(TWO_APRIL_TAG_LOOKUP_TABLE);
 

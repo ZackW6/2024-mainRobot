@@ -127,15 +127,9 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
 
     @Override
     public void periodic(){
-        updateVisionPose(LimelightConstants.LIMELIGHT_NAME);
-        updateVisionPose(LimelightConstants.LIMELIGHT3G_NAME);
-
-        System.out.println(getPose().getRotation().getDegrees());
-        // updateVisionPose(SecondLimelightHere);
-        // visionEstimation();
-        // System.out.println(getPigeon2().getAngle());
-        // System.out.println("Speaker Distance " + getDistanceFromSpeakerMeters());
-        // System.out.println("Rotation " + getAngleFromSpeaker());
+        // updateVisionPose(LimelightConstants.LIMELIGHT_NAME);
+        // updateVisionPose(LimelightConstants.LIMELIGHT3G_NAME);
+        System.out.println(getDistanceFromTagMeters(7));
     }
 
     public Pose2d getPose() {
@@ -243,167 +237,34 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
         return Rotation2d.fromDegrees(m_pigeon2.getYaw().getValueAsDouble());
     }
 
-    public Rotation2d getAngleFromSpeaker() {
-            var alliance  = DriverStation.getAlliance();
-            int wantedID = 7;
-            if (!alliance.isPresent()){
-                LimelightHelpers.setPriorityTagID(LimelightConstants.LIMELIGHT_NAME,7);
-            }else{
-                if (alliance.get().equals(Alliance.Blue)){
-                    LimelightHelpers.setPriorityTagID(LimelightConstants.LIMELIGHT_NAME,7);
-                }else{
-                    LimelightHelpers.setPriorityTagID(LimelightConstants.LIMELIGHT_NAME,4);
-                    wantedID = 4;
-                }
-            }
-            LimelightResults results =  LimelightHelpers.getLatestResults(LimelightConstants.LIMELIGHT_NAME);
-            double fiducialID = LimelightHelpers.getFiducialID(LimelightConstants.LIMELIGHT_NAME);
-            if (results.targetingResults.valid && fiducialID == wantedID) {
-                // System.out.println("Degrees: " + LimelightHelpers.getTX(LimelightConstants.LIMELIGHT_NAME));
-                return Rotation2d.fromDegrees(LimelightHelpers.getTX(LimelightConstants.LIMELIGHT_NAME));
-            }else{
-            Pose2d speakerLocation;
-            double deltaX;
-            double deltaY;
-            alliance = DriverStation.getAlliance();
-            if (!alliance.isPresent()) {
-                return new Rotation2d(0);
-            }
-            double currentPoseX = getPose().getX();
-            double currentPoseY = getPose().getY();
-            
-            if (alliance.get() == DriverStation.Alliance.Blue) {
-                speakerLocation = new Pose2d(-0.0381, 5.547868, null);
-                deltaX = speakerLocation.getX() - currentPoseX;
-            deltaY = speakerLocation.getY() - currentPoseY;
-
-            double angleRadians = ((Math.atan(deltaY/deltaX)));
-
-            // Convert the angle to Rotation2d
-            Rotation2d rotation = Rotation2d.fromRadians(angleRadians - getPose().getRotation().getRadians());
-
-            // System.out.println(((rotation.getDegrees()))+"angleRot");
-            // System.out.println(rotation+"ROTATION");
-            // System.out.println(rotation.getDegrees());
-            return rotation;
-            } else {
-                speakerLocation = new Pose2d(16.579342, 5.547868, null);
-                deltaX = speakerLocation.getX() - currentPoseX;
-            deltaY = speakerLocation.getY() - currentPoseY;
-
-            double angleRadians = ((Math.atan(deltaY/deltaX)));
-            Rotation2d rotation;
-            // Convert the angle to Rotation2d
-            if (angleRadians > 0){
-                rotation = Rotation2d.fromRadians((angleRadians - getPose().getRotation().getRadians()) - Math.PI);
-            } else {
-                rotation = Rotation2d.fromRadians((angleRadians - getPose().getRotation().getRadians()) + Math.PI);
-            }
-            
-            // System.out.println(((correctYaw(rotation.getDegrees(),0)))+"angleRot");
-            // System.out.println(rotation+"ROTATION");
-            // System.out.println(rotation.getDegrees());
-            return Rotation2d.fromDegrees(correctYaw(rotation.getDegrees(),0));
-            }
-            //Rotation2d.fromRadians(Math.atan((currentPoseX - speakerLocation.getX())/(currentPoseY - speakerLocation.getY())));
-    
-        }
-    }
-    public Rotation2d getPoseAngleFromSpeaker() {
-            
-        Pose2d speakerLocation;
+    public Rotation2d getAngleFromTag(double ID) {
+        Pose2d tagLocation = LimelightConstants.K_TAG_LAYOUT.getTagPose((int)ID).get().toPose2d();
         double deltaX;
         double deltaY;
-        var alliance = DriverStation.getAlliance();
-        if (!alliance.isPresent()) {
-            return new Rotation2d(0);
-        }
-        double currentPoseX = getPose().getX();
-        double currentPoseY = getPose().getY();
-        
-        if (alliance.get() == DriverStation.Alliance.Blue) {
-            speakerLocation = new Pose2d(-0.0381, 5.547868, null);
-            deltaX = speakerLocation.getX() - currentPoseX;
-            deltaY = speakerLocation.getY() - currentPoseY;
+        deltaX = tagLocation.getX() - getPose().getX();
+        deltaY = tagLocation.getY() - getPose().getY();
 
-            double angleRadians = ((Math.atan(deltaY/deltaX)));
-            return Rotation2d.fromRadians(angleRadians);
-        } else {
-            speakerLocation = new Pose2d(16.579342, 5.547868, null);
-            deltaX = speakerLocation.getX() - currentPoseX;
-            deltaY = speakerLocation.getY() - currentPoseY;
+        double angleRadians = ((Math.atan(deltaY/deltaX)));
 
-            double angleRadians = ((Math.atan(deltaY/deltaX)));
-        
-            // System.out.println(((correctYaw(rotation.getDegrees(),0)))+"angleRot");
-            // System.out.println(rotation+"ROTATION");
-            // System.out.println(rotation.getDegrees());
-            return Rotation2d.fromRadians(angleRadians);
-        }
-        //Rotation2d.fromRadians(Math.atan((currentPoseX - speakerLocation.getX())/(currentPoseY - speakerLocation.getY())));
-    
+        // Convert the angle to Rotation2d
+        Rotation2d rotation = Rotation2d.fromRadians(angleRadians - getPose().getRotation().getRadians());
+
+        // System.out.println(((rotation.getDegrees()))+"angleRot");
+        // System.out.println(rotation+"ROTATION");
+        // System.out.println(rotation.getDegrees());
+        return rotation;
     }
-    private double correctYaw(double x, double setpoint){
-        if (x>180+setpoint){
-          x-=360;
-        }else if(x<-180+setpoint){
-          x+=360;
-        }
-        return x;
+    public Rotation2d getPoseAngleFromTag(double ID) {
+        Pose2d speakerLocation = LimelightConstants.K_TAG_LAYOUT.getTagPose((int)ID).get().toPose2d();
+        double deltaX = speakerLocation.getX() - getPose().getX();
+        double deltaY = speakerLocation.getY() - getPose().getY();
+        double angleRadians = ((Math.atan(deltaY/deltaX)));
+        return Rotation2d.fromRadians(angleRadians);
     }
 
-    public double getDistanceFromSpeakerMeters() {
-        var alliance  = DriverStation.getAlliance();
-        int wantedID = 7;
-        if (!alliance.isPresent()){
-            LimelightHelpers.setPriorityTagID(LimelightConstants.LIMELIGHT_NAME,7);
-        }else{
-            if (alliance.get().equals(Alliance.Blue)){
-                LimelightHelpers.setPriorityTagID(LimelightConstants.LIMELIGHT_NAME,7);
-            }else{
-                LimelightHelpers.setPriorityTagID(LimelightConstants.LIMELIGHT_NAME,4);
-                wantedID = 4;
-            }
-        }
-        LimelightResults results =  LimelightHelpers.getLatestResults(LimelightConstants.LIMELIGHT_NAME);
-        double fiducialID = LimelightHelpers.getFiducialID(LimelightConstants.LIMELIGHT_NAME);
-
-        if (results.targetingResults.valid && fiducialID == wantedID) {
-            NetworkTable table = NetworkTableInstance.getDefault().getTable(LimelightConstants.LIMELIGHT_NAME);
-            NetworkTableEntry ty = table.getEntry("ty");
-            double targetOffsetAngle_Vertical = ty.getDouble(0.0);
-            // how many degrees back is your limelight rotated from perfectly vertical?
-            double limelightMountAngleDegrees = 33.5;//Units.radiansToDegrees(LimelightConstants.LIMELIGHT_CAMERA_TRANSFORM.getRotation().getY()); 
-
-            // distance from the center of the Limelight lens to the floor
-            double limelightLensHeightInches = Units.metersToInches(LimelightConstants.LIMELIGHT_CAMERA_TRANSFORM.getZ()); 
-
-            // distance from the target to the floor
-            double goalHeightInches = Units.metersToInches(LimelightConstants.K_TAG_LAYOUT.getTagPose(7).get().getZ()); 
-
-            double angleToGoalDegrees = limelightMountAngleDegrees + targetOffsetAngle_Vertical;
-            double angleToGoalRadians = angleToGoalDegrees * (3.14159 / 180.0);
-
-            //calculate distance
-            double distanceFromLimelightToGoalInches = (goalHeightInches - limelightLensHeightInches) / Math.tan(angleToGoalRadians);
-            // System.out.println(distanceFromLimelightToGoalInches/12);
-            return Units.inchesToMeters(distanceFromLimelightToGoalInches);
-        }else{
-            Pose2d speakerPose;
-            alliance  = DriverStation.getAlliance();
-            if (!alliance.isPresent()){
-                speakerPose = LimelightConstants.K_TAG_LAYOUT.getTagPose(7).get().toPose2d();
-            }else{
-                if (alliance.get().equals(Alliance.Blue)){
-                    speakerPose = LimelightConstants.K_TAG_LAYOUT.getTagPose(7).get().toPose2d();
-                }else{
-                    speakerPose = LimelightConstants.K_TAG_LAYOUT.getTagPose(4).get().toPose2d();
-                }
-            }
-            double distance = Math.sqrt(Math.pow(speakerPose.getX()-getPose().getX(),2)+Math.pow(speakerPose.getY()-getPose().getY(),2));
-            // System.out.println(distance);
-            return distance;
-        }
+    public double getDistanceFromTagMeters(double ID) {
+        Pose2d speakerPose = LimelightConstants.K_TAG_LAYOUT.getTagPose((int)ID).get().toPose2d();
+        return Math.sqrt(Math.pow(speakerPose.getX()-getPose().getX(),2)+Math.pow(speakerPose.getY()-getPose().getY(),2));
     }
 
 
@@ -457,15 +318,17 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
             PoseEstimate botpose = currentVisionPose(limelightName);
             double latency = botpose.latency;
             Pose2d currentPose = botpose.pose;
-            double avgAmbiguity = 0;
-            double avgDistance = 0;
-            for (RawFiducial val : botpose.rawFiducials){
-                avgAmbiguity += val.ambiguity;
-                avgDistance += val.distToCamera;
-            }
+            double avgAmbiguity = 100;
+            double avgDistance = 4;
+            // for (RawFiducial val : botpose.rawFiducials){
+            //     // if (val.ambiguity > 0){
+            //     //     avgAmbiguity += val.ambiguity;
+            //     // }
+            //     // avgDistance += val.distToCamera;
+            // }
             avgAmbiguity /= botpose.rawFiducials.length;
             avgDistance /= botpose.rawFiducials.length;
-            boolean isInBounds = currentPose.getX() > 0 && currentPose.getX() < 15 && currentPose.getY() > 0 && currentPose.getY() < 8;
+            boolean isInBounds = currentPose.getX() > 0 && currentPose.getX() < 16.4846 && currentPose.getY() > 0 && currentPose.getY() < 8.1026;
             if (avgAmbiguity > 0.4 && avgDistance < 6 && isInBounds){
                 double[] stddev;
                 if (botpose.tagCount>1){

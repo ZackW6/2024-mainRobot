@@ -65,23 +65,16 @@ public class FactoryCommands extends SubsystemBase{
   public Command loadAndShoot(){
     return Commands.deadline(Commands.waitSeconds(.01).andThen(Commands.waitUntil(() ->shooter.isLeftFlywheelAtTargetSpeed()))
       ,Commands.run(() -> {
-        // double dist = drivetrain.getDistanceFromSpeakerMeters();
-        // if (dist<=2 || dist ==-1){
-        //   shooter.setTargetFlywheelSpeed(85,85);
-        // }else if(dist<=3){
-        //   shooter.setTargetFlywheelSpeed(75,75);
-        // }else if(dist>3){
-        //   shooter.setTargetFlywheelSpeed(65,65);
-        // }
-        double shooterSpeed = ShooterConstants.SHOOTER_DISTANCE_LINEAR_INTERPOLATOR.getLookupValue(drivetrain.getDistanceFromSpeakerMeters())[0];
-        shooter.setTargetFlywheelSpeed(shooterSpeed, shooterSpeed);
+        // double shooterSpeed = ShooterConstants.SHOOTER_DISTANCE_LINEAR_INTERPOLATOR.getLookupValue(drivetrain.getDistanceFromSpeakerMeters()+.2)[0];
+        shooter.setTargetFlywheelSpeed(75, 75);
       }), Commands.runOnce(()->shooter.disableDefault()))
       .andThen(Commands.waitUntil(()->arm.isArmInSpeakerState())).andThen(intake.outtakePiece())
       .andThen(resetAll());
   }
+
   public Command loadAndShootAuto(){
     return Commands.deadline(Commands.waitSeconds(.01).andThen(Commands.waitUntil(() ->shooter.isLeftFlywheelAtTargetSpeed()))
-      ,Commands.run(() -> shooter.setTargetFlywheelSpeed(85,85)), Commands.runOnce(()->shooter.disableDefault()))
+      ,Commands.run(() -> shooter.setTargetFlywheelSpeed(75,75)), Commands.runOnce(()->shooter.disableDefault()))
       .andThen(Commands.waitUntil(()->arm.isArmInSpeakerState())).andThen(intake.outtakePiece())
       .andThen(resetAll());
   }
@@ -93,8 +86,8 @@ public class FactoryCommands extends SubsystemBase{
   }
   public Command ampShot(){
     return Commands.deadline(Commands.waitSeconds(.5)
-      ,Commands.waitSeconds(0.003).andThen(Commands.runOnce(()->arm.setCurrentArmState(ArmState.AmpMove)))
-      ,intake.setVelocity(-19.25/*-19.5*/)).andThen(switchModes());
+      ,Commands.waitSeconds(0.006).andThen(Commands.runOnce(()->arm.setCurrentArmState(ArmState.AmpMove)))
+      ,intake.setVelocity(-19.25/*-19.25*/)).andThen(switchModes());
   } 
 
   public Command intakeMain(){
@@ -160,17 +153,25 @@ public class FactoryCommands extends SubsystemBase{
     }
     return x;
   }
-  private final PIDController thetaControllerSpeaker = new PIDController(7,0,0);
-  private final PIDController distanceController = new PIDController(5, 0, 0);
+  private final PIDController thetaControllerSpeaker = new PIDController(3,0,0.01);
+  private final PIDController distanceController = new PIDController(1.9, 0, 0.2);
   public Command alignToSpeaker() {
     DoubleSupplier xAxis = () -> -xboxController.getLeftY() * TunerConstants.kSpeedAt12VoltsMps;
     DoubleSupplier yAxis = () -> -xboxController.getLeftX() * TunerConstants.kSpeedAt12VoltsMps;
     thetaControllerSpeaker.reset();
+    DoubleSupplier teamID = ()->{
+      if (DriverStation.getAlliance().isPresent()){
+        if(DriverStation.getAlliance().get().equals(Alliance.Red)){
+          return 4;
+        }
+      }
+      return 7;
+    };
     DoubleSupplier rotationalVelocity = () -> {
-      if(drivetrain.getAngleFromSpeaker().getDegrees()>0){
-        return -thetaControllerSpeaker.calculate(drivetrain.getAngleFromSpeaker().getDegrees(),0);//-7;
+      if(drivetrain.getAngleFromTag(teamID.getAsDouble()).getDegrees()>0){
+        return -thetaControllerSpeaker.calculate(drivetrain.getAngleFromTag(teamID.getAsDouble()).getDegrees(),0);//-7;
       }else{
-        return -thetaControllerSpeaker.calculate(drivetrain.getAngleFromSpeaker().getDegrees(),0);//+7;
+        return -thetaControllerSpeaker.calculate(drivetrain.getAngleFromTag(teamID.getAsDouble()).getDegrees(),0);//+7;
       }
     };
     return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble()) 
@@ -180,7 +181,15 @@ public class FactoryCommands extends SubsystemBase{
   public Command getInRange() {
     // DoubleSupplier xAxis = () -> -xboxController.getLeftY() * TunerConstants.kSpeedAt12VoltsMps;
     // DoubleSupplier yAxis = () -> -xboxController.getLeftX() * TunerConstants.kSpeedAt12VoltsMps;
-    DoubleSupplier distanceSpeed = ()-> -distanceController.calculate(drivetrain.getDistanceFromSpeakerMeters(), 2.3);
+    DoubleSupplier teamID = ()->{
+      if (DriverStation.getAlliance().isPresent()){
+        if(DriverStation.getAlliance().get().equals(Alliance.Red)){
+          return 4;
+        }
+      }
+      return 7;
+    };
+    DoubleSupplier distanceSpeed = ()-> -distanceController.calculate(drivetrain.getDistanceFromTagMeters(teamID.getAsDouble()), 2.25);
     DoubleSupplier redOrBlueSide = ()->{
       var alliance = DriverStation.getAlliance();
       if (!alliance.isPresent() || alliance.get().equals(Alliance.Blue)){
@@ -189,7 +198,7 @@ public class FactoryCommands extends SubsystemBase{
         return -90;
       }
     };
-    DoubleSupplier shareableNum = ()->(drivetrain.getYawOffsetDegrees().getDegrees()-drivetrain.getPoseAngleFromSpeaker().getDegrees()+redOrBlueSide.getAsDouble())*Math.PI/180;
+    DoubleSupplier shareableNum = ()->(drivetrain.getYawOffsetDegrees().getDegrees()-drivetrain.getPoseAngleFromTag(teamID.getAsDouble()).getDegrees()+redOrBlueSide.getAsDouble())*Math.PI/180;
     DoubleSupplier xAxis = () -> 
       (-Math.sin(shareableNum.getAsDouble()))*distanceSpeed.getAsDouble()
       /Math.max(Math.max(Math.abs(xboxController.getLeftX()* TunerConstants.kSpeedAt12VoltsMps), Math.abs(xboxController.getLeftY()* TunerConstants.kSpeedAt12VoltsMps)),1)
@@ -200,11 +209,12 @@ public class FactoryCommands extends SubsystemBase{
       -xboxController.getLeftX() * TunerConstants.kSpeedAt12VoltsMps;
     // DoubleSupplier rotation = () -> -xboxController.getLeftX() * TunerConstants.kSpeedAt12VoltsMps;
     thetaControllerSpeaker.reset();
+    
     DoubleSupplier rotationalVelocity = () -> {
-      if(drivetrain.getAngleFromSpeaker().getDegrees()>0){
-        return -thetaControllerSpeaker.calculate(drivetrain.getAngleFromSpeaker().getDegrees(),0);//-7;
+      if(drivetrain.getAngleFromTag(teamID.getAsDouble()).getDegrees()>0){
+        return -thetaControllerSpeaker.calculate(drivetrain.getAngleFromTag(teamID.getAsDouble()).getDegrees(),0);//-7;
       }else{
-        return -thetaControllerSpeaker.calculate(drivetrain.getAngleFromSpeaker().getDegrees(),0);//+7;
+        return -thetaControllerSpeaker.calculate(drivetrain.getAngleFromTag(teamID.getAsDouble()).getDegrees(),0);//+7;
       }
     };
 

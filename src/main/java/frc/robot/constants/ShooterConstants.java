@@ -38,12 +38,12 @@ public class ShooterConstants {
 
     public static final double[][] SHOOTER_DISTANCE_LOOKUP_TABLE = {
       // {distance in meters, x std deviation, y std deviation, r (in degrees) std deviation}
-      {6.4, 95},
-      {7, 90},
-      {7.5, 84},
-      {8, 46},
-      {8.5, 42.5},
-      {9, 36.9}
+      {1.95072, 95},
+      {2.1336, 90},
+      {2.286, 84},
+      {2.4384, 46},
+      {2.5908, 42.5},
+      {2.7432, 36.9}
     };
     public static final MultiLinearInterpolator SHOOTER_DISTANCE_LINEAR_INTERPOLATOR = new MultiLinearInterpolator(SHOOTER_DISTANCE_LOOKUP_TABLE);
 }
