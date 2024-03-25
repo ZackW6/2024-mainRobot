@@ -29,6 +29,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.CommandSwerveDrivetrain;
+import frc.robot.constants.ShooterConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Candle;
@@ -64,14 +65,16 @@ public class FactoryCommands extends SubsystemBase{
   public Command loadAndShoot(){
     return Commands.deadline(Commands.waitSeconds(.01).andThen(Commands.waitUntil(() ->shooter.isLeftFlywheelAtTargetSpeed()))
       ,Commands.run(() -> {
-        double dist = drivetrain.getDistanceFromSpeakerMeters();
-        if (dist<=2 || dist ==-1){
-          shooter.setTargetFlywheelSpeed(85,85);
-        }else if(dist<=3){
-          shooter.setTargetFlywheelSpeed(75,75);
-        }else if(dist>3){
-          shooter.setTargetFlywheelSpeed(65,65);
-        }
+        // double dist = drivetrain.getDistanceFromSpeakerMeters();
+        // if (dist<=2 || dist ==-1){
+        //   shooter.setTargetFlywheelSpeed(85,85);
+        // }else if(dist<=3){
+        //   shooter.setTargetFlywheelSpeed(75,75);
+        // }else if(dist>3){
+        //   shooter.setTargetFlywheelSpeed(65,65);
+        // }
+        double shooterSpeed = ShooterConstants.SHOOTER_DISTANCE_LINEAR_INTERPOLATOR.getLookupValue(drivetrain.getDistanceFromSpeakerMeters())[0];
+        shooter.setTargetFlywheelSpeed(shooterSpeed, shooterSpeed);
       }), Commands.runOnce(()->shooter.disableDefault()))
       .andThen(Commands.waitUntil(()->arm.isArmInSpeakerState())).andThen(intake.outtakePiece())
       .andThen(resetAll());
