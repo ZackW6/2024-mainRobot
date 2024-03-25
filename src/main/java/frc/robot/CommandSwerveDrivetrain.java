@@ -21,11 +21,14 @@ import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
 import com.pathplanner.lib.util.PIDConstants;
 import com.pathplanner.lib.util.ReplanningConfig;
 
+import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
@@ -46,7 +49,10 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.LimelightHelpers.LimelightResults;
+import frc.robot.LimelightHelpers.PoseEstimate;
+import frc.robot.LimelightHelpers.RawFiducial;
 import frc.robot.constants.LimelightConstants;
+import frc.robot.util.MultiLinearInterpolator;
 // import frc.robot.constants.VisionConstants;
 import frc.robot.generated.TunerConstants;
 // import frc.robot.subsystems.Vision;
@@ -238,16 +244,28 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     }
 
     public Rotation2d getAngleFromSpeaker() {
-            LimelightResults results =  LimelightHelpers.getLatestResults(LimelightConstants.LIMELIGHT_NAME);     
-
-            if (results.targetingResults.valid) {
+            var alliance  = DriverStation.getAlliance();
+            int wantedID = 7;
+            if (!alliance.isPresent()){
+                LimelightHelpers.setPriorityTagID(LimelightConstants.LIMELIGHT_NAME,7);
+            }else{
+                if (alliance.get().equals(Alliance.Blue)){
+                    LimelightHelpers.setPriorityTagID(LimelightConstants.LIMELIGHT_NAME,7);
+                }else{
+                    LimelightHelpers.setPriorityTagID(LimelightConstants.LIMELIGHT_NAME,4);
+                    wantedID = 4;
+                }
+            }
+            LimelightResults results =  LimelightHelpers.getLatestResults(LimelightConstants.LIMELIGHT_NAME);
+            double fiducialID = LimelightHelpers.getFiducialID(LimelightConstants.LIMELIGHT_NAME);
+            if (results.targetingResults.valid && fiducialID == wantedID) {
                 // System.out.println("Degrees: " + LimelightHelpers.getTX(LimelightConstants.LIMELIGHT_NAME));
                 return Rotation2d.fromDegrees(LimelightHelpers.getTX(LimelightConstants.LIMELIGHT_NAME));
             }else{
             Pose2d speakerLocation;
             double deltaX;
             double deltaY;
-            var alliance = DriverStation.getAlliance();
+            alliance = DriverStation.getAlliance();
             if (!alliance.isPresent()) {
                 return new Rotation2d(0);
             }
@@ -301,15 +319,27 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     }
 
     public double getDistanceFromSpeakerMeters() {
-        LimelightResults results =  LimelightHelpers.getLatestResults(LimelightConstants.LIMELIGHT_NAME);     
+        var alliance  = DriverStation.getAlliance();
+        int wantedID = 7;
+        if (!alliance.isPresent()){
+            LimelightHelpers.setPriorityTagID(LimelightConstants.LIMELIGHT_NAME,7);
+        }else{
+            if (alliance.get().equals(Alliance.Blue)){
+                LimelightHelpers.setPriorityTagID(LimelightConstants.LIMELIGHT_NAME,7);
+            }else{
+                LimelightHelpers.setPriorityTagID(LimelightConstants.LIMELIGHT_NAME,4);
+                wantedID = 4;
+            }
+        }
+        LimelightResults results =  LimelightHelpers.getLatestResults(LimelightConstants.LIMELIGHT_NAME);
+        double fiducialID = LimelightHelpers.getFiducialID(LimelightConstants.LIMELIGHT_NAME);
 
-        if (results.targetingResults.valid) {
+        if (results.targetingResults.valid && fiducialID == wantedID) {
             NetworkTable table = NetworkTableInstance.getDefault().getTable(LimelightConstants.LIMELIGHT_NAME);
             NetworkTableEntry ty = table.getEntry("ty");
             double targetOffsetAngle_Vertical = ty.getDouble(0.0);
-
             // how many degrees back is your limelight rotated from perfectly vertical?
-            double limelightMountAngleDegrees = 35;//Units.radiansToDegrees(LimelightConstants.LIMELIGHT_CAMERA_TRANSFORM.getRotation().getY()); 
+            double limelightMountAngleDegrees = 33.5;//Units.radiansToDegrees(LimelightConstants.LIMELIGHT_CAMERA_TRANSFORM.getRotation().getY()); 
 
             // distance from the center of the Limelight lens to the floor
             double limelightLensHeightInches = Units.metersToInches(LimelightConstants.LIMELIGHT_CAMERA_TRANSFORM.getZ()); 
@@ -325,15 +355,16 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
             // System.out.println(distanceFromLimelightToGoalInches/12);
             return Units.inchesToMeters(distanceFromLimelightToGoalInches);
         }else{
-            var alliance  = DriverStation.getAlliance();
-            if (!alliance.isPresent()){
-                return -1;
-            }
             Pose2d speakerPose;
-            if (alliance.get().equals(Alliance.Blue)){
+            alliance  = DriverStation.getAlliance();
+            if (!alliance.isPresent()){
                 speakerPose = LimelightConstants.K_TAG_LAYOUT.getTagPose(7).get().toPose2d();
             }else{
-                speakerPose = LimelightConstants.K_TAG_LAYOUT.getTagPose(4).get().toPose2d();
+                if (alliance.get().equals(Alliance.Blue)){
+                    speakerPose = LimelightConstants.K_TAG_LAYOUT.getTagPose(7).get().toPose2d();
+                }else{
+                    speakerPose = LimelightConstants.K_TAG_LAYOUT.getTagPose(4).get().toPose2d();
+                }
             }
             double distance = Math.sqrt(Math.pow(speakerPose.getX()-getPose().getX(),2)+Math.pow(speakerPose.getY()-getPose().getY(),2));
             // System.out.println(distance);
@@ -351,37 +382,70 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
             m_stateLock.writeLock().unlock();
         }
     }
-    // public Rotation2d getYawNoOffset(){
-    //     return m_pigeon2.getRotation2d();
-    // }
-    private double[] currentVisionPose(String limelightName) {
-        return LimelightHelpers.getBotPose_wpiBlue(limelightName);
-    }
 
+    // private double[] currentVisionPose(String limelightName) {
+    //     return LimelightHelpers.getBotPose_wpiBlue(limelightName);
+    // }
+
+    // private void updateVisionPose(String limelightName) {
+    //     LimelightResults results =  LimelightHelpers.getLatestResults(limelightName);     
+
+    //     if (results.targetingResults.valid) {
+    //         double[] botpose = currentVisionPose(limelightName);
+    //         // System.out.println(getVisionTrust(botpose));
+    //         double latency = (Timer.getFPGATimestamp() - (botpose[6]/1000.0));
+           
+    //         Pose2d currentPose = new Pose2d(new Translation2d(botpose[0], botpose[1]), new Rotation2d(Units.degreesToRadians(botpose[5])));
+    //         double trustWorthiness = 1;
+            
+    //         // if (Math.abs(currentPose.getX() - getPose().getX()) <= 1 && Math.abs(currentPose.getY() - getPose().getY()) <= 1) {
+    //         // System.out.println("Good Data");
+    //         double[] targetPose = LimelightHelpers.getTargetPose_RobotSpace(limelightName);
+    //         double targetDistance = Math.sqrt(Math.pow(targetPose[0], 2) + Math.pow(targetPose[1], 2) + Math.pow(targetPose[2], 2));
+    //         // double[] stddev = oneAprilTagLookupTable.getLookupValue(targetDistance);
+    //         // System.out.println("DistanceFromTarget: " + targetDistance);
+    //         // swerveDrivePoseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(stddev[0], stddev[1], Units.degreesToRadians(stddev[2])));
+    //         addVisionMeasurement(currentPose, latency, VecBuilder.fill(1,1,10));
+
+    //         // } else {
+    //         //     System.out.println("Cannot add vision data - Pose is out of range");
+    //         // }
+    //         // poseEstimator.addVisionMeasurement(currentPose, latency,VecBuilder.fill(0.9, 0.9, 0.1).times(1.0 / trustWorthiness));
+    //     }
+    // }
+    private PoseEstimate currentVisionPose(String limelightName) {
+        return LimelightHelpers.getBotPoseEstimate_wpiBlue(limelightName);
+    }
     private void updateVisionPose(String limelightName) {
-        LimelightResults results =  LimelightHelpers.getLatestResults(limelightName);     
+        LimelightResults results =  LimelightHelpers.getLatestResults(limelightName);  
 
         if (results.targetingResults.valid) {
-            double[] botpose = currentVisionPose(limelightName);
-            // System.out.println(getVisionTrust(botpose));
-            double latency = (Timer.getFPGATimestamp() - (botpose[6]/1000.0));
-           
-            Pose2d currentPose = new Pose2d(new Translation2d(botpose[0], botpose[1]), new Rotation2d(Units.degreesToRadians(botpose[5])));
-            double trustWorthiness = 1;
-            
-            if (Math.abs(currentPose.getX() - getPose().getX()) <= 1 && Math.abs(currentPose.getY() - getPose().getY()) <= 1) {
-                // System.out.println("Good Data");
-                double[] targetPose = LimelightHelpers.getTargetPose_RobotSpace(limelightName);
-                double targetDistance = Math.sqrt(Math.pow(targetPose[0], 2) + Math.pow(targetPose[1], 2) + Math.pow(targetPose[2], 2));
-                // double[] stddev = oneAprilTagLookupTable.getLookupValue(targetDistance);
-                // System.out.println("DistanceFromTarget: " + targetDistance);
-                // swerveDrivePoseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(stddev[0], stddev[1], Units.degreesToRadians(stddev[2])));
-                addVisionMeasurement(currentPose, latency, VecBuilder.fill(1,1,10));
-
-            } else {
-                System.out.println("Cannot add vision data - Pose is out of range");
+            PoseEstimate botpose = currentVisionPose(limelightName);
+            double latency = botpose.latency;
+            Pose2d currentPose = botpose.pose;
+            double avgAmbiguity = 0;
+            double avgDistance = 0;
+            for (RawFiducial val : botpose.rawFiducials){
+                avgAmbiguity += val.ambiguity;
+                avgDistance += val.distToCamera;
             }
-            // poseEstimator.addVisionMeasurement(currentPose, latency,VecBuilder.fill(0.9, 0.9, 0.1).times(1.0 / trustWorthiness));
+            avgAmbiguity /= botpose.rawFiducials.length;
+            avgDistance /= botpose.rawFiducials.length;
+            boolean isInBounds = currentPose.getX() > 0 && currentPose.getX() < 15 && currentPose.getY() > 0 && currentPose.getY() < 8;
+            if (avgAmbiguity > 0.4 && avgDistance < 6 && isInBounds){
+                double[] stddev;
+                if (botpose.tagCount>1){
+                    stddev = LimelightConstants.TWO_APRIL_TAG_LINEAR_INTERPOLATOR.getLookupValue(avgDistance);
+                }else{
+                    stddev = LimelightConstants.ONE_APRIL_TAG_LINEAR_INTERPOLATOR.getLookupValue(avgDistance);
+                }
+                Matrix<N3,N1> stdDeviation = VecBuilder.fill(stddev[0],stddev[1],stddev[2]);
+                addVisionMeasurement(currentPose, latency, stdDeviation);
+            }else{
+                System.out.println("Could not add vision measurement - out of standard bounds");
+            }
+        }else{
+            System.out.println("Could not add vision measurement - no tags present");
         }
     }
     public Rotation2d getYawOffsetDegrees(){

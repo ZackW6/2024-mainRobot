@@ -1,6 +1,7 @@
 package frc.robot.constants;
 
 import edu.wpi.first.math.util.Units;
+import frc.robot.util.MultiLinearInterpolator;
 
 public class ShooterConstants {
     public static final double FLYWHEEL_ALLOWABLE_ERROR = 1.5;//ONLY ONE BEING USED
@@ -34,4 +35,15 @@ public class ShooterConstants {
 
     public static final boolean SHOOTER_STATOR_CURRENT_LIMIT_ENABLE = true;
     public static final double SHOOTER_STATOR_CURRENT_LIMIT = 200;
+
+    public static final double[][] SHOOTER_DISTANCE_LOOKUP_TABLE = {
+      // {distance in meters, x std deviation, y std deviation, r (in degrees) std deviation}
+      {6.4, 95},
+      {7, 90},
+      {7.5, 84},
+      {8, 46},
+      {8.5, 42.5},
+      {9, 36.9}
+    };
+    public static final MultiLinearInterpolator SHOOTER_DISTANCE_LINEAR_INTERPOLATOR = new MultiLinearInterpolator(SHOOTER_DISTANCE_LOOKUP_TABLE);
 }
