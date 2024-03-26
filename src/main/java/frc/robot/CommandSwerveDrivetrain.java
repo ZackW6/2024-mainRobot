@@ -127,7 +127,7 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
 
     @Override
     public void periodic(){
-        // updateVisionPose(LimelightConstants.LIMELIGHT_NAME);
+        updateVisionPose(LimelightConstants.LIMELIGHT_NAME);
         // updateVisionPose(LimelightConstants.LIMELIGHT3G_NAME);
         System.out.println(getDistanceFromTagMeters(7));
     }
@@ -248,6 +248,13 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
 
         // Convert the angle to Rotation2d
         Rotation2d rotation = Rotation2d.fromRadians(angleRadians - getPose().getRotation().getRadians());
+        if (getPose().getX()>tagLocation.getX()){
+            if (rotation.getDegrees()>0){
+                rotation = Rotation2d.fromDegrees(Units.radiansToDegrees(angleRadians) - getPose().getRotation().getDegrees()-180);
+            }else{
+                rotation = Rotation2d.fromDegrees(Units.radiansToDegrees(angleRadians) - getPose().getRotation().getDegrees()+180);
+            }
+        }
 
         // System.out.println(((rotation.getDegrees()))+"angleRot");
         // System.out.println(rotation+"ROTATION");
