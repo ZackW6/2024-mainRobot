@@ -109,7 +109,7 @@ public class RobotContainer {
     operatorController.a().onTrue(groupCommands.switchModes());
     operatorController.x().whileTrue(intake.setVelocity(15));
     operatorController.y().whileTrue(getAutoToPath());
-    operatorController.b().whileTrue(getAutoToPoint());
+    operatorController.b().whileTrue(getAutoToPoint().andThen(groupCommands.loadAndShoot()));
     if (Utils.isSimulation()) {
       drivetrain.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
     }
@@ -167,8 +167,9 @@ public class RobotContainer {
   }
 
 
+
   private Command getAutoToPoint(){
-    Pose2d targetPose = new Pose2d(10, 5, Rotation2d.fromDegrees(180));
+    Pose2d targetPose = new Pose2d(9.2, 1, Rotation2d.fromDegrees(325));
 
 
     // Create the constraints to use while pathfinding

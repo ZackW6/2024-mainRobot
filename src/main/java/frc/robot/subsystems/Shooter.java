@@ -164,11 +164,11 @@ public class Shooter extends SubsystemBase{
             if (doDefault){
                 if (DriverStation.isTeleop()){//THIS WILL BE USED TO CHANGE SPEED DEPENDING ON HOW CLOSE YOU ARE TO THE SPEAKER
                     if (drivetrain!=null){
-                        leftShooterMotor.setControl(velocityRequest.withVelocity(20));//drivetrain.getDistanceFromSpeakerMeters()*40));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
-                        rightShooterMotor.setControl(velocityRequest.withVelocity(20));//drivetrain.getDistanceFromSpeakerMeters()*40));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
+                        leftShooterMotor.setControl(velocityRequest.withVelocity(0));//drivetrain.getDistanceFromSpeakerMeters()*40));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
+                        rightShooterMotor.setControl(velocityRequest.withVelocity(0));//drivetrain.getDistanceFromSpeakerMeters()*40));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
                     }else{
-                        leftShooterMotor.setControl(velocityRequest.withVelocity(20));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
-                        rightShooterMotor.setControl(velocityRequest.withVelocity(20));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
+                        leftShooterMotor.setControl(velocityRequest.withVelocity(0));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
+                        rightShooterMotor.setControl(velocityRequest.withVelocity(0));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
                     }
                 }else if(DriverStation.isAutonomous()){//ALWAYS BE FAST IN AUTO
                     leftShooterMotor.setControl(velocityRequest.withVelocity(75));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/

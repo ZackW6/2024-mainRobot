@@ -6,6 +6,7 @@ package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.constants.GeneralConstants;
@@ -67,6 +68,11 @@ private Animation toAnimate;
   public Command pickUpLights() {
     return this.runOnce(() ->{
         toAnimate = new StrobeAnimation(0, 255, 0, 0, 0.05, LedCount);
+    } );
+  }
+  public Command ampAlignLights() {
+    return this.runOnce(() ->{
+        toAnimate = new StrobeAnimation(255, 255, 0, 0, 0.05, LedCount);
     } );
   }
 
