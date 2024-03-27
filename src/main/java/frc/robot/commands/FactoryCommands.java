@@ -142,7 +142,6 @@ public class FactoryCommands extends SubsystemBase{
         return thetaControllerAmp.calculate(correctYaw((drivetrain.getPose().getRotation().getDegrees())%360,90), 90);
       }
     };
-    
     return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble()) //was -xAxis, but in sim is this
       .withVelocityY(yAxis.getAsDouble())//was -yAxis, but in sim is this
       .withRotationalRate(Units.degreesToRadians(rotationalVelocity.getAsDouble())))
@@ -158,7 +157,6 @@ public class FactoryCommands extends SubsystemBase{
       return 6;
     };
     return Commands.run(()->{
-
       if (drivetrain.getAngleFromTag(teamID.getAsDouble()).getDegrees()<10 && drivetrain.getAngleFromTag(teamID.getAsDouble()).getDegrees()>-10){
         candle.ampAlignLights().schedule();
       }else{
