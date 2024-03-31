@@ -89,8 +89,8 @@ public class RobotContainer {
     intake.setDefaultCommand(intake.stop());
     candle.setDefaultCommand(candle.idleLED());
     drivetrain.setDefaultCommand(
-        drivetrain.applyRequest(() -> drive.withVelocityX(-driverController.getLeftY() * MaxSpeed)
-            .withVelocityY(-driverController.getLeftX() * 0.85 * MaxSpeed)
+        drivetrain.applyRequest(() -> drive.withVelocityX(-driverController.getLeftY() * 0.6 * MaxSpeed)
+            .withVelocityY(-driverController.getLeftX() * 0.6 * MaxSpeed)
             .withRotationalRate(-driverController.getRightX() *2/3 * MaxAngularRate)
     ));
 
@@ -108,7 +108,13 @@ public class RobotContainer {
     
     operatorController.a().onTrue(groupCommands.switchModes());
     operatorController.x().whileTrue(intake.setVelocity(15));
-    operatorController.y().whileTrue(getAutoToPath());
+    operatorController.y().onTrue(Commands.runOnce(()->{
+    if(shooter.getIdleSpeed()>0){
+        shooter.setIdleSpeed(0);
+      }else{
+        shooter.setIdleSpeed(60);
+      }
+    }));
     operatorController.b().whileTrue(getAutoToPoint().andThen(groupCommands.loadAndShoot()));
     if (Utils.isSimulation()) {
       drivetrain.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
@@ -157,9 +163,11 @@ public class RobotContainer {
 
   public void configureAutonomousCommands() {
     NamedCommands.registerCommand("intake", groupCommands.intakeMainAuto());
+    NamedCommands.registerCommand("setIdleSpeed", Commands.runOnce(()->shooter.setAutoIdleSpeed(30)));
     NamedCommands.registerCommand("loadAndShoot", groupCommands.loadAndShootAuto());
     NamedCommands.registerCommand("loadAndShootLinear", groupCommands.loadAndShoot());
     NamedCommands.registerCommand("loadAndShootThree", groupCommands.loadAndShootAutoSecondary());
+    NamedCommands.registerCommand("loadAndShootFour", groupCommands.loadAndShootAutoTertiary());
   }
 
   public Command getAutonomousCommand() {

@@ -16,12 +16,12 @@
     },
     {
       "anchor": {
-        "x": 1.8852482149408742,
-        "y": 4.280060525933018
+        "x": 2.1776020760018726,
+        "y": 4.057871591526659
       },
       "prevControl": {
-        "x": 2.013883913807714,
-        "y": 4.1046482092964185
+        "x": 2.306237774868712,
+        "y": 3.88245927489006
       },
       "nextControl": null,
       "isLocked": false,
@@ -45,7 +45,7 @@
   "eventMarkers": [
     {
       "name": "Shoot 4",
-      "waypointRelativePos": 0.85,
+      "waypointRelativePos": 0.8,
       "command": {
         "type": "parallel",
         "data": {
@@ -53,7 +53,7 @@
             {
               "type": "named",
               "data": {
-                "name": "loadAndShoot"
+                "name": "loadAndShootThree"
               }
             }
           ]

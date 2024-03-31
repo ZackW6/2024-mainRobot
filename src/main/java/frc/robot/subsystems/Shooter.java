@@ -48,7 +48,8 @@ public class Shooter extends SubsystemBase{
     private boolean flywheelDisabled = false;
     private double targetFlywheelSpeedL;
     private double targetFlywheelSpeedR;
-
+    private double IdleSpeed = 0;
+    private double autoIdleSpeed = 75;
     // private final NetworkTableEntry shooterRPMOffsetEntry;
     CommandSwerveDrivetrain drivetrain;
 
@@ -164,15 +165,15 @@ public class Shooter extends SubsystemBase{
             if (doDefault){
                 if (DriverStation.isTeleop()){//THIS WILL BE USED TO CHANGE SPEED DEPENDING ON HOW CLOSE YOU ARE TO THE SPEAKER
                     if (drivetrain!=null){
-                        leftShooterMotor.setControl(velocityRequest.withVelocity(0));//drivetrain.getDistanceFromSpeakerMeters()*40));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
-                        rightShooterMotor.setControl(velocityRequest.withVelocity(0));//drivetrain.getDistanceFromSpeakerMeters()*40));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
+                        leftShooterMotor.setControl(velocityRequest.withVelocity(IdleSpeed));//drivetrain.getDistanceFromSpeakerMeters()*40));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
+                        rightShooterMotor.setControl(velocityRequest.withVelocity(IdleSpeed));//drivetrain.getDistanceFromSpeakerMeters()*40));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
                     }else{
-                        leftShooterMotor.setControl(velocityRequest.withVelocity(0));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
-                        rightShooterMotor.setControl(velocityRequest.withVelocity(0));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
+                        leftShooterMotor.setControl(velocityRequest.withVelocity(IdleSpeed));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
+                        rightShooterMotor.setControl(velocityRequest.withVelocity(IdleSpeed));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
                     }
                 }else if(DriverStation.isAutonomous()){//ALWAYS BE FAST IN AUTO
-                    leftShooterMotor.setControl(velocityRequest.withVelocity(75));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
-                    rightShooterMotor.setControl(velocityRequest.withVelocity(75));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
+                    leftShooterMotor.setControl(velocityRequest.withVelocity(autoIdleSpeed));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
+                    rightShooterMotor.setControl(velocityRequest.withVelocity(autoIdleSpeed));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
                 }
             }else{
                 leftShooterMotor.setControl(velocityRequest.withVelocity(targetFlywheelSpeedL));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
@@ -183,7 +184,15 @@ public class Shooter extends SubsystemBase{
 
         // shootingOffset = shooterRPMOffsetEntry.getDouble(0.0);
     }
-
+    public void setIdleSpeed(double speed){
+        IdleSpeed = speed;
+    }
+    public double getIdleSpeed(){
+        return IdleSpeed;
+    }
+    public void setAutoIdleSpeed(double speed){
+        autoIdleSpeed = speed;
+    }
     public void setupDistToSpeakerSpeed(CommandSwerveDrivetrain swerve){
         drivetrain = swerve;
     }

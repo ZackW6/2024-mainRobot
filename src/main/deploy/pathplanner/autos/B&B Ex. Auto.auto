@@ -2,43 +2,25 @@
   "version": 1.0,
   "startingPose": {
     "position": {
-      "x": 1.4844248215812361,
-      "y": 3.5391622327187657
+      "x": 1.4746750633643797,
+      "y": 7.361067453726357
     },
-    "rotation": 0.0
+    "rotation": 0
   },
   "command": {
     "type": "sequential",
     "data": {
       "commands": [
         {
-          "type": "path",
+          "type": "named",
           "data": {
-            "pathName": "S-L Taxi - shoot"
+            "name": "setIdleSpeed"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "4 shoot"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "4 shoot to 5"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "5 shoot US"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "5 shoot US to 6"
+            "pathName": "B&B Experimental"
           }
         },
         {
@@ -46,10 +28,22 @@
           "data": {
             "pathName": "6 shoot"
           }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "6 shoot to 7"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "7 shoot"
+          }
         }
       ]
     }
   },
-  "folder": null,
+  "folder": "Test Autos",
   "choreoAuto": false
 }

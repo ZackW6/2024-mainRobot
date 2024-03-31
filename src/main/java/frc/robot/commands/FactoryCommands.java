@@ -30,6 +30,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.CommandSwerveDrivetrain;
+import frc.robot.constants.LimelightConstants;
 import frc.robot.constants.ShooterConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Arm;
@@ -79,12 +80,21 @@ public class FactoryCommands extends SubsystemBase{
       .andThen(Commands.waitUntil(()->arm.isArmInSpeakerState())).andThen(intake.outtakePiece())
       .andThen(resetAll());
   }
+  
   public Command loadAndShootAutoSecondary(){
-    return Commands.deadline(Commands.waitSeconds(.01).andThen(Commands.waitUntil(() ->shooter.isLeftFlywheelAtTargetSpeed()))
-      ,Commands.run(() -> shooter.setTargetFlywheelSpeed(60,60)), Commands.runOnce(()->shooter.disableDefault()))
+    return Commands.deadline(Commands.waitSeconds(.01).andThen(Commands.waitUntil(() ->shooter.isLeftFlywheelAtTargetSpeed() && shooter.isRightFlywheelAtTargetSpeed()))
+      ,Commands.run(() -> shooter.setTargetFlywheelSpeed(50,35)), Commands.runOnce(()->shooter.disableDefault()))
       .andThen(Commands.waitUntil(()->arm.isArmInSpeakerState())).andThen(intake.outtakePiece())
       .andThen(resetAll());
   }
+
+  public Command loadAndShootAutoTertiary(){
+    return Commands.deadline(Commands.waitSeconds(.01).andThen(Commands.waitUntil(() ->shooter.isLeftFlywheelAtTargetSpeed() && shooter.isRightFlywheelAtTargetSpeed()))
+      ,Commands.run(() -> shooter.setTargetFlywheelSpeed(40,40)), Commands.runOnce(()->shooter.disableDefault()))
+      .andThen(Commands.waitUntil(()->arm.isArmInSpeakerState())).andThen(intake.outtakePiece())
+      .andThen(resetAll());
+  }
+
   public Command ampShot(){
     return Commands.deadline(Commands.waitSeconds(.5)
       ,Commands.waitSeconds(0.006).andThen(Commands.runOnce(()->arm.setCurrentArmState(ArmState.AmpMove)))
@@ -157,7 +167,8 @@ public class FactoryCommands extends SubsystemBase{
       return 6;
     };
     return Commands.run(()->{
-      if (drivetrain.getAngleFromTag(teamID.getAsDouble()).getDegrees()<10 && drivetrain.getAngleFromTag(teamID.getAsDouble()).getDegrees()>-10){
+      if (drivetrain.getPose().getX()<LimelightConstants.K_TAG_LAYOUT.getTagPose((int)teamID.getAsDouble()).get().getX()+.5
+    && drivetrain.getPose().getX()>LimelightConstants.K_TAG_LAYOUT.getTagPose((int)teamID.getAsDouble()).get().getX()-.5){//drivetrain.getAngleFromTag(teamID.getAsDouble()).getDegrees()<10 && drivetrain.getAngleFromTag(teamID.getAsDouble()).getDegrees()>-10){
         candle.ampAlignLights().schedule();
       }else{
         System.out.println(drivetrain.getAngleFromTag(teamID.getAsDouble()).getDegrees());
@@ -174,7 +185,7 @@ public class FactoryCommands extends SubsystemBase{
     }
     return x;
   }
-  private final PIDController thetaControllerSpeaker = new PIDController(3,0,0.01);
+  private final PIDController thetaControllerSpeaker = new PIDController(3.5,0,0.01);
   private final PIDController distanceController = new PIDController(1.9, 0, 0.2);
   public Command alignToSpeaker() {
     DoubleSupplier xAxis = () -> -xboxController.getLeftY() * TunerConstants.kSpeedAt12VoltsMps;
