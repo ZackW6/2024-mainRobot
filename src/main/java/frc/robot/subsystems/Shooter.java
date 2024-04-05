@@ -214,7 +214,7 @@ public class Shooter extends SubsystemBase{
     }
 
     public void setTargetFlywheelSpeed(double targetFlywheelSpeedL,double targetFlywheelSpeedR) {
-        System.out.println(targetFlywheelSpeedL+"FLYWHEELSPEED");
+        // System.out.println(targetFlywheelSpeedL+"FLYWHEELSPEED");
         this.targetFlywheelSpeedL = targetFlywheelSpeedL;
         this.targetFlywheelSpeedR = targetFlywheelSpeedR;
     }

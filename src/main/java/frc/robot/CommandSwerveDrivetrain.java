@@ -131,7 +131,7 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
             updateVisionPose(LimelightConstants.LIMELIGHT_NAME);
         }
         // updateVisionPose(LimelightConstants.AMP_CAM);
-        System.out.println(getDistanceFromTagMeters(7));
+        // System.out.println(getDistanceFromTagMeters(7));
     }
 
     public Pose2d getPose() {
@@ -263,6 +263,33 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
         // System.out.println(rotation.getDegrees());
         return rotation;
     }
+    public Rotation2d getAngleFromCorner() {
+        Pose2d tagLocation = new Pose2d(0,8.1026,new Rotation2d());
+        if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get().equals(Alliance.Red)){
+            tagLocation = new Pose2d(16.4846,8.1026,new Rotation2d());
+        }
+        double deltaX;
+        double deltaY;
+        deltaX = tagLocation.getX() - getPose().getX();
+        deltaY = tagLocation.getY() - getPose().getY();
+
+        double angleRadians = ((Math.atan(deltaY/deltaX)));
+
+        // Convert the angle to Rotation2d
+        Rotation2d rotation = Rotation2d.fromRadians(angleRadians - getPose().getRotation().getRadians());
+        if (getPose().getX()>tagLocation.getX()){
+            if (rotation.getDegrees()>0){
+                rotation = Rotation2d.fromDegrees(Units.radiansToDegrees(angleRadians) - getPose().getRotation().getDegrees()-180);
+            }else{
+                rotation = Rotation2d.fromDegrees(Units.radiansToDegrees(angleRadians) - getPose().getRotation().getDegrees()+180);
+            }
+        }
+
+        // System.out.println(((rotation.getDegrees()))+"angleRot");
+        // System.out.println(rotation+"ROTATION");
+        // System.out.println(rotation.getDegrees());
+        return rotation;
+    }
     public Rotation2d getPoseAngleFromTag(double ID) {
         Pose2d speakerLocation = LimelightConstants.K_TAG_LAYOUT.getTagPose((int)ID).get().toPose2d();
         double deltaX = speakerLocation.getX() - getPose().getX();
@@ -296,13 +323,12 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
 
         if (LimelightHelpers.getFiducialID(limelightName) != -1) {
             PoseEstimate botposeEstimate = LimelightHelpers.getBotPoseEstimate_wpiBlue(limelightName);
-            System.out.println("Added Vision");
+            // System.out.println("Saw Tag");
             double[] botpose = currentVisionPose(limelightName);
             // System.out.println(getVisionTrust(botpose));
             double latency = (Timer.getFPGATimestamp() - (botpose[6]/1000.0));
            
             Pose2d currentPose = new Pose2d(new Translation2d(botpose[0], botpose[1]), new Rotation2d(Units.degreesToRadians(botpose[5])));
-            double trustWorthiness = 1;
             
             // if (Math.abs(currentPose.getX() - getPose().getX()) <= 1 && Math.abs(currentPose.getY() - getPose().getY()) <= 1) {
             // System.out.println("Good Data");
@@ -310,11 +336,32 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
             double targetDistance = Math.sqrt(Math.pow(targetPose[0], 2) + Math.pow(targetPose[1], 2) + Math.pow(targetPose[2], 2));
             double[] stddev = LimelightConstants.ONE_APRIL_TAG_LINEAR_INTERPOLATOR.getLookupValue(targetDistance);
             // System.out.println("DistanceFromTarget: " + targetDistance);
+            double ambiguity = 100;
+            boolean isInBounds = currentPose.getX() > 0 && currentPose.getX() < 16.4846 && currentPose.getY() > 0 && currentPose.getY() < 8.1026;
+
+            try {
+                ambiguity = botposeEstimate.rawFiducials[0].ambiguity;
+            } catch (Exception e) {
+                // TODO: handle exception
+                // System.out.println("AMBIGUITY BROKEN");
+            }
             // swerveDrivePoseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(stddev[0], stddev[1], Units.degreesToRadians(stddev[2])));
-            if (botposeEstimate.avgTagDist<6){
-                addVisionMeasurement(currentPose, latency, VecBuilder.fill(stddev[0],stddev[1],stddev[2]));//VecBuilder.fill(.1,.1,10));
+            double allowableDist;
+            // if (DriverStation.isTeleopEnabled()){
+            allowableDist=6;
+            // }else{
+            //     allowableDist=3;
+            // }
+            if (botposeEstimate.avgTagDist<allowableDist && ambiguity<.4 && isInBounds){
+                // System.out.println("Added Vision");
+                // if (DriverStation.isTeleopEnabled()){
+                    addVisionMeasurement(currentPose, latency, VecBuilder.fill(stddev[0],stddev[1],stddev[2]));
+                // }
+                // else{
+                //     addVisionMeasurement(currentPose, latency, VecBuilder.fill(stddev[0],stddev[1],10000));
+                // }
             }else{
-                System.out.println("Out of standard bounds");
+
             }
 
             // } else {
@@ -322,7 +369,7 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
             // }
             // poseEstimator.addVisionMeasurement(currentPose, latency,VecBuilder.fill(0.9, 0.9, 0.1).times(1.0 / trustWorthiness));
         }else{
-            System.out.println("No tags present");
+            // System.out.println("No tags present");
         }
     }
     // private PoseEstimate currentVisionPose(String limelightName) {
@@ -343,9 +390,9 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     //         }
     //         avgAmbiguity /= botpose.rawFiducials.length;
     //         avgDistance /= botpose.rawFiducials.length;
-    //         // boolean isInRange = currentPose.getX() > getPose().getX()-1 && currentPose.getX() < getPose().getX()+1 && currentPose.getY() > getPose().getY()-1 && currentPose.getY() < getPose().getY()+1;
+            // boolean isInRange = currentPose.getX() > getPose().getX()-1 && currentPose.getX() < getPose().getX()+1 && currentPose.getY() > getPose().getY()-1 && currentPose.getY() < getPose().getY()+1;
 
-    //         boolean isInBounds = currentPose.getX() > 0 && currentPose.getX() < 16.4846 && currentPose.getY() > 0 && currentPose.getY() < 8.1026;
+            // boolean isInBounds = currentPose.getX() > 0 && currentPose.getX() < 16.4846 && currentPose.getY() > 0 && currentPose.getY() < 8.1026;
     //         if (avgAmbiguity < 70 && botpose.avgTagDist < 6 && isInBounds /*&& isInRange*/){
     //             System.out.println("ADDED VISION");
     //             double[] stddev;

@@ -34,7 +34,7 @@ import frc.robot.constants.LimelightConstants;
 import frc.robot.constants.ShooterConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Arm;
-import frc.robot.subsystems.Candle;
+// import frc.robot.subsystems.Candle;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.Arm.ArmState;
@@ -43,14 +43,14 @@ public class FactoryCommands extends SubsystemBase{
   private Arm arm;
   private Shooter shooter;
   private Intake intake;
-  private Candle candle;
+  // private Candle candle;
   private CommandSwerveDrivetrain drivetrain;
   private CommandXboxController xboxController;
-  public FactoryCommands(Arm arm, Shooter shooter, Intake intake, Candle candle, CommandSwerveDrivetrain drivetrain, CommandXboxController xboxController){
+  public FactoryCommands(Arm arm, Shooter shooter, Intake intake, CommandSwerveDrivetrain drivetrain, CommandXboxController xboxController){
     this.arm = arm;
     this.shooter = shooter;
     this.intake = intake;
-    this.candle = candle;
+    // this.candle = candle;
     this.drivetrain = drivetrain;
     this.xboxController = xboxController;
   }
@@ -80,7 +80,7 @@ public class FactoryCommands extends SubsystemBase{
       .andThen(Commands.waitUntil(()->arm.isArmInSpeakerState())).andThen(intake.outtakePiece())
       .andThen(resetAll());
   }
-  
+
   public Command loadAndShootAutoSecondary(){
     return Commands.deadline(Commands.waitSeconds(.01).andThen(Commands.waitUntil(() ->shooter.isLeftFlywheelAtTargetSpeed() && shooter.isRightFlywheelAtTargetSpeed()))
       ,Commands.run(() -> shooter.setTargetFlywheelSpeed(50,35)), Commands.runOnce(()->shooter.disableDefault()))
@@ -90,36 +90,47 @@ public class FactoryCommands extends SubsystemBase{
 
   public Command loadAndShootAutoTertiary(){
     return Commands.deadline(Commands.waitSeconds(.01).andThen(Commands.waitUntil(() ->shooter.isLeftFlywheelAtTargetSpeed() && shooter.isRightFlywheelAtTargetSpeed()))
-      ,Commands.run(() -> shooter.setTargetFlywheelSpeed(40,40)), Commands.runOnce(()->shooter.disableDefault()))
+      ,Commands.run(() -> shooter.setTargetFlywheelSpeed(55,37)), Commands.runOnce(()->shooter.disableDefault()))
+      .andThen(Commands.waitUntil(()->arm.isArmInSpeakerState())).andThen(intake.outtakePiece())
+      .andThen(resetAll());
+  }
+  public Command loadAndShootOperator(){
+    return Commands.deadline(Commands.waitSeconds(.01).andThen(Commands.waitUntil(() ->shooter.isLeftFlywheelAtTargetSpeed() && shooter.isRightFlywheelAtTargetSpeed()))
+      ,Commands.run(() -> shooter.setTargetFlywheelSpeed(60,60)), Commands.runOnce(()->shooter.disableDefault()))
       .andThen(Commands.waitUntil(()->arm.isArmInSpeakerState())).andThen(intake.outtakePiece())
       .andThen(resetAll());
   }
 
   public Command ampShot(){
     return Commands.deadline(Commands.waitSeconds(.5)
-      ,Commands.waitSeconds(0.006).andThen(Commands.runOnce(()->arm.setCurrentArmState(ArmState.AmpMove)))
-      ,intake.setVelocity(-19.25/*-19.25*/)).andThen(switchModes());
+      ,Commands.waitSeconds(0.003/*0.006*/).andThen(Commands.runOnce(()->arm.setCurrentArmState(ArmState.AmpMove)))
+      ,intake.setVelocity(-18.8/*-19.25*/)).andThen(switchModes());
+  }
+  public Command intakeShoot(){
+    return Commands.deadline(Commands.waitSeconds(2)
+      ,Commands.runOnce(()->arm.setCurrentArmState(ArmState.IntakeShoot))
+      ,Commands.deadline(Commands.waitSeconds(.1),intake.setVelocity(10)).andThen(intake.setVelocity(-100000/*-19.25*/))).andThen(Commands.runOnce(()->arm.setCurrentArmState(ArmState.Amp))).andThen(switchModes());
   }
 
   public Command intakeMain(){
     return Commands.deadline(intake.intakePiece(),Commands.runOnce(()->arm.setCurrentArmState(ArmState.Intake)),Commands.runOnce(()->shooter.enableDefault()))
-      .andThen(candle.pickUpLights())
+      // .andThen(candle.pickUpLights())
       .andThen(Commands.deadline(Commands.waitSeconds(.5).andThen(Commands.waitUntil(()->arm.isArmAtAngle()))
-      ,intake.setVelocity(20)
+      ,intake.setVelocity(25)
       ,Commands.runOnce(()->arm.setCurrentArmState(arm.lastMainState()))))
-      .andThen(intake.stop())
-      .andThen(candle.idleLED());
+      .andThen(intake.stop());
+      // .andThen(candle.idleLED());
   }
 
   public Command intakeMainAuto(){
     return Commands.race(Commands.waitSeconds(2.5)
       ,Commands.deadline(intake.intakePiece(),Commands.runOnce(()->arm.setCurrentArmState(ArmState.Intake)),Commands.runOnce(()->shooter.enableDefault()))
-      .andThen(candle.pickUpLights()))
+      )// .andThen(candle.pickUpLights()))
       .andThen(Commands.deadline(Commands.waitSeconds(.5).andThen(Commands.waitUntil(()->arm.isArmAtAngle()))
       ,intake.setVelocity(15)
       ,Commands.runOnce(()->arm.setCurrentArmState(arm.lastMainState()))))
-      .andThen(intake.stop())
-      .andThen(candle.idleLED());
+      .andThen(intake.stop());
+      // .andThen(candle.idleLED());
   }
 
   public Command resetAll(){
@@ -167,13 +178,11 @@ public class FactoryCommands extends SubsystemBase{
       return 6;
     };
     return Commands.run(()->{
-      if (drivetrain.getPose().getX()<LimelightConstants.K_TAG_LAYOUT.getTagPose((int)teamID.getAsDouble()).get().getX()+.5
-    && drivetrain.getPose().getX()>LimelightConstants.K_TAG_LAYOUT.getTagPose((int)teamID.getAsDouble()).get().getX()-.5){//drivetrain.getAngleFromTag(teamID.getAsDouble()).getDegrees()<10 && drivetrain.getAngleFromTag(teamID.getAsDouble()).getDegrees()>-10){
-        candle.ampAlignLights().schedule();
+      if (drivetrain.getPose().getX()<LimelightConstants.K_TAG_LAYOUT.getTagPose((int)teamID.getAsDouble()).get().getX()+.127
+    && drivetrain.getPose().getX()>LimelightConstants.K_TAG_LAYOUT.getTagPose((int)teamID.getAsDouble()).get().getX()-.127){//drivetrain.getAngleFromTag(teamID.getAsDouble()).getDegrees()<10 && drivetrain.getAngleFromTag(teamID.getAsDouble()).getDegrees()>-10){
+        // candle.ampAlignLights().schedule();
       }else{
-        System.out.println(drivetrain.getAngleFromTag(teamID.getAsDouble()).getDegrees());
-
-        candle.idleLED().schedule();
+        // candle.idleLED().schedule();
       }
     });
   }
@@ -187,7 +196,7 @@ public class FactoryCommands extends SubsystemBase{
   }
   private final PIDController thetaControllerSpeaker = new PIDController(3.5,0,0.01);
   private final PIDController distanceController = new PIDController(1.9, 0, 0.2);
-  public Command alignToSpeaker() {
+  public Command alignToCorner() {
     DoubleSupplier xAxis = () -> -xboxController.getLeftY() * TunerConstants.kSpeedAt12VoltsMps;
     DoubleSupplier yAxis = () -> -xboxController.getLeftX() * TunerConstants.kSpeedAt12VoltsMps;
     thetaControllerSpeaker.reset();
@@ -200,10 +209,10 @@ public class FactoryCommands extends SubsystemBase{
       return 7;
     };
     DoubleSupplier rotationalVelocity = () -> {
-      if(drivetrain.getAngleFromTag(teamID.getAsDouble()).getDegrees()>0){
-        return -thetaControllerSpeaker.calculate(drivetrain.getAngleFromTag(teamID.getAsDouble()).getDegrees()-180,0);//-7;
+      if(drivetrain.getAngleFromCorner().getDegrees()>0){
+        return -thetaControllerSpeaker.calculate(drivetrain.getAngleFromCorner().getDegrees()-180,0);//-7;
       }else{
-        return -thetaControllerSpeaker.calculate(drivetrain.getAngleFromTag(teamID.getAsDouble()).getDegrees()+180,0);//+7;
+        return -thetaControllerSpeaker.calculate(drivetrain.getAngleFromCorner().getDegrees()+180,0);//+7;
       }
     };
     return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble()) 

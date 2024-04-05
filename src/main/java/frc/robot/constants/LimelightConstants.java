@@ -24,22 +24,22 @@ public class LimelightConstants {
 
 
     public static final double[][] ONE_APRIL_TAG_LOOKUP_TABLE = {
-      // {distance in meters, x std deviation, y std deviation, r (in degrees) std deviation}
-      {0, 0.001, 0.001, 50},
-      {1.5, 0.01, 0.01, 100},
-      {3, 0.7, 0.7, 300},
-      {4.5, 3, 3, 900},
-      {6, 8, 8, 1800}
+      // {distance in meters, x std deviation, y std deviation, r (in degrees//actually maybe radians) std deviation}
+      {0, 0.001, 0.001, 1},
+      {1.5, 0.01, 0.01, 3},
+      {3, 0.7, 0.7, 10},
+      {4.5, 3, 3, 100},
+      {6, 8, 8, 1000}
     };
     public static final MultiLinearInterpolator ONE_APRIL_TAG_LINEAR_INTERPOLATOR = new MultiLinearInterpolator(ONE_APRIL_TAG_LOOKUP_TABLE);
 
     public static final double[][] TWO_APRIL_TAG_LOOKUP_TABLE = {
       // {distance in meters, x std deviation, y std deviation, r (in degrees) std deviation}
-      {0, 0.001, 0.001, 25},
-      {1.5, 0.01, 0.01, 50},
-      {3, 0.4, 0.4, 150},
-      {4.5, 2, 2, 300},
-      {6, 6, 6, 600}
+      {0, 0.001, 0.001, .25},
+      {1.5, 0.01, 0.01, .6},
+      {3, 0.4, 0.4, 10},
+      {4.5, 2, 2, 100},
+      {6, 6, 6, 1000}
     };
     public static final MultiLinearInterpolator TWO_APRIL_TAG_LINEAR_INTERPOLATOR = new MultiLinearInterpolator(TWO_APRIL_TAG_LOOKUP_TABLE);
 

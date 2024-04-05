@@ -83,7 +83,8 @@ public class Arm extends SubsystemBase {
     Speaker,
     Amp,
     Intake,
-    AmpMove
+    AmpMove,
+    IntakeShoot
   } 
 
 
@@ -160,7 +161,6 @@ public class Arm extends SubsystemBase {
   // public Command sysIdDynamic(SysIdRoutine.Direction direction) {
   //     return m_SysIdRoutine.dynamic(direction);
   // }
-
   MotionMagicTorqueCurrentFOC m_request = new MotionMagicTorqueCurrentFOC(.47);
 
   private void setArmDegree(ArmState armPosition, boolean isActive){
@@ -177,6 +177,9 @@ public class Arm extends SubsystemBase {
           break;
         case AmpMove:
           rotSet= .21;
+          break;
+        case IntakeShoot:
+          rotSet= .27;
           break;
         default:
           rotSet=.4422222222;
@@ -203,8 +206,10 @@ public class Arm extends SubsystemBase {
       setArmDegree(ArmState.Amp, true);
     }else if (currentArmState == ArmState.Intake){
       setArmDegree(ArmState.Intake, true);
-    }else{
+    }else if (currentArmState == ArmState.AmpMove){
       setArmDegree(ArmState.AmpMove, true);
+    }else if(currentArmState == ArmState.IntakeShoot){
+      setArmDegree(ArmState.IntakeShoot, true);
     }
   }
 

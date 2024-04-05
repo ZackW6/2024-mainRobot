@@ -32,19 +32,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "5 shoot US"
+            "pathName": "5 shoot AS"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "5 shoot US to 6"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "6 shoot"
+            "pathName": "5 shoot AS to 6"
           }
         }
       ]

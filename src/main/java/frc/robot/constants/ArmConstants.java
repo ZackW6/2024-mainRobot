@@ -20,7 +20,7 @@ public class ArmConstants{
 		public static final double JERK = 5000;
 
         
-        public static final Rotation2d ANGLE_OFFSET = Rotation2d.fromRotations(0.43);//.592);//.063);//.314);//
+        public static final Rotation2d ANGLE_OFFSET = Rotation2d.fromRotations(.592);//.592);//.063);//.314);//
         
 
         /* Arm Current Limiting */ //TODO: Change these values

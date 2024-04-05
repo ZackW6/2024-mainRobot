@@ -19,7 +19,7 @@ public class ShooterConstants {
     //TODO: Run SysID for shooter
     //TODO: Tune Shooter PID https://docs.wpilib.org/en/latest/docs/software/advanced-controls/introduction/tuning-flywheel.html
 
-    public static final double kS = 6.82; // Add 0.25 V output to overcome static friction
+    public static final double kS = 6.624; // Add 0.25 V output to overcome static friction
     public static final double kV = .06325; // A velocity target of 1 rps results in 0.12 V output
     public static final double kA = 2; // An acceleration of 1 rps/s requires 0.01 V output
     public static final double kP = 8; // This will need to be tuned after feedforward

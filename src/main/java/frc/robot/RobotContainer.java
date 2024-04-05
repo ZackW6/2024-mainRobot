@@ -47,7 +47,7 @@ import frc.robot.commands.FactoryCommands;
 import frc.robot.constants.GeneralConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Arm;
-import frc.robot.subsystems.Candle;
+// import frc.robot.subsystems.Candle;
 import frc.robot.subsystems.Arm.ArmState;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
@@ -78,8 +78,8 @@ public class RobotContainer {
   private final Arm arm = new Arm();
   private final Shooter shooter = new Shooter();
   private final Intake intake = new Intake();
-  private final Candle candle = new Candle();
-  private final FactoryCommands groupCommands = new FactoryCommands(arm, shooter, intake, candle, drivetrain, driverController);
+  // private final Candle candle = new Candle();
+  private final FactoryCommands groupCommands = new FactoryCommands(arm, shooter, intake, drivetrain, driverController);
   
 
   private void configureBindings() {
@@ -87,10 +87,10 @@ public class RobotContainer {
 
     shooter.enableDefault();
     intake.setDefaultCommand(intake.stop());
-    candle.setDefaultCommand(candle.idleLED());
+    // candle.setDefaultCommand(candle.idleLED());
     drivetrain.setDefaultCommand(
-        drivetrain.applyRequest(() -> drive.withVelocityX(-driverController.getLeftY() * 0.6 * MaxSpeed)
-            .withVelocityY(-driverController.getLeftX() * 0.6 * MaxSpeed)
+        drivetrain.applyRequest(() -> drive.withVelocityX(-driverController.getLeftY() * 0.85 * MaxSpeed)
+            .withVelocityY(-driverController.getLeftX() * 0.85 * MaxSpeed)
             .withRotationalRate(-driverController.getRightX() *2/3 * MaxAngularRate)
     ));
 
@@ -100,22 +100,25 @@ public class RobotContainer {
     driverController.rightBumper().whileTrue(groupCommands.intake()).whileFalse(Commands.runOnce(()->arm.setCurrentArmState(arm.lastMainState())));
     driverController.leftBumper().onTrue(groupCommands.shoot());
     driverController.rightTrigger(.5).whileTrue(drivetrain.applyRequest(() -> brake));
-    driverController.leftTrigger(.5).whileTrue(groupCommands.getInRange());
+    driverController.leftTrigger(.5).whileTrue(groupCommands.getInRange())
+    .onTrue(Commands.runOnce(()->shooter.setIdleSpeed(60)))
+    .onFalse(Commands.runOnce(()->shooter.setIdleSpeed(0)));
 
-    driverController.rightStick().whileTrue(groupCommands.alignToSpeaker());
+    driverController.rightStick().whileTrue(groupCommands.alignToCorner());
     driverController.a().whileTrue(groupCommands.alignToAmp());//.and(() -> driverController.x().getAsBoolean());
     // driverController.getHID().setRumble(RumbleType.kBothRumble, 1);
     
     operatorController.a().onTrue(groupCommands.switchModes());
     operatorController.x().whileTrue(intake.setVelocity(15));
-    operatorController.y().onTrue(Commands.runOnce(()->{
-    if(shooter.getIdleSpeed()>0){
+    operatorController.y().whileTrue(getAutoToPoint().andThen(groupCommands.loadAndShoot()));
+    operatorController.b().onTrue(Commands.runOnce(()->{
+      if (shooter.getIdleSpeed()>0){
         shooter.setIdleSpeed(0);
       }else{
         shooter.setIdleSpeed(60);
       }
     }));
-    operatorController.b().whileTrue(getAutoToPoint().andThen(groupCommands.loadAndShoot()));
+    operatorController.leftBumper().onTrue(groupCommands.loadAndShootOperator());
     if (Utils.isSimulation()) {
       drivetrain.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
     }
@@ -132,7 +135,6 @@ public class RobotContainer {
     new Trigger(()-> drivetrain.getDistanceFromTagMeters(teamID.getAsDouble()) > 1.95072 && drivetrain.getDistanceFromTagMeters(teamID.getAsDouble()) < 2.7432)
       .whileTrue(Commands.runOnce(()->driverController.getHID().setRumble(RumbleType.kBothRumble, 1)))
       .whileFalse(Commands.runOnce(()->driverController.getHID().setRumble(RumbleType.kBothRumble, 0)));
-
     new Trigger(()->DriverStation.isTeleop()).and(()->{
       var alliance = DriverStation.getAlliance();
       if (!alliance.isPresent()){
@@ -163,7 +165,7 @@ public class RobotContainer {
 
   public void configureAutonomousCommands() {
     NamedCommands.registerCommand("intake", groupCommands.intakeMainAuto());
-    NamedCommands.registerCommand("setIdleSpeed", Commands.runOnce(()->shooter.setAutoIdleSpeed(30)));
+    NamedCommands.registerCommand("setIdleSpeed", Commands.runOnce(()->shooter.setAutoIdleSpeed(40)));
     NamedCommands.registerCommand("loadAndShoot", groupCommands.loadAndShootAuto());
     NamedCommands.registerCommand("loadAndShootLinear", groupCommands.loadAndShoot());
     NamedCommands.registerCommand("loadAndShootThree", groupCommands.loadAndShootAutoSecondary());
