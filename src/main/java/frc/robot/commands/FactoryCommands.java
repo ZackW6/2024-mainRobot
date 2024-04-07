@@ -64,11 +64,30 @@ public class FactoryCommands extends SubsystemBase{
     // return Commands.either(resetAll(), intake(), ()->arm.isArmInIntakeState()) ;
   }
 
+  // public Command spinUpShooter(){
+  //   return Commands.deadline(Commands.waitSeconds(.01).andThen(Commands.waitUntil(() ->shooter.isLeftFlywheelAtTargetSpeed()))
+  //     ,Commands.run(() -> {
+  //       // double shooterSpeed = ShooterConstants.SHOOTER_DISTANCE_LINEAR_INTERPOLATOR.getLookupValue(drivetrain.getDistanceFromSpeakerMeters()+.2)[0];
+  //       shooter.setTargetFlywheelSpeed(75, 75);
+  //     }), Commands.runOnce(()->shooter.disableDefault()));
+  //     // .andThen(resetAll());
+  // }
+
+  // public Command stopShooter(){
+  //   return Commands.deadline(Commands.waitSeconds(.01).andThen(Commands.waitUntil(() ->shooter.isLeftFlywheelAtTargetSpeed()))
+  //     ,Commands.run(() -> {
+  //       // double shooterSpeed = ShooterConstants.SHOOTER_DISTANCE_LINEAR_INTERPOLATOR.getLookupValue(drivetrain.getDistanceFromSpeakerMeters()+.2)[0];
+  //       shooter.setTargetFlywheelSpeed(0, 0);
+  //     }), Commands.runOnce(()->shooter.disableDefault()));
+  //     // .andThen(resetAll());
+  // }
+
+
   public Command loadAndShoot(){
     return Commands.deadline(Commands.waitSeconds(.01).andThen(Commands.waitUntil(() ->shooter.isLeftFlywheelAtTargetSpeed()))
       ,Commands.run(() -> {
         // double shooterSpeed = ShooterConstants.SHOOTER_DISTANCE_LINEAR_INTERPOLATOR.getLookupValue(drivetrain.getDistanceFromSpeakerMeters()+.2)[0];
-        shooter.setTargetFlywheelSpeed(75, 75);
+        shooter.setTargetFlywheelSpeed(78, 78);
       }), Commands.runOnce(()->shooter.disableDefault()))
       .andThen(Commands.waitUntil(()->arm.isArmInSpeakerState())).andThen(intake.outtakePiece())
       .andThen(resetAll());
@@ -231,7 +250,7 @@ public class FactoryCommands extends SubsystemBase{
       }
       return 7;
     };
-    DoubleSupplier distanceSpeed = ()-> -distanceController.calculate(drivetrain.getDistanceFromTagMeters(teamID.getAsDouble()), 2.25);
+    DoubleSupplier distanceSpeed = ()-> -distanceController.calculate(drivetrain.getDistanceFromTagMeters(teamID.getAsDouble()), 2.32);
     DoubleSupplier redOrBlueSide = ()->{
       var alliance = DriverStation.getAlliance();
       if (!alliance.isPresent() || alliance.get().equals(Alliance.Blue)){

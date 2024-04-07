@@ -77,6 +77,8 @@ public class Shooter extends SubsystemBase{
                 () -> Units.radiansPerSecondToRotationsPerMinute(getTargetFlywheelSpeedL()));
         shuffleboardTab.addBoolean("Is Left Flywheel at Speed", this::isLeftFlywheelAtTargetSpeed);
         shuffleboardTab.addBoolean("Is Right Flywheel at Speed", this::isLeftFlywheelAtTargetSpeed);
+        shuffleboardTab.addNumber("Idle Speed",
+                () -> IdleSpeed);
         // shooterRPMOffsetEntry = Shuffleboard.getTab("Driver")
         //         .add("Shooting Offset", 0.0).withWidget(BuiltInWidgets.kNumberSlider)
         //         .withProperties(Map.of("min", -250.0, "max", 250.0, "Block increment", 25.0))

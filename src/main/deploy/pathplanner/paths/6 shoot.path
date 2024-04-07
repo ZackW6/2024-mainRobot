@@ -16,12 +16,12 @@
     },
     {
       "anchor": {
-        "x": 3.300240902476107,
-        "y": 5.203898726885772
+        "x": 2.83,
+        "y": 5.33
       },
       "prevControl": {
-        "x": 4.1193526186567855,
-        "y": 4.800279286012687
+        "x": 3.649111716180682,
+        "y": 4.926380559126915
       },
       "nextControl": null,
       "isLocked": false,
@@ -45,7 +45,7 @@
   "eventMarkers": [
     {
       "name": "Shoot 6",
-      "waypointRelativePos": 0.9,
+      "waypointRelativePos": 0.85,
       "command": {
         "type": "parallel",
         "data": {
@@ -86,7 +86,7 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -9.0,
+    "rotation": -5.0,
     "rotateFast": false
   },
   "reversed": false,
@@ -95,5 +95,5 @@
     "rotation": 0,
     "velocity": 0
   },
-  "useDefaultConstraints": true
+  "useDefaultConstraints": false
 }

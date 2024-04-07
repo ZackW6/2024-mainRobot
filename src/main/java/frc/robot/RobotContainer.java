@@ -110,15 +110,11 @@ public class RobotContainer {
     
     operatorController.a().onTrue(groupCommands.switchModes());
     operatorController.x().whileTrue(intake.setVelocity(15));
-    operatorController.y().whileTrue(getAutoToPoint().andThen(groupCommands.loadAndShoot()));
-    operatorController.b().onTrue(Commands.runOnce(()->{
-      if (shooter.getIdleSpeed()>0){
-        shooter.setIdleSpeed(0);
-      }else{
-        shooter.setIdleSpeed(60);
-      }
-    }));
-    operatorController.leftBumper().onTrue(groupCommands.loadAndShootOperator());
+    // operatorController.y().whileTrue(getAutoToPoint().andThen(groupCommands.loadAndShoot()));
+    operatorController.leftBumper().onTrue(Commands.runOnce(()->shooter.setIdleSpeed(60)));
+    operatorController.rightBumper().onTrue(Commands.runOnce(()->shooter.setIdleSpeed(0)));
+    
+    // operatorController.leftBumper().onTrue(groupCommands.loadAndShootOperator());
     if (Utils.isSimulation()) {
       drivetrain.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
     }

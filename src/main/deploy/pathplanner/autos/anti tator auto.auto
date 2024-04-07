@@ -14,31 +14,37 @@
         {
           "type": "path",
           "data": {
-            "pathName": "S-L Taxi - shoot"
+            "pathName": "Anti Tator taxi"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "4 shoot"
+            "pathName": "6 shoot"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "4 shoot to 5"
+            "pathName": "6 shoot to 7"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "7 shoot"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "7 shoot to 5"
           }
         },
         {
           "type": "path",
           "data": {
             "pathName": "5 shoot US"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "5 shoot US to 6"
           }
         }
       ]
