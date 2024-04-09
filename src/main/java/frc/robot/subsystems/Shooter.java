@@ -50,22 +50,14 @@ public class Shooter extends SubsystemBase{
     private double targetFlywheelSpeedR;
     private double IdleSpeed = 0;
     private double autoIdleSpeed = 75;
-    // private final NetworkTableEntry shooterRPMOffsetEntry;
-    CommandSwerveDrivetrain drivetrain;
 
-    private final VoltageOut m_sysidControl = new VoltageOut(0);
     private final MotionMagicVelocityTorqueCurrentFOC velocityRequest = new MotionMagicVelocityTorqueCurrentFOC(0).withSlot(0);
 
-    private SysIdRoutine m_SysIdRoutine;
 
     public Shooter(){
         
         leftShooterMotor = new TalonFX(ShooterConstants.LEFT_SHOOTER_MOTOR_ID);
         rightShooterMotor = new TalonFX(ShooterConstants.RIGHT_SHOOTER_MOTOR_ID);
-        // TalonFXConfiguration talonFXConfigs = new TalonFXConfiguration();
-        // leftShooterMotor.getConfigurator().apply(talonFXConfigs);
-        // leftShooterMotor.setInverted(true);
-        // rightShooterMotor.setInverted(false);
         configMotors();
 
         ShuffleboardTab shuffleboardTab = Shuffleboard.getTab("Shooter");
@@ -79,112 +71,28 @@ public class Shooter extends SubsystemBase{
         shuffleboardTab.addBoolean("Is Right Flywheel at Speed", this::isLeftFlywheelAtTargetSpeed);
         shuffleboardTab.addNumber("Idle Speed",
                 () -> IdleSpeed);
-        // shooterRPMOffsetEntry = Shuffleboard.getTab("Driver")
-        //         .add("Shooting Offset", 0.0).withWidget(BuiltInWidgets.kNumberSlider)
-        //         .withProperties(Map.of("min", -250.0, "max", 250.0, "Block increment", 25.0))
-        //         .withPosition(2, 1)
-        //         .getEntry();
-    
-        // leftSpeed = Shuffleboard.getTab("Shooter")
-        //     .add("LeftSpeed", 0)
-        //     .withWidget(BuiltInWidgets.kNumberSlider)
-        //     .withProperties(Map.of("min",-100,"max",100))
-        //     .getEntry();
-
-        // rightSpeed = Shuffleboard.getTab("Shooter")
-        //     .add("RightSpeed", 0)
-        //     .withWidget(BuiltInWidgets.kNumberSlider)
-        //     .withProperties(Map.of("min",-100,"max",100))
-        //     .getEntry();
-
-        // m_SysIdRoutine = new SysIdRoutine(
-        //     new SysIdRoutine.Config(
-        //         null, Volts.of(4), null, // Use default config
-        //         (state) -> SignalLogger.writeString("SysIdTestState", state.toString())
-        //     ),
-        //     new SysIdRoutine.Mechanism(
-        //         (Measure<Voltage> volts) -> leftShooterMotor.setControl(m_sysidControl.withOutput(volts.in(Volts))),
-        //         null, // No log consumer, since data is recorded by AdvantageKit
-        //         this
-        //     ) //I WANT TO TRY THIS PROBABLY, I WONDER IF IT AUTO DOES VOLTS, POS, AND VELOCITY?////////////////////////////////////////
-        // );
-
-        // The methods below return Command objects
-        // m_SysIdRoutine =
-        // new SysIdRoutine(
-        //     new SysIdRoutine.Config(
-        //         null,         // Default ramp rate is acceptable
-        //         Volts.of(4), // Reduce dynamic voltage to 4 to prevent motor brownout
-        //         null,       // Default timeout is acceptable
-        //                     // Log state with Phoenix SignalLogger class
-        //         (state)->SignalLogger.writeString("state", state.toString())),
-        //     new SysIdRoutine.Mechanism(
-        //         (Measure<Voltage> volts)-> leftShooterMotor.setControl(m_sysidControl.withOutput(volts.in(Volts))),
-        //         (motor) -> {
-        //             SignalLogger.writeDouble("Voltage", leftShooterMotor.getSupplyVoltage().getValue());
-        //             SignalLogger.writeDouble("Position", leftShooterMotor.getRotorPosition().getValueAsDouble());
-        //             SignalLogger.writeDouble("Velocity", leftShooterMotor.getRotorVelocity().getValueAsDouble());
-        //             // SignalLogger.writeDouble("Voltage", leftShooterMotor.getSupplyVoltage().getValueAsDouble()  );
-        //             // SignalLogger.writeDouble("Position", leftShooterMotor.getPosition().getValueAsDouble());
-        //             // SignalLogger.writeDouble("Velocity", leftShooterMotor.getVelocity().getValueAsDouble());
-        //         },
-        //         this));
-        // SignalLogger.setPath("/home/lvuser/logs/");
-        // SignalLogger.start();
-
-        // setName("Shooter");
-        // // leftShooterMotor.getA
-        // // TalonFXConfiguration cfg = new TalonFXConfiguration();
-        // // leftShooterMotor.getConfigurator().apply(cfg);
-
-        // /* Speed up signals for better charaterization data */
-        // BaseStatusSignal.setUpdateFrequencyForAll(250,
-        //     leftShooterMotor.getPosition(),
-        //     leftShooterMotor.getVelocity(),
-        //     leftShooterMotor.getMotorVoltage());
-
-        // /* Optimize out the other signals, since they're not particularly helpful for us */
-        // leftShooterMotor.optimizeBusUtilization();
-        // SignalLogger.setPath("/home/lvuser/logs/");
-        // SignalLogger.start();
     }    
-    // public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
-    //     return m_SysIdRoutine.quasistatic(direction);
-    // }
-    // public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-    //     return m_SysIdRoutine.dynamic(direction);
-    // }
-    
+
     @Override
     public void periodic() {
         // TODO: TO MAKE THIS WORK TURN TO FALSE
-        // flywheelDisabled = true;
-        if (flywheelDisabled) {
+        if (flywheelDisabled || (doDefault && IdleSpeed == 0)) {
             leftShooterMotor.stopMotor();
             rightShooterMotor.stopMotor();
         } else {
-            // double feedForward = FLYWHEEL_VELOCITY_CONSTANT * targetFlywheelSpeed / 12.0;
             if (doDefault){
-                if (DriverStation.isTeleop()){//THIS WILL BE USED TO CHANGE SPEED DEPENDING ON HOW CLOSE YOU ARE TO THE SPEAKER
-                    if (drivetrain!=null){
-                        leftShooterMotor.setControl(velocityRequest.withVelocity(IdleSpeed));//drivetrain.getDistanceFromSpeakerMeters()*40));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
-                        rightShooterMotor.setControl(velocityRequest.withVelocity(IdleSpeed));//drivetrain.getDistanceFromSpeakerMeters()*40));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
-                    }else{
-                        leftShooterMotor.setControl(velocityRequest.withVelocity(IdleSpeed));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
-                        rightShooterMotor.setControl(velocityRequest.withVelocity(IdleSpeed));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
-                    }
-                }else if(DriverStation.isAutonomous()){//ALWAYS BE FAST IN AUTO
-                    leftShooterMotor.setControl(velocityRequest.withVelocity(autoIdleSpeed));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
-                    rightShooterMotor.setControl(velocityRequest.withVelocity(autoIdleSpeed));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
+                if (DriverStation.isTeleop()){
+                    leftShooterMotor.setControl(velocityRequest.withVelocity(IdleSpeed));
+                    rightShooterMotor.setControl(velocityRequest.withVelocity(IdleSpeed));
+                }else if(DriverStation.isAutonomous()){
+                    leftShooterMotor.setControl(velocityRequest.withVelocity(autoIdleSpeed));
+                    rightShooterMotor.setControl(velocityRequest.withVelocity(autoIdleSpeed));
                 }
             }else{
-                leftShooterMotor.setControl(velocityRequest.withVelocity(targetFlywheelSpeedL));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/
-                rightShooterMotor.setControl(velocityRequest.withVelocity(targetFlywheelSpeedR));//Shouldnt need/ since tuned kV* .withFeedForward(feedForward));*/;
+                leftShooterMotor.setControl(velocityRequest.withVelocity(targetFlywheelSpeedL));
+                rightShooterMotor.setControl(velocityRequest.withVelocity(targetFlywheelSpeedR));
             }
-            
         }
-
-        // shootingOffset = shooterRPMOffsetEntry.getDouble(0.0);
     }
     public void setIdleSpeed(double speed){
         IdleSpeed = speed;
@@ -194,9 +102,6 @@ public class Shooter extends SubsystemBase{
     }
     public void setAutoIdleSpeed(double speed){
         autoIdleSpeed = speed;
-    }
-    public void setupDistToSpeakerSpeed(CommandSwerveDrivetrain swerve){
-        drivetrain = swerve;
     }
 
     @Deprecated

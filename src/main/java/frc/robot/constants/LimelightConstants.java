@@ -25,22 +25,32 @@ public class LimelightConstants {
 
     public static final double[][] ONE_APRIL_TAG_LOOKUP_TABLE = {
       // {distance in meters, x std deviation, y std deviation, r (in degrees//actually maybe radians) std deviation}
-      {0, 0.001, 0.001, .5},
-      {1.5, 0.01, 0.01, 1},
-      {3, 0.7, 0.7, 2},
-      {4.5, 3, 3, 1000},
-      {6, 8, 8, 1000}
+      {0, 0.001, 0.001, 999999},
+      {1.5, 0.01, 0.01, 999999},
+      {3, 0.7, 0.7, 999999},
+      {4.5, 3, 3, 999999},
+      {6, 8, 8, 999999}
     };
     public static final MultiLinearInterpolator ONE_APRIL_TAG_LINEAR_INTERPOLATOR = new MultiLinearInterpolator(ONE_APRIL_TAG_LOOKUP_TABLE);
 
     public static final double[][] TWO_APRIL_TAG_LOOKUP_TABLE = {
       // {distance in meters, x std deviation, y std deviation, r (in degrees) std deviation}
-      {0, 0.001, 0.001, .5},
-      {1.5, 0.01, 0.01, 1},
-      {3, 0.4, 0.4, 3},
-      {4.5, 2, 2, 100},
-      {6, 6, 6, 1000}
+      {0, 0.001, 0.001, 999999},
+      {1.5, 0.01, 0.01, 999999},
+      {3, 0.4, 0.4, 999999},
+      {4.5, 2, 2, 999999},
+      {6, 6, 6, 999999}
     };
     public static final MultiLinearInterpolator TWO_APRIL_TAG_LINEAR_INTERPOLATOR = new MultiLinearInterpolator(TWO_APRIL_TAG_LOOKUP_TABLE);
 
+    public static final double[][] ROTATION_LOOKUP_TABLE = {
+      // {distance in meters, x std deviation, y std deviation, r (in degrees) std deviation}
+      {0,.1},
+      {1.5, .25},
+      {3,.5},
+      {4.5, 3},
+      {6, 1000}
+    };
+    
+    public static final MultiLinearInterpolator ROTATION_LINEAR_INTERPOLATOR = new MultiLinearInterpolator(TWO_APRIL_TAG_LOOKUP_TABLE);
 }

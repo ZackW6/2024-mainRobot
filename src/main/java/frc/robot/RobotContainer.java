@@ -106,6 +106,7 @@ public class RobotContainer {
 
     driverController.rightStick().whileTrue(groupCommands.alignToCorner());
     driverController.a().whileTrue(groupCommands.alignToAmp());//.and(() -> driverController.x().getAsBoolean());
+    driverController.b().whileTrue(groupCommands.alignToPiece());
     // driverController.getHID().setRumble(RumbleType.kBothRumble, 1);
     
     operatorController.a().onTrue(groupCommands.switchModes());
@@ -139,15 +140,6 @@ public class RobotContainer {
       return DriverStation.getAlliance().get().equals(Alliance.Red);
     }).onTrue(Commands.runOnce(()->drivetrain.seedFieldRelative(180-drivetrain.getPose().getRotation().getDegrees())))
     .onFalse(Commands.runOnce(()->drivetrain.seedFieldRelative(360-drivetrain.getPose().getRotation().getDegrees())));
-    // new Trigger(()->DriverStation.isTeleop()).onTrue(Commands.runOnce(()->{
-
-      
-
-    // }));
-
-
-      // new Pose2d(drivetrain.getPose().getTranslation()
-      // ,new Rotation2d(drivetrain.getPose().getRotation().getRadians()+Math.PI/2))))).onTrue(Commands.runOnce(()->System.out.println("HI")));
   }
 
   public RobotContainer() {

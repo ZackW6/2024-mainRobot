@@ -18,6 +18,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
@@ -58,31 +59,6 @@ public class FactoryCommands extends SubsystemBase{
   public Command shoot() {
     return Commands.either(ampShot(), loadAndShoot(), ()->arm.isArmInAmpState()) ;
   }
-
-  public Command intake() {
-    return intakeMain();
-    // return Commands.either(resetAll(), intake(), ()->arm.isArmInIntakeState()) ;
-  }
-
-  // public Command spinUpShooter(){
-  //   return Commands.deadline(Commands.waitSeconds(.01).andThen(Commands.waitUntil(() ->shooter.isLeftFlywheelAtTargetSpeed()))
-  //     ,Commands.run(() -> {
-  //       // double shooterSpeed = ShooterConstants.SHOOTER_DISTANCE_LINEAR_INTERPOLATOR.getLookupValue(drivetrain.getDistanceFromSpeakerMeters()+.2)[0];
-  //       shooter.setTargetFlywheelSpeed(75, 75);
-  //     }), Commands.runOnce(()->shooter.disableDefault()));
-  //     // .andThen(resetAll());
-  // }
-
-  // public Command stopShooter(){
-  //   return Commands.deadline(Commands.waitSeconds(.01).andThen(Commands.waitUntil(() ->shooter.isLeftFlywheelAtTargetSpeed()))
-  //     ,Commands.run(() -> {
-  //       // double shooterSpeed = ShooterConstants.SHOOTER_DISTANCE_LINEAR_INTERPOLATOR.getLookupValue(drivetrain.getDistanceFromSpeakerMeters()+.2)[0];
-  //       shooter.setTargetFlywheelSpeed(0, 0);
-  //     }), Commands.runOnce(()->shooter.disableDefault()));
-  //     // .andThen(resetAll());
-  // }
-
-
   public Command loadAndShoot(){
     return Commands.deadline(Commands.waitSeconds(.01).andThen(Commands.waitUntil(() ->shooter.isLeftFlywheelAtTargetSpeed()))
       ,Commands.run(() -> {
@@ -125,15 +101,17 @@ public class FactoryCommands extends SubsystemBase{
       ,Commands.waitSeconds(0.003/*0.006*/).andThen(Commands.runOnce(()->arm.setCurrentArmState(ArmState.AmpMove)))
       ,intake.setVelocity(-18.8/*-19.25*/)).andThen(switchModes());
   }
+  @Deprecated
   public Command intakeShoot(){
     return Commands.deadline(Commands.waitSeconds(2)
       ,Commands.runOnce(()->arm.setCurrentArmState(ArmState.IntakeShoot))
       ,Commands.deadline(Commands.waitSeconds(.1),intake.setVelocity(10)).andThen(intake.setVelocity(-100000/*-19.25*/))).andThen(Commands.runOnce(()->arm.setCurrentArmState(ArmState.Amp))).andThen(switchModes());
   }
 
-  public Command intakeMain(){
+  public Command intake(){
     return Commands.deadline(intake.intakePiece(),Commands.runOnce(()->arm.setCurrentArmState(ArmState.Intake)),Commands.runOnce(()->shooter.enableDefault()))
       // .andThen(candle.pickUpLights())
+      .andThen(Commands.run(()->xboxController.getHID().setRumble(RumbleType.kBothRumble, 1)))
       .andThen(Commands.deadline(Commands.waitSeconds(.5).andThen(Commands.waitUntil(()->arm.isArmAtAngle()))
       ,intake.setVelocity(25)
       ,Commands.runOnce(()->arm.setCurrentArmState(arm.lastMainState()))))
@@ -168,20 +146,8 @@ public class FactoryCommands extends SubsystemBase{
   public Command alignToAmp() {
     DoubleSupplier xAxis = () -> -xboxController.getLeftY() * TunerConstants.kSpeedAt12VoltsMps;
     DoubleSupplier yAxis = () -> -xboxController.getLeftX() * TunerConstants.kSpeedAt12VoltsMps;
-    // thetaController.enableContinuousInput(-, Math.PI);
     thetaControllerAmp.reset();
-    // thetaController.setSetpoint(90);
-    var alliance = DriverStation.getAlliance();
-    if(!alliance.isPresent()) {
-      return Commands.none();
-    }
-    DoubleSupplier rotationalVelocity = () -> {
-      if(DriverStation.Alliance.Blue.equals(alliance.get())){
-        return thetaControllerAmp.calculate(correctYaw((drivetrain.getPose().getRotation().getDegrees())%360,90), 90);
-      }else{
-        return thetaControllerAmp.calculate(correctYaw((drivetrain.getPose().getRotation().getDegrees())%360,90), 90);
-      }
-    };
+    DoubleSupplier rotationalVelocity = () -> thetaControllerAmp.calculate(correctYaw((drivetrain.getPose().getRotation().getDegrees())%360,90), 90);
     return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble()) //was -xAxis, but in sim is this
       .withVelocityY(yAxis.getAsDouble())//was -yAxis, but in sim is this
       .withRotationalRate(Units.degreesToRadians(rotationalVelocity.getAsDouble())))
@@ -198,7 +164,7 @@ public class FactoryCommands extends SubsystemBase{
     };
     return Commands.run(()->{
       if (drivetrain.getPose().getX()<LimelightConstants.K_TAG_LAYOUT.getTagPose((int)teamID.getAsDouble()).get().getX()+.127
-    && drivetrain.getPose().getX()>LimelightConstants.K_TAG_LAYOUT.getTagPose((int)teamID.getAsDouble()).get().getX()-.127){//drivetrain.getAngleFromTag(teamID.getAsDouble()).getDegrees()<10 && drivetrain.getAngleFromTag(teamID.getAsDouble()).getDegrees()>-10){
+    && drivetrain.getPose().getX()>LimelightConstants.K_TAG_LAYOUT.getTagPose((int)teamID.getAsDouble()).get().getX()-.127){
         // candle.ampAlignLights().schedule();
       }else{
         // candle.idleLED().schedule();
@@ -219,14 +185,6 @@ public class FactoryCommands extends SubsystemBase{
     DoubleSupplier xAxis = () -> -xboxController.getLeftY() * TunerConstants.kSpeedAt12VoltsMps;
     DoubleSupplier yAxis = () -> -xboxController.getLeftX() * TunerConstants.kSpeedAt12VoltsMps;
     thetaControllerSpeaker.reset();
-    DoubleSupplier teamID = ()->{
-      if (DriverStation.getAlliance().isPresent()){
-        if(DriverStation.getAlliance().get().equals(Alliance.Red)){
-          return 4;
-        }
-      }
-      return 7;
-    };
     DoubleSupplier rotationalVelocity = () -> {
       if(drivetrain.getAngleFromCorner().getDegrees()>0){
         return -thetaControllerSpeaker.calculate(drivetrain.getAngleFromCorner().getDegrees()-180,0);//-7;
@@ -234,6 +192,16 @@ public class FactoryCommands extends SubsystemBase{
         return -thetaControllerSpeaker.calculate(drivetrain.getAngleFromCorner().getDegrees()+180,0);//+7;
       }
     };
+    return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble()) 
+      .withVelocityY(yAxis.getAsDouble())
+      .withRotationalRate(Units.degreesToRadians(rotationalVelocity.getAsDouble())));
+  }
+  public Command alignToPiece() {
+    DoubleSupplier xAxis = () -> -xboxController.getLeftY() * TunerConstants.kSpeedAt12VoltsMps;
+    DoubleSupplier yAxis = () -> -xboxController.getLeftX() * TunerConstants.kSpeedAt12VoltsMps;
+    thetaControllerSpeaker.reset();
+    DoubleSupplier rotationalVelocity = () -> -thetaControllerSpeaker.calculate(drivetrain.getRotationFromPiece("limelight").getDegrees(),0);
+
     return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble()) 
       .withVelocityY(yAxis.getAsDouble())
       .withRotationalRate(Units.degreesToRadians(rotationalVelocity.getAsDouble())));
@@ -282,20 +250,6 @@ public class FactoryCommands extends SubsystemBase{
     return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble()) 
           .withVelocityY(yAxis.getAsDouble())
           .withRotationalRate(Units.degreesToRadians(rotationalVelocity.getAsDouble())));
-    // DoubleSupplier distanceYVelocity = ()-> distanceYController.calculate(drivetrain.getDistanceFromSpeakerMeters(), 2);
-    
-    // DoubleSupplier offset=()->{
-    //   var alliance = DriverStation.getAlliance();
-    //   return alliance.isPresent() ? (alliance.get().equals(Alliance.Red) ? 180 : 360) : 360;
-    // };
-    // drivetrain.seedFieldRelative(180-drivetrain.getPose().getRotation().getDegrees());
-    // return drivetrain.applyRequest(() -> drive.withVelocityX(distanceYVelocity.getAsDouble()) 
-    //   .withVelocityY(yAxis.getAsDouble())
-    //   .withRotationalRate(Units.degreesToRadians(rotationalVelocity.getAsDouble())))
-    //   .alongWith(Commands.runOnce(()->{
-    //   drivetrain.seedFieldRelative(offset.getAsDouble()-drivetrain.getPose().getRotation().getDegrees());
-    // }));
-    
   }
 
   public Command switchModes(){

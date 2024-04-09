@@ -92,33 +92,9 @@ public class Arm extends SubsystemBase {
 
     armMotor = new TalonFX(ArmConstants.ARM_MOTOR_ID);
     encoder = new CANcoder(ArmConstants.CAN_CODER_ID);
-    //resetToAbsolute();
+
     configMotor();
-    // angleTarget = tab
-    //   .add("angleTarget", 0)
-    //   .withWidget(BuiltInWidgets.kNumberSlider)
-    //   .withProperties(Map.of("min",-20,"max",180))
-    //   .getEntry();
-    // armFeedForward = tab
-    //   .add("armFeedForward", 0)
-    //   .withWidget(BuiltInWidgets.kNumberSlider)
-    //   .withProperties(Map.of("min",0,"max",300)) //DONT NEED SINCE CTRE, BUT KEEPING JUST IN CASE
-    //   .getEntry();
-    // armP = tab
-    //   .add("armP", 0)
-    //   .withWidget(BuiltInWidgets.kNumberSlider)
-    //   .withProperties(Map.of("min",0,"max",200))
-    //   .getEntry();
-    // armI = tab
-    //   .add("armI", 0)
-    //   .withWidget(BuiltInWidgets.kNumberSlider)
-    //   .withProperties(Map.of("min",0,"max",10))
-    //   .getEntry();
-    // armD = tab
-    //   .add("armD", 0)
-    //   .withWidget(BuiltInWidgets.kNumberSlider)
-    //   .withProperties(Map.of("min",0,"max",10))
-    //   .getEntry();
+
     tab.addNumber("armCurrent", ()->armMotor.getTorqueCurrent().getValueAsDouble());
 
     tab.addNumber("armVelocity", ()->armMotor.getVelocity().getValueAsDouble());
@@ -126,41 +102,7 @@ public class Arm extends SubsystemBase {
     tab.addNumber("armTemp", ()->armMotor.getDeviceTemp().getValueAsDouble());
 
     tab.addNumber("armAngle", ()->getArmDegrees());
-    // m_SysIdRoutine =
-    //     new SysIdRoutine(
-    //         new SysIdRoutine.Config(
-    //             null,         // Default ramp rate is acceptable
-    //             Volts.of(4), // Reduce dynamic voltage to 4 to prevent motor brownout
-    //             null,          // Default timeout is acceptable
-    //                                    // Log state with Phoenix SignalLogger class
-    //             (state)->SignalLogger.writeString("state", state.toString())),
-    //         new SysIdRoutine.Mechanism(
-    //             (Measure<Voltage> volts)-> armMotor.setControl(m_sysidControl.withOutput(volts.in(Volts))),
-    //             null,
-    //             this));
-    //     setName("Arm");
-
-    //     // TalonFXConfiguration cfg = new TalonFXConfiguration();
-    //     // leftShooterMotor.getConfigurator().apply(cfg);
-
-    //     /* Speed up signals for better charaterization data */
-    //     BaseStatusSignal.setUpdateFrequencyForAll(250,
-    //         armMotor.getPosition(),
-    //         armMotor.getVelocity(),
-    //         armMotor.getMotorVoltage());
-
-    //     /* Optimize out the other signals, since they're not particularly helpful for us */
-    //     armMotor.optimizeBusUtilization();
-    //     SignalLogger.setPath("/media/sda1/");//HERE
-    //     SignalLogger.start();
-    
   }
-  // public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
-  //     return m_SysIdRoutine.quasistatic(direction);
-  // }
-  // public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-  //     return m_SysIdRoutine.dynamic(direction);
-  // }
   MotionMagicTorqueCurrentFOC m_request = new MotionMagicTorqueCurrentFOC(.47);
 
   private void setArmDegree(ArmState armPosition, boolean isActive){
@@ -194,10 +136,6 @@ public class Arm extends SubsystemBase {
 
   @Override
   public void periodic() {
-    // This method will be called once per scheduler run
-    // ArmPositions defaultState = getCurrentArmState() == ArmState.Speaker ? ArmPositions.Load : ArmPositions.Amp;
-    // setDefaultCommand(setArmDegree(ArmPositions.Amp));
-    
     if (currentArmState == ArmState.Speaker) {
       lastMainState = ArmState.Speaker;
       setArmDegree(ArmState.Speaker, true);
@@ -285,7 +223,6 @@ public class Arm extends SubsystemBase {
   }
 
   public double getArmDegrees() {
-    //return Rotation2d.fromRotations(getCANcoder().getRotations());
     return getCANcoder().getDegrees();
   }
 
