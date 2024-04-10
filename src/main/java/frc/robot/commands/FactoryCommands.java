@@ -4,6 +4,7 @@
 
 package frc.robot.commands;
 
+import java.util.Currency;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
@@ -111,11 +112,11 @@ public class FactoryCommands extends SubsystemBase{
   public Command intake(){
     return Commands.deadline(intake.intakePiece(),Commands.runOnce(()->arm.setCurrentArmState(ArmState.Intake)),Commands.runOnce(()->shooter.enableDefault()))
       // .andThen(candle.pickUpLights())
-      .andThen(Commands.run(()->xboxController.getHID().setRumble(RumbleType.kBothRumble, 1)))
+      .andThen(Commands.runOnce(()->xboxController.getHID().setRumble(RumbleType.kBothRumble, 1)))
       .andThen(Commands.deadline(Commands.waitSeconds(.5).andThen(Commands.waitUntil(()->arm.isArmAtAngle()))
       ,intake.setVelocity(25)
       ,Commands.runOnce(()->arm.setCurrentArmState(arm.lastMainState()))))
-      .andThen(intake.stop());
+      .andThen(intake.stop()).finallyDo(()->xboxController.getHID().setRumble(RumbleType.kBothRumble, 0));
       // .andThen(candle.idleLED());
   }
 
@@ -196,12 +197,12 @@ public class FactoryCommands extends SubsystemBase{
       .withVelocityY(yAxis.getAsDouble())
       .withRotationalRate(Units.degreesToRadians(rotationalVelocity.getAsDouble())));
   }
+  private final PIDController thetaControllerPiece = new PIDController(5,0,0.03);
   public Command alignToPiece() {
     DoubleSupplier xAxis = () -> -xboxController.getLeftY() * TunerConstants.kSpeedAt12VoltsMps;
     DoubleSupplier yAxis = () -> -xboxController.getLeftX() * TunerConstants.kSpeedAt12VoltsMps;
-    thetaControllerSpeaker.reset();
-    DoubleSupplier rotationalVelocity = () -> -thetaControllerSpeaker.calculate(drivetrain.getRotationFromPiece("limelight").getDegrees(),0);
-
+    thetaControllerPiece.reset();
+    DoubleSupplier rotationalVelocity = () -> -thetaControllerPiece.calculate(drivetrain.getRotationFromPiece("limelight-object").getDegrees(),0);
     return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble()) 
       .withVelocityY(yAxis.getAsDouble())
       .withRotationalRate(Units.degreesToRadians(rotationalVelocity.getAsDouble())));
@@ -267,5 +268,23 @@ public class FactoryCommands extends SubsystemBase{
         arm.setCurrentArmState(setState);
       }
       });
+  }
+  private double startingGyro;
+  private double startingPosition; 
+  public Command wheelRadiusCommand(){
+    return Commands.deadline(Commands.runOnce(()->{
+      startingGyro = drivetrain.getPigeon2().getAngle();
+      startingPosition = drivetrain.getModule(0).getDriveMotor().getPosition().getValueAsDouble()/6.75;
+    })
+    .andThen(Commands.waitSeconds(30)
+    .andThen(Commands.runOnce(()->{
+      System.out.println(Math.abs(Math.abs(startingGyro)-Math.abs(drivetrain.getPigeon2().getAngle()))+"GYRO CHANGE");
+      System.out.println(Math.abs(Math.abs(startingPosition)-Math.abs(drivetrain.getModule(0).getDriveMotor().getPosition().getValueAsDouble()/6.75))+"POS CHANGE");
+      double wheelRadius = Units.degreesToRadians(Math.abs(Math.abs(startingGyro)-Math.abs(drivetrain.getPigeon2().getAngle())))*13.258252/Units.rotationsToRadians(Math.abs(Math.abs(startingPosition)-Math.abs(drivetrain.getModule(0).getDriveMotor().getPosition().getValueAsDouble()/6.75)));
+      System.out.println(wheelRadius);
+    }))),
+    drivetrain.applyRequest(() -> drive.withVelocityX(0)
+          .withVelocityY(0)
+          .withRotationalRate(Units.degreesToRadians(120))));
   }
 }

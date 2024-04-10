@@ -108,14 +108,14 @@ public class RobotContainer {
     driverController.a().whileTrue(groupCommands.alignToAmp());//.and(() -> driverController.x().getAsBoolean());
     driverController.b().whileTrue(groupCommands.alignToPiece());
     // driverController.getHID().setRumble(RumbleType.kBothRumble, 1);
-    
     operatorController.a().onTrue(groupCommands.switchModes());
+    operatorController.y().onTrue(groupCommands.wheelRadiusCommand());
     operatorController.x().whileTrue(intake.setVelocity(15));
     // operatorController.y().whileTrue(getAutoToPoint().andThen(groupCommands.loadAndShoot()));
     operatorController.leftBumper().onTrue(Commands.runOnce(()->shooter.setIdleSpeed(60)));
     operatorController.rightBumper().onTrue(Commands.runOnce(()->shooter.setIdleSpeed(0)));
     
-    // operatorController.leftBumper().onTrue(groupCommands.loadAndShootOperator());
+    operatorController.leftBumper().onTrue(getAutoToPath());
     if (Utils.isSimulation()) {
       drivetrain.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
     }
@@ -161,11 +161,21 @@ public class RobotContainer {
   }
 
   public Command getAutonomousCommand() {
-    return autoChooser.getSelected();
+    // return autoChooser.getSelected();
+    return getAutonomousCommandSpecial();
   }
-
-
-
+  public Command getAutonomousCommandSpecial() {
+    drivetrain.seedFieldRelative(new Pose2d(new Translation2d(1.49,7.37), Rotation2d.fromDegrees(0)));
+    return AutoBuilder.followPath(PathPlannerPath.fromPathFile("S-A 4.5 piece continuous")).andThen(Commands.either(
+      AutoBuilder.pathfindThenFollowPath(
+            PathPlannerPath.fromPathFile("6 shoot"),
+            new PathConstraints(
+            3.0, 4.0,
+            Units.degreesToRadians(540), Units.degreesToRadians(720)),
+            3.0 
+    ),AutoBuilder.followPath(PathPlannerPath.fromPathFile("6 to 7")).andThen(AutoBuilder.followPath(PathPlannerPath.fromPathFile("7 shoot"))),()->intake.isPiecePresent()));
+    // PathPlannerPath.fromPathFile("S-A 4.5 piece continuous");
+  }
   private Command getAutoToPoint(){
     Pose2d targetPose = new Pose2d(9.2, 1, Rotation2d.fromDegrees(325));
 
@@ -186,7 +196,7 @@ public class RobotContainer {
     return pathfindingCommand;
   }
   private Command getAutoToPath(){
-    PathPlannerPath path = PathPlannerPath.fromPathFile("Rush Hour 1");
+    PathPlannerPath path = PathPlannerPath.fromPathFile("S-A 4.5 piece continuous");
 
 
     // Create the constraints to use while pathfinding. The constraints defined in the path will only be used for the path.

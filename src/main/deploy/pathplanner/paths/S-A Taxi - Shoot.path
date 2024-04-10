@@ -8,32 +8,87 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 1.4521990582442719,
-        "y": 7.025263281295794
+        "x": 1.444384086260714,
+        "y": 7.160745729101997
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 2.261288368730585,
-        "y": 6.610851683241828
+        "x": 1.75,
+        "y": 7.12
       },
       "prevControl": {
-        "x": 1.7679412281901505,
-        "y": 6.45298059826889
+        "x": 1.5858100115012714,
+        "y": 7.005799966388851
+      },
+      "nextControl": {
+        "x": 1.9141899884987286,
+        "y": 7.234200033611149
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 2.8441688792209487,
+        "y": 7.74153024089524
+      },
+      "prevControl": {
+        "x": 2.051981618758264,
+        "y": 7.74153024089524
+      },
+      "nextControl": {
+        "x": 3.6363561396836337,
+        "y": 7.74153024089524
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 8.270256540513081,
+        "y": 7.437482225391801
+      },
+      "prevControl": {
+        "x": 5.912376799549818,
+        "y": 7.60704746480718
       },
       "nextControl": null,
       "isLocked": false,
       "linkedName": null
     }
   ],
-  "rotationTargets": [],
-  "constraintZones": [],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 1.0,
+      "rotationDegrees": 47.05,
+      "rotateFast": false
+    },
+    {
+      "waypointRelativePos": 2.0,
+      "rotationDegrees": 0,
+      "rotateFast": true
+    }
+  ],
+  "constraintZones": [
+    {
+      "name": "Shoot Preload",
+      "minWaypointRelativePos": 0,
+      "maxWaypointRelativePos": 1.0,
+      "constraints": {
+        "maxVelocity": 5.0,
+        "maxAcceleration": 2.0,
+        "maxAngularVelocity": 540.0,
+        "maxAngularAcceleration": 720.0
+      }
+    }
+  ],
   "eventMarkers": [
     {
       "name": "Loaded Shot",
-      "waypointRelativePos": 0.9,
+      "waypointRelativePos": 0.25,
       "command": {
         "type": "sequential",
         "data": {
@@ -41,7 +96,7 @@
             {
               "type": "named",
               "data": {
-                "name": "loadAndShoot"
+                "name": "loadAndShootThree"
               }
             }
           ]
@@ -51,13 +106,13 @@
   ],
   "globalConstraints": {
     "maxVelocity": 5.0,
-    "maxAcceleration": 4.0,
+    "maxAcceleration": 5.0,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 30.699722550814343,
+    "rotation": -2.792702365713211,
     "rotateFast": false
   },
   "reversed": false,

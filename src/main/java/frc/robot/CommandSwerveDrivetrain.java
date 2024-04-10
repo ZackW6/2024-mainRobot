@@ -103,6 +103,7 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
 
     @Override
     public void periodic(){
+        // System.out.println(Rotation2d.fromDegrees(-LimelightHelpers.getTX("limelight-object")));
         if (DriverStation.isTeleopEnabled() && !Robot.isSimulation()){
             updateVisionPose(LimelightConstants.LIMELIGHT_NAME);
         }
@@ -348,17 +349,21 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
             LimelightHelpers.SetRobotOrientation(limelightName, m_odometry.getEstimatedPosition().getRotation().getDegrees(), 0, 0, 0, 0, 0);
             LimelightHelpers.PoseEstimate botPose = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelightName);
             
-            if(Math.abs(Units.radiansToDegrees(getState().speeds.omegaRadiansPerSecond)) > 720) // if our angular velocity is greater than 720 degrees per second, ignore vision updates
+            if(Math.abs(Units.radiansToDegrees(getState().speeds.omegaRadiansPerSecond)) > 60) // if our angular velocity is greater than 720 degrees per second, ignore vision updates
             {
                 RejectUpdate = true;
             }
             if(!RejectUpdate)
             {
                 double[] stdDevs;
-                if (botPose.tagCount>1){
-                    stdDevs = LimelightConstants.TWO_APRIL_TAG_LINEAR_INTERPOLATOR.getLookupValue(botPose.avgTagDist);
+                if (DriverStation.isTeleopEnabled()){
+                    if (botPose.tagCount>1){
+                        stdDevs = LimelightConstants.TWO_APRIL_TAG_LINEAR_INTERPOLATOR.getLookupValue(botPose.avgTagDist);
+                    }else{
+                        stdDevs = LimelightConstants.ONE_APRIL_TAG_LINEAR_INTERPOLATOR.getLookupValue(botPose.avgTagDist);
+                    }
                 }else{
-                    stdDevs = LimelightConstants.ONE_APRIL_TAG_LINEAR_INTERPOLATOR.getLookupValue(botPose.avgTagDist);
+                    stdDevs = LimelightConstants.AUTO_INTERPOLATOR.getLookupValue(botPose.avgTagDist);
                 }
                 addVisionMeasurement(
                     botPose.pose,
@@ -374,10 +379,6 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
         return speakerPose.getX()-getPose().getX();
     }
     public Rotation2d getRotationFromPiece(String limelightName){
-        if (LimelightHelpers.getLatestResults(limelightName).targetingResults.valid){
-            return Rotation2d.fromDegrees(LimelightHelpers.getTX(limelightName));
-        }
-        return new Rotation2d();
-        
+        return Rotation2d.fromDegrees(-LimelightHelpers.getTX(limelightName));        
     }
 }

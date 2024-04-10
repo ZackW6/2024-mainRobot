@@ -23,13 +23,21 @@ public class LimelightConstants {
     public static final AprilTagFieldLayout K_TAG_LAYOUT = AprilTagFields.k2024Crescendo.loadAprilTagLayoutField();
 
 
+    // public static final double[][] ONE_APRIL_TAG_LOOKUP_TABLE = {
+    //   // {distance in meters, x std deviation, y std deviation, r (in degrees//actually maybe radians) std deviation}
+    //   {0, 0.001, 0.001, 999999},
+    //   {1.5, 0.01, 0.01, 999999},
+    //   {3, 0.7, 0.7, 999999},
+    //   {4.5, 3, 3, 999999},
+    //   {6, 8, 8, 999999}
+    // };
     public static final double[][] ONE_APRIL_TAG_LOOKUP_TABLE = {
       // {distance in meters, x std deviation, y std deviation, r (in degrees//actually maybe radians) std deviation}
-      {0, 0.001, 0.001, 999999},
-      {1.5, 0.01, 0.01, 999999},
-      {3, 0.7, 0.7, 999999},
-      {4.5, 3, 3, 999999},
-      {6, 8, 8, 999999}
+      {0, 0.0, 0.0, 999999},
+      {1.5, 0, 0.0, 999999},
+      {3, .25, .25, 999999},
+      {4.5, 1, 1, 999999},
+      {6, 2, 2, 999999}
     };
     public static final MultiLinearInterpolator ONE_APRIL_TAG_LINEAR_INTERPOLATOR = new MultiLinearInterpolator(ONE_APRIL_TAG_LOOKUP_TABLE);
 
@@ -53,4 +61,14 @@ public class LimelightConstants {
     };
     
     public static final MultiLinearInterpolator ROTATION_LINEAR_INTERPOLATOR = new MultiLinearInterpolator(TWO_APRIL_TAG_LOOKUP_TABLE);
+    public static final double[][] AUTO_LOOKUP_TABLE = {
+      // {distance in meters, x std deviation, y std deviation, r (in degrees//actually maybe radians) std deviation}
+      {0, 0.5, .5, 999999},
+      {1.5, 1, 1, 999999},
+      {3, 2, 2, 999999},
+      {4.5, 5, 5, 999999},
+      {6, 10, 10, 999999}
+    };
+    public static final MultiLinearInterpolator AUTO_INTERPOLATOR = new MultiLinearInterpolator(TWO_APRIL_TAG_LOOKUP_TABLE);
+
 }

@@ -106,4 +106,7 @@ public class Intake extends SubsystemBase{
 
         intakeMotor.getConfigurator().apply(talonFXConfigs);
     }
+    public boolean isPiecePresent(){
+        return getLimitSwitch();
+    }
 }

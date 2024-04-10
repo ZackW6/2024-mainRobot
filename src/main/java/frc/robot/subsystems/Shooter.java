@@ -76,7 +76,7 @@ public class Shooter extends SubsystemBase{
     @Override
     public void periodic() {
         // TODO: TO MAKE THIS WORK TURN TO FALSE
-        if (flywheelDisabled || (doDefault && IdleSpeed == 0)) {
+        if (flywheelDisabled || (doDefault && IdleSpeed == 0) && !DriverStation.isAutonomousEnabled()) {
             leftShooterMotor.stopMotor();
             rightShooterMotor.stopMotor();
         } else {
