@@ -104,7 +104,7 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     @Override
     public void periodic(){
         // System.out.println(Rotation2d.fromDegrees(-LimelightHelpers.getTX("limelight-object")));
-        if (DriverStation.isTeleopEnabled() && !Robot.isSimulation()){
+        if (/*DriverStation.isTeleopEnabled() && */!Robot.isSimulation()){
             updateVisionPose(LimelightConstants.LIMELIGHT_NAME);
         }
     }
@@ -174,6 +174,25 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
         }
         return rotation;
     }
+    public Rotation2d getAngleFromPose(Pose2d pose) {
+        double deltaX;
+        double deltaY;
+        deltaX = pose.getX() - getPose().getX();
+        deltaY = pose.getY() - getPose().getY();
+
+        double angleRadians = ((Math.atan(deltaY/deltaX)));
+
+        // Convert the angle to Rotation2d
+        Rotation2d rotation = Rotation2d.fromRadians(angleRadians - getPose().getRotation().getRadians());
+        if (getPose().getX()>pose.getX()){
+            if (rotation.getDegrees()>0){
+                rotation = Rotation2d.fromDegrees(Units.radiansToDegrees(angleRadians) - getPose().getRotation().getDegrees()-180);
+            }else{
+                rotation = Rotation2d.fromDegrees(Units.radiansToDegrees(angleRadians) - getPose().getRotation().getDegrees()+180);
+            }
+        }
+        return rotation;
+    }
     public Rotation2d getAngleFromCorner() {
         Pose2d tagLocation = new Pose2d(0,8.1026,new Rotation2d());
         if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get().equals(Alliance.Red)){
@@ -201,17 +220,14 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
         // System.out.println(rotation.getDegrees());
         return rotation;
     }
-    public Rotation2d getPoseAngleFromTag(double ID) {
-        Pose2d speakerLocation = LimelightConstants.K_TAG_LAYOUT.getTagPose((int)ID).get().toPose2d();
-        double deltaX = speakerLocation.getX() - getPose().getX();
-        double deltaY = speakerLocation.getY() - getPose().getY();
+    public Rotation2d getPoseAngle(Pose2d pose) {
+        double deltaX = pose.getX() - getPose().getX();
+        double deltaY = pose.getY() - getPose().getY();
         double angleRadians = ((Math.atan(deltaY/deltaX)));
         return Rotation2d.fromRadians(angleRadians);
     }
-
-    public double getDistanceFromTagMeters(double ID) {
-        Pose2d speakerPose = LimelightConstants.K_TAG_LAYOUT.getTagPose((int)ID).get().toPose2d();
-        return Math.sqrt(Math.pow(speakerPose.getX()-getPose().getX(),2)+Math.pow(speakerPose.getY()-getPose().getY(),2));
+    public double getDistanceFromPoseMeters(Pose2d pose) {
+        return Math.sqrt(Math.pow(pose.getX()-getPose().getX(),2)+Math.pow(pose.getY()-getPose().getY(),2));
     }
 
 
@@ -374,11 +390,30 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     public Rotation2d getYawOffsetDegrees(){
         return m_fieldRelativeOffset;
     }
-    public double getXDistanceFromTagMeters(double ID) {
-        Pose2d speakerPose = LimelightConstants.K_TAG_LAYOUT.getTagPose((int)ID).get().toPose2d();
-        return speakerPose.getX()-getPose().getX();
-    }
     public Rotation2d getRotationFromPiece(String limelightName){
         return Rotation2d.fromDegrees(-LimelightHelpers.getTX(limelightName));        
+    }
+    public double getDistanceFromPiece(String limelightName){
+        if (LimelightHelpers.getTA(LimelightConstants.AMP_CAM) != 0){
+            NetworkTable table = NetworkTableInstance.getDefault().getTable(LimelightConstants.AMP_CAM);
+            NetworkTableEntry ty = table.getEntry("ty");
+            double targetOffsetAngle_Vertical = ty.getDouble(0.0);
+
+            // how many degrees back is your limelight rotated from perfectly vertical?
+            double limelightMountAngleDegrees = LimelightConstants.AMP_CAM_TRANSFORM.getRotation().getY(); 
+
+            // distance from the center of the Limelight lens to the floor
+            double limelightLensHeightInches = LimelightConstants.AMP_CAM_TRANSFORM.getZ(); 
+
+            // distance from the target to the floor
+            double goalHeightInches = 1; 
+
+            double angleToGoalDegrees = limelightMountAngleDegrees + targetOffsetAngle_Vertical;
+
+            double angleToGoalRadians = angleToGoalDegrees * (3.14159 / 180.0);
+
+            return  Units.inchesToMeters(goalHeightInches - limelightLensHeightInches) / Math.tan(angleToGoalRadians);
+        }
+        return -1;
     }
 }

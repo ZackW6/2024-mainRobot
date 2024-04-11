@@ -15,7 +15,7 @@ public class LimelightConstants {
     public static final Transform3d LIMELIGHT_CAMERA_TRANSFORM =
         new Transform3d(new Translation3d(0,-.297, 0.25146), new Rotation3d(0, Units.degreesToRadians(33.5), Units.degreesToRadians(0)));
 
-    public static final String AMP_CAM = "ampcam";
+    public static final String AMP_CAM = "limelight-object";
     public static final double MAX_XY_ERROR_AMP_CAM = 1.0;
     public static final Transform3d AMP_CAM_TRANSFORM =
         new Transform3d(new Translation3d(0,0, 0), new Rotation3d(0, Units.degreesToRadians(0), Units.degreesToRadians(0)));

@@ -7,6 +7,7 @@ package frc.robot.commands;
 import java.util.Currency;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 import com.ctre.phoenix6.mechanisms.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
@@ -182,6 +183,7 @@ public class FactoryCommands extends SubsystemBase{
   }
   private final PIDController thetaControllerSpeaker = new PIDController(3.5,0,0.01);
   private final PIDController distanceController = new PIDController(1.9, 0, 0.2);
+  
   public Command alignToCorner() {
     DoubleSupplier xAxis = () -> -xboxController.getLeftY() * TunerConstants.kSpeedAt12VoltsMps;
     DoubleSupplier yAxis = () -> -xboxController.getLeftX() * TunerConstants.kSpeedAt12VoltsMps;
@@ -199,36 +201,62 @@ public class FactoryCommands extends SubsystemBase{
   }
   private final PIDController thetaControllerPiece = new PIDController(5,0,0.03);
   public Command alignToPiece() {
-    DoubleSupplier xAxis = () -> -xboxController.getLeftY() * TunerConstants.kSpeedAt12VoltsMps;
-    DoubleSupplier yAxis = () -> -xboxController.getLeftX() * TunerConstants.kSpeedAt12VoltsMps;
-    thetaControllerPiece.reset();
-    DoubleSupplier rotationalVelocity = () -> -thetaControllerPiece.calculate(drivetrain.getRotationFromPiece("limelight-object").getDegrees(),0);
+    DoubleSupplier distanceSpeed = ()-> -distanceController.calculate(drivetrain.getDistanceFromPiece(LimelightConstants.AMP_CAM), .2);
+    DoubleSupplier shareableNum = ()->(drivetrain.getYawOffsetDegrees().getDegrees()-drivetrain.getPose().getRotation().getDegrees()-drivetrain.getRotationFromPiece(LimelightConstants.AMP_CAM).getDegrees()-90)*Math.PI/180;
+    DoubleSupplier xAxis = () -> 
+      (-Math.sin(shareableNum.getAsDouble()))*distanceSpeed.getAsDouble()
+      /Math.max(Math.max(Math.abs(xboxController.getLeftX()* TunerConstants.kSpeedAt12VoltsMps), Math.abs(xboxController.getLeftY()* TunerConstants.kSpeedAt12VoltsMps)),1)
+      -xboxController.getLeftY() * TunerConstants.kSpeedAt12VoltsMps;
+    DoubleSupplier yAxis = () -> 
+      (-Math.cos(shareableNum.getAsDouble()))*distanceSpeed.getAsDouble()
+      /Math.max(Math.max(Math.abs(xboxController.getLeftX()* TunerConstants.kSpeedAt12VoltsMps), Math.abs(xboxController.getLeftY()* TunerConstants.kSpeedAt12VoltsMps)),1)
+      -xboxController.getLeftX() * TunerConstants.kSpeedAt12VoltsMps;
+    thetaControllerSpeaker.reset();
+    
+    DoubleSupplier rotationalVelocity = () -> -thetaControllerPiece.calculate(drivetrain.getRotationFromPiece(LimelightConstants.AMP_CAM).getDegrees(),0);
+
     return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble()) 
-      .withVelocityY(yAxis.getAsDouble())
-      .withRotationalRate(Units.degreesToRadians(rotationalVelocity.getAsDouble())));
+          .withVelocityY(yAxis.getAsDouble())
+          .withRotationalRate(Units.degreesToRadians(rotationalVelocity.getAsDouble())));
   }
+  // public Command alignToPiece() {
+  //   thetaControllerPiece.reset();
+  //   DoubleSupplier rotationalVelocity = () -> -thetaControllerPiece.calculate(drivetrain.getAngleFromPose(new Pose2d(0,0, new Rotation2d())) /*getRotationFromPiece(LimelightConstants.AMP_CAM)*/.getDegrees(),0);
+  //   DoubleSupplier distanceSpeed = ()-> distanceController.calculate(drivetrain.getDistanceFromPoseMeters(new Pose2d(0,0, new Rotation2d())), 0);
+  //   DoubleSupplier shareableNum = ()->(drivetrain.getYawOffsetDegrees().getDegrees()-drivetrain.getAngleFromPose(new Pose2d(0,0, new Rotation2d()))/*drivetrain.getRotationFromPiece(LimelightConstants.AMP_CAM)*/.getDegrees())*Math.PI/180;
+  //   DoubleSupplier xAxis = () -> 
+  //     (-Math.sin(shareableNum.getAsDouble()))*distanceSpeed.getAsDouble()
+  //     /Math.max(Math.max(Math.abs(xboxController.getLeftX()* TunerConstants.kSpeedAt12VoltsMps), Math.abs(xboxController.getLeftY()* TunerConstants.kSpeedAt12VoltsMps)),1)
+  //     -xboxController.getLeftY() * TunerConstants.kSpeedAt12VoltsMps;
+  //   DoubleSupplier yAxis = () -> 
+  //     (-Math.cos(shareableNum.getAsDouble()))*distanceSpeed.getAsDouble()
+  //     /Math.max(Math.max(Math.abs(xboxController.getLeftX()* TunerConstants.kSpeedAt12VoltsMps), Math.abs(xboxController.getLeftY()* TunerConstants.kSpeedAt12VoltsMps)),1)
+  //     -xboxController.getLeftX() * TunerConstants.kSpeedAt12VoltsMps;
+  //   return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble()) 
+  //     .withVelocityY(yAxis.getAsDouble())
+  //     .withRotationalRate(Units.degreesToRadians(rotationalVelocity.getAsDouble())));
+  // }
 
   public Command getInRange() {
     // DoubleSupplier xAxis = () -> -xboxController.getLeftY() * TunerConstants.kSpeedAt12VoltsMps;
     // DoubleSupplier yAxis = () -> -xboxController.getLeftX() * TunerConstants.kSpeedAt12VoltsMps;
-    DoubleSupplier teamID = ()->{
+    Supplier<Pose2d> teamID = ()->{
       if (DriverStation.getAlliance().isPresent()){
         if(DriverStation.getAlliance().get().equals(Alliance.Red)){
-          return 4;
+          return LimelightConstants.K_TAG_LAYOUT.getTagPose(4).get().toPose2d();
         }
       }
-      return 7;
+      return LimelightConstants.K_TAG_LAYOUT.getTagPose(7).get().toPose2d();
     };
-    DoubleSupplier distanceSpeed = ()-> -distanceController.calculate(drivetrain.getDistanceFromTagMeters(teamID.getAsDouble()), 2.32);
+    DoubleSupplier distanceSpeed = ()-> -distanceController.calculate(drivetrain.getDistanceFromPoseMeters(teamID.get()), 2.32);
     DoubleSupplier redOrBlueSide = ()->{
-      var alliance = DriverStation.getAlliance();
-      if (!alliance.isPresent() || alliance.get().equals(Alliance.Blue)){
+      if (drivetrain.getPose().getX()>teamID.get().getX()/*!alliance.isPresent() || alliance.get().equals(Alliance.Blue)*/){
         return 90;
       }else{
         return -90;
       }
     };
-    DoubleSupplier shareableNum = ()->(drivetrain.getYawOffsetDegrees().getDegrees()-drivetrain.getPoseAngleFromTag(teamID.getAsDouble()).getDegrees()+redOrBlueSide.getAsDouble())*Math.PI/180;
+    DoubleSupplier shareableNum = ()->(drivetrain.getYawOffsetDegrees().getDegrees()-drivetrain.getPoseAngle(teamID.get()).getDegrees()+redOrBlueSide.getAsDouble())*Math.PI/180;
     DoubleSupplier xAxis = () -> 
       (-Math.sin(shareableNum.getAsDouble()))*distanceSpeed.getAsDouble()
       /Math.max(Math.max(Math.abs(xboxController.getLeftX()* TunerConstants.kSpeedAt12VoltsMps), Math.abs(xboxController.getLeftY()* TunerConstants.kSpeedAt12VoltsMps)),1)
@@ -241,10 +269,10 @@ public class FactoryCommands extends SubsystemBase{
     thetaControllerSpeaker.reset();
     
     DoubleSupplier rotationalVelocity = () -> {
-      if(drivetrain.getAngleFromTag(teamID.getAsDouble()).getDegrees()>0){
-        return -thetaControllerSpeaker.calculate(drivetrain.getAngleFromTag(teamID.getAsDouble()).getDegrees()-180,0);//-7;
+      if(drivetrain.getAngleFromPose(teamID.get()).getDegrees()>0){
+        return -thetaControllerSpeaker.calculate(drivetrain.getAngleFromPose(teamID.get()).getDegrees()-180,0);//-7;
       }else{
-        return -thetaControllerSpeaker.calculate(drivetrain.getAngleFromTag(teamID.getAsDouble()).getDegrees()+180,0);//+7;
+        return -thetaControllerSpeaker.calculate(drivetrain.getAngleFromPose(teamID.get()).getDegrees()+180,0);//+7;
       }
     };
 

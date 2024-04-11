@@ -17,6 +17,7 @@
 package frc.robot;
 
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
@@ -45,6 +46,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.commands.FactoryCommands;
 import frc.robot.constants.GeneralConstants;
+import frc.robot.constants.LimelightConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Arm;
 // import frc.robot.subsystems.Candle;
@@ -109,27 +111,26 @@ public class RobotContainer {
     driverController.b().whileTrue(groupCommands.alignToPiece());
     // driverController.getHID().setRumble(RumbleType.kBothRumble, 1);
     operatorController.a().onTrue(groupCommands.switchModes());
-    operatorController.y().onTrue(groupCommands.wheelRadiusCommand());
+    // operatorController.y().onTrue(groupCommands.wheelRadiusCommand());
     operatorController.x().whileTrue(intake.setVelocity(15));
     // operatorController.y().whileTrue(getAutoToPoint().andThen(groupCommands.loadAndShoot()));
     operatorController.leftBumper().onTrue(Commands.runOnce(()->shooter.setIdleSpeed(60)));
     operatorController.rightBumper().onTrue(Commands.runOnce(()->shooter.setIdleSpeed(0)));
     
-    operatorController.leftBumper().onTrue(getAutoToPath());
     if (Utils.isSimulation()) {
       drivetrain.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
     }
     drivetrain.registerTelemetry(logger::telemeterize);
     // driverController.getHID().se\tRumble(RumbleType.kBothRumble, 1);
-    DoubleSupplier teamID = ()->{
+    Supplier<Pose2d> teamID = ()->{
       if (DriverStation.getAlliance().isPresent()){
         if(DriverStation.getAlliance().get().equals(Alliance.Red)){
-          return 4;
+          return LimelightConstants.K_TAG_LAYOUT.getTagPose(4).get().toPose2d();
         }
       }
-      return 7;
+      return LimelightConstants.K_TAG_LAYOUT.getTagPose(7).get().toPose2d();
     };
-    new Trigger(()-> drivetrain.getDistanceFromTagMeters(teamID.getAsDouble()) > 1.95072 && drivetrain.getDistanceFromTagMeters(teamID.getAsDouble()) < 2.7432)
+    new Trigger(()-> drivetrain.getDistanceFromPoseMeters(teamID.get()) > 1.95072 && drivetrain.getDistanceFromPoseMeters(teamID.get()) < 2.7432)
       .whileTrue(Commands.runOnce(()->driverController.getHID().setRumble(RumbleType.kBothRumble, 1)))
       .whileFalse(Commands.runOnce(()->driverController.getHID().setRumble(RumbleType.kBothRumble, 0)));
     new Trigger(()->DriverStation.isTeleop()).and(()->{
@@ -149,6 +150,7 @@ public class RobotContainer {
 
     autoChooser = AutoBuilder.buildAutoChooser();
     SmartDashboard.putData("Auto Chooser", autoChooser);
+    autoChooser.addOption("Conditional Auto", getAutonomousCommandSpecial());
   }
 
   public void configureAutonomousCommands() {
@@ -161,11 +163,16 @@ public class RobotContainer {
   }
 
   public Command getAutonomousCommand() {
-    // return autoChooser.getSelected();
-    return getAutonomousCommandSpecial();
+    return autoChooser.getSelected();
+    // return getAutonomousCommandSpecial();
   }
   public Command getAutonomousCommandSpecial() {
-    drivetrain.seedFieldRelative(new Pose2d(new Translation2d(1.49,7.37), Rotation2d.fromDegrees(0)));
+    if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get().equals(Alliance.Red)){
+      drivetrain.seedFieldRelative(new Pose2d(new Translation2d(15.09,7.37), Rotation2d.fromDegrees(180)));
+    }else{
+      drivetrain.seedFieldRelative(new Pose2d(new Translation2d(1.49,7.37), Rotation2d.fromDegrees(0)));
+    }
+    
     return AutoBuilder.followPath(PathPlannerPath.fromPathFile("S-A 4.5 piece continuous")).andThen(Commands.either(
       AutoBuilder.pathfindThenFollowPath(
             PathPlannerPath.fromPathFile("6 shoot"),
