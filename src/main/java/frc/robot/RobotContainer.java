@@ -51,6 +51,9 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Arm;
 // import frc.robot.subsystems.Candle;
 import frc.robot.subsystems.Arm.ArmState;
+import frc.robot.util.PathOnTheFly;
+import frc.robot.util.PathOnTheFly.AutoToPoint;
+import frc.robot.util.PathOnTheFly.PathConfig;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
 
@@ -150,7 +153,11 @@ public class RobotContainer {
 
     autoChooser = AutoBuilder.buildAutoChooser();
     SmartDashboard.putData("Auto Chooser", autoChooser);
+
+    PathOnTheFly.PathConfig pathConfig = new PathOnTheFly.PathConfig(5,5,Rotation2d.fromDegrees(540),Rotation2d.fromDegrees(540),3,0);
+    PathOnTheFly.addConfig(pathConfig,0);
     autoChooser.addOption("Conditional Auto", getAutonomousCommandSpecial());
+    autoChooser.addOption("OnTheFlyAuto", getOnTheFlyAuto());
   }
 
   public void configureAutonomousCommands() {
@@ -183,41 +190,17 @@ public class RobotContainer {
     ),AutoBuilder.followPath(PathPlannerPath.fromPathFile("6 to 7")).andThen(AutoBuilder.followPath(PathPlannerPath.fromPathFile("7 shoot"))),()->intake.isPiecePresent()));
     // PathPlannerPath.fromPathFile("S-A 4.5 piece continuous");
   }
-  private Command getAutoToPoint(){
-    Pose2d targetPose = new Pose2d(9.2, 1, Rotation2d.fromDegrees(325));
-
-
-    // Create the constraints to use while pathfinding
-    PathConstraints constraints = new PathConstraints(
-            3.0, 4.0,
-            Units.degreesToRadians(540), Units.degreesToRadians(720));
-
-
-    // Since AutoBuilder is configured, we can use it to build pathfinding commands
-    Command pathfindingCommand = AutoBuilder.pathfindToPose(
-            targetPose,
-            constraints,
-            0.0, // Goal end velocity in meters/sec
-            0.0 // Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate.
-    );
-    return pathfindingCommand;
-  }
-  private Command getAutoToPath(){
-    PathPlannerPath path = PathPlannerPath.fromPathFile("S-A 4.5 piece continuous");
-
-
-    // Create the constraints to use while pathfinding. The constraints defined in the path will only be used for the path.
-    PathConstraints constraints = new PathConstraints(
-            3.0, 4.0,
-            Units.degreesToRadians(540), Units.degreesToRadians(720));
-
-
-    // Since AutoBuilder is configured, we can use it to build pathfinding commands
-    Command pathfindingCommand = AutoBuilder.pathfindThenFollowPath(
-            path,
-            constraints,
-            3.0 // Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate.
-    );
-    return pathfindingCommand;
+  public Command getOnTheFlyAuto() {
+    if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get().equals(Alliance.Red)){
+      drivetrain.seedFieldRelative(new Pose2d(new Translation2d(15.09,7.37), Rotation2d.fromDegrees(180)));
+    }else{
+      drivetrain.seedFieldRelative(new Pose2d(new Translation2d(1.49,7.37), Rotation2d.fromDegrees(0)));
+    }
+    return AutoToPoint.getToPoint(7.11,7.44,0,PathOnTheFly.getConfig(0))
+    .andThen(Commands.either(Commands.deadline(groupCommands.intake(),groupCommands.alignToPiece())
+    ,AutoToPoint.getToPoint(7.72,6.24,-37.12,PathOnTheFly.getConfig(0)).andThen(Commands.deadline(groupCommands.intake(),groupCommands.alignToPiece()))
+    ,()->drivetrain.isPiecePresent() && CommandSwerveDrivetrain.poseWithinRange(drivetrain.getPiecePose().get(),new Pose2d(8.29,7.42,new Rotation2d()),.2)))
+    .andThen(AutoToPoint.getToPoint(5.19,6.18,-172.21,PathOnTheFly.getConfig(0)))
+    .andThen(Commands.deadline(Commands.waitSeconds(3),groupCommands.getInRange())).andThen(groupCommands.loadAndShoot());
   }
 }

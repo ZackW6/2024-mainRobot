@@ -199,9 +199,9 @@ public class FactoryCommands extends SubsystemBase{
       .withVelocityY(yAxis.getAsDouble())
       .withRotationalRate(Units.degreesToRadians(rotationalVelocity.getAsDouble())));
   }
-  private final PIDController thetaControllerPiece = new PIDController(5,0,0.03);
+  private final PIDController thetaControllerPiece = new PIDController(1.9,0,0.2);
   public Command alignToPiece() {
-    DoubleSupplier distanceSpeed = ()-> -distanceController.calculate(drivetrain.getDistanceFromPiece(LimelightConstants.AMP_CAM), .2);
+    DoubleSupplier distanceSpeed = ()-> -distanceController.calculate(drivetrain.getDistanceFromPieceVertical(), 0);
     DoubleSupplier shareableNum = ()->(drivetrain.getYawOffsetDegrees().getDegrees()-drivetrain.getPose().getRotation().getDegrees()-drivetrain.getRotationFromPiece(LimelightConstants.AMP_CAM).getDegrees()-90)*Math.PI/180;
     DoubleSupplier xAxis = () -> 
       (-Math.sin(shareableNum.getAsDouble()))*distanceSpeed.getAsDouble()
