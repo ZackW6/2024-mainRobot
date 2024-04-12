@@ -94,8 +94,8 @@ public class RobotContainer {
     intake.setDefaultCommand(intake.stop());
     // candle.setDefaultCommand(candle.idleLED());
     drivetrain.setDefaultCommand(
-        drivetrain.applyRequest(() -> drive.withVelocityX(-driverController.getLeftY() * 0.85 * MaxSpeed)
-            .withVelocityY(-driverController.getLeftX() * 0.85 * MaxSpeed)
+        drivetrain.applyRequest(() -> drive.withVelocityX(-driverController.getLeftY() * 0.90 * MaxSpeed)
+            .withVelocityY(-driverController.getLeftX() * 0.90 * MaxSpeed)
             .withRotationalRate(-driverController.getRightX() *2/3 * MaxAngularRate)
     ));
 

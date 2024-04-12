@@ -103,6 +103,9 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
 
     @Override
     public void periodic(){
+        if (isPiecePresent()){
+            System.out.println(getPiecePose().get());
+        }
         // System.out.println(Rotation2d.fromDegrees(-LimelightHelpers.getTX("limelight-object")));
         if (/*DriverStation.isTeleopEnabled() && */!Robot.isSimulation()){
             updateVisionPose(LimelightConstants.LIMELIGHT_NAME);
@@ -362,7 +365,6 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
             NetworkTable table = NetworkTableInstance.getDefault().getTable(LimelightConstants.AMP_CAM);
             NetworkTableEntry ty = table.getEntry("ty");
             double targetOffsetAngle_Vertical = ty.getDouble(0.0);
-
             // how many degrees back is your limelight rotated from perfectly vertical?
             double limelightMountAngleDegrees = Units.radiansToDegrees(LimelightConstants.AMP_CAM_TRANSFORM.getRotation().getY()); 
 
@@ -372,11 +374,10 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
             // distance from the target to the floor
             double goalHeightInches = 1; 
 
-            double angleToGoalDegrees = limelightMountAngleDegrees + targetOffsetAngle_Vertical;
+            double angleToGoalDegrees = -limelightMountAngleDegrees + targetOffsetAngle_Vertical;
 
             double angleToGoalRadians = angleToGoalDegrees * (3.14159 / 180.0);
-
-            return  Units.inchesToMeters(goalHeightInches - limelightLensHeightInches) / Math.tan(angleToGoalRadians)-LimelightConstants.AMP_CAM_TRANSFORM.getY();
+            return  Units.inchesToMeters((goalHeightInches - limelightLensHeightInches) / Math.tan(angleToGoalRadians))+LimelightConstants.AMP_CAM_TRANSFORM.getY();
         }
         return 0;
     }
@@ -385,15 +386,14 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
             NetworkTable table = NetworkTableInstance.getDefault().getTable(LimelightConstants.AMP_CAM);
             NetworkTableEntry tx = table.getEntry("tx");
             double targetOffsetAngle_Vertical = tx.getDouble(0.0);
-
+            
             // what is the yaw of your limelight
             double limelightMountAngleDegrees = Units.radiansToDegrees(LimelightConstants.AMP_CAM_TRANSFORM.getRotation().getZ()); 
 
             double angleToGoalDegrees = limelightMountAngleDegrees + targetOffsetAngle_Vertical;
 
             double angleToGoalRadians = angleToGoalDegrees * (3.14159 / 180.0);
-
-            return Units.inchesToMeters(getDistanceFromPieceVertical()*Math.tan(angleToGoalRadians))-LimelightConstants.AMP_CAM_TRANSFORM.getX();
+            return getDistanceFromPieceVertical()*Math.tan(angleToGoalRadians);//+LimelightConstants.AMP_CAM_TRANSFORM.getX();
         }
         return 0;
     }
