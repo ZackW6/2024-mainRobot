@@ -41,6 +41,8 @@ import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.Arm.ArmState;
+import frc.robot.util.PathOnTheFly;
+import frc.robot.util.PathOnTheFly.AutoToPoint;
 
 public class FactoryCommands extends SubsystemBase{
   private Arm arm;
@@ -299,6 +301,7 @@ public class FactoryCommands extends SubsystemBase{
   }
   private double startingGyro;
   private double startingPosition; 
+  @Deprecated
   public Command wheelRadiusCommand(){
     return Commands.deadline(Commands.runOnce(()->{
       startingGyro = drivetrain.getPigeon2().getAngle();
@@ -314,5 +317,15 @@ public class FactoryCommands extends SubsystemBase{
     drivetrain.applyRequest(() -> drive.withVelocityX(0)
           .withVelocityY(0)
           .withRotationalRate(Units.degreesToRadians(120))));
+  }
+  public Command getToPieceCommand(){
+    if (drivetrain.isPiecePresent()){
+      return AutoToPoint.getToPoint(drivetrain.getPiecePose().get().getX()
+      ,drivetrain.getPiecePose().get().getY()
+      ,drivetrain.getPose().getRotation().getDegrees()+drivetrain.getRotationFromPiece(LimelightConstants.AMP_CAM).getDegrees()
+      ,PathOnTheFly.getConfig(0));
+    }else{
+      return Commands.none();
+    }
   }
 }

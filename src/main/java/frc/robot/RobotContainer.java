@@ -16,6 +16,7 @@
 
 package frc.robot;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
@@ -40,11 +41,13 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.commands.FactoryCommands;
+import frc.robot.commands.OnTheFlyAutos;
 import frc.robot.constants.GeneralConstants;
 import frc.robot.constants.LimelightConstants;
 import frc.robot.generated.TunerConstants;
@@ -85,7 +88,7 @@ public class RobotContainer {
   private final Intake intake = new Intake();
   // private final Candle candle = new Candle();
   private final FactoryCommands groupCommands = new FactoryCommands(arm, shooter, intake, drivetrain, driverController);
-  
+  private final OnTheFlyAutos onTheFlyAutos = new OnTheFlyAutos(arm, shooter, intake, drivetrain, driverController);
 
   private void configureBindings() {
     /* Setup Default Commands */
@@ -154,10 +157,10 @@ public class RobotContainer {
     autoChooser = AutoBuilder.buildAutoChooser();
     SmartDashboard.putData("Auto Chooser", autoChooser);
 
-    PathOnTheFly.PathConfig pathConfig = new PathOnTheFly.PathConfig(5,5,Rotation2d.fromDegrees(540),Rotation2d.fromDegrees(540),3,0);
+    PathOnTheFly.PathConfig pathConfig = new PathOnTheFly.PathConfig(5,5,Rotation2d.fromDegrees(540),Rotation2d.fromDegrees(540),0,0);
     PathOnTheFly.addConfig(pathConfig,0);
-    autoChooser.addOption("Conditional Auto", getAutonomousCommandSpecial());
-    autoChooser.addOption("OnTheFlyAuto", getOnTheFlyAuto());
+    autoChooser.addOption("Conditional Auto", onTheFlyAutos.getAutonomousCommandSpecial());
+    autoChooser.addOption("OnTheFlyAuto", onTheFlyAutos.onTheFlyAutoPiecePose());
   }
 
   public void configureAutonomousCommands() {
@@ -172,35 +175,5 @@ public class RobotContainer {
   public Command getAutonomousCommand() {
     return autoChooser.getSelected();
     // return getAutonomousCommandSpecial();
-  }
-  public Command getAutonomousCommandSpecial() {
-    if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get().equals(Alliance.Red)){
-      drivetrain.seedFieldRelative(new Pose2d(new Translation2d(15.09,7.37), Rotation2d.fromDegrees(180)));
-    }else{
-      drivetrain.seedFieldRelative(new Pose2d(new Translation2d(1.49,7.37), Rotation2d.fromDegrees(0)));
-    }
-    
-    return AutoBuilder.followPath(PathPlannerPath.fromPathFile("S-A 4.5 piece continuous")).andThen(Commands.either(
-      AutoBuilder.pathfindThenFollowPath(
-            PathPlannerPath.fromPathFile("6 shoot"),
-            new PathConstraints(
-            3.0, 4.0,
-            Units.degreesToRadians(540), Units.degreesToRadians(720)),
-            3.0 
-    ),AutoBuilder.followPath(PathPlannerPath.fromPathFile("6 to 7")).andThen(AutoBuilder.followPath(PathPlannerPath.fromPathFile("7 shoot"))),()->intake.isPiecePresent()));
-    // PathPlannerPath.fromPathFile("S-A 4.5 piece continuous");
-  }
-  public Command getOnTheFlyAuto() {
-    if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get().equals(Alliance.Red)){
-      drivetrain.seedFieldRelative(new Pose2d(new Translation2d(15.09,7.37), Rotation2d.fromDegrees(180)));
-    }else{
-      drivetrain.seedFieldRelative(new Pose2d(new Translation2d(1.49,7.37), Rotation2d.fromDegrees(0)));
-    }
-    return AutoToPoint.getToPoint(7.11,7.44,0,PathOnTheFly.getConfig(0))
-    .andThen(Commands.either(Commands.deadline(groupCommands.intake(),groupCommands.alignToPiece())
-    ,AutoToPoint.getToPoint(7.72,6.24,-37.12,PathOnTheFly.getConfig(0)).andThen(Commands.deadline(groupCommands.intake(),groupCommands.alignToPiece()))
-    ,()->drivetrain.isPiecePresent() && CommandSwerveDrivetrain.poseWithinRange(drivetrain.getPiecePose().get(),new Pose2d(8.29,7.42,new Rotation2d()),.2)))
-    .andThen(AutoToPoint.getToPoint(5.19,6.18,-172.21,PathOnTheFly.getConfig(0)))
-    .andThen(Commands.deadline(Commands.waitSeconds(3),groupCommands.getInRange())).andThen(groupCommands.loadAndShoot());
   }
 }

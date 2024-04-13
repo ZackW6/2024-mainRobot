@@ -11,6 +11,8 @@ import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 
 /**
@@ -20,22 +22,8 @@ public class PathOnTheFly {
         private static PathConfig[] configs = new PathConfig[4];
         public static class AutoToPath{
                 public static Command getToPath(String name){
-                        PathPlannerPath path = PathPlannerPath.fromPathFile(name);
-
-
-                        // Create the constraints to use while pathfinding. The constraints defined in the path will only be used for the path.
-                        PathConstraints constraints = new PathConstraints(
-                                3.0, 4.0,
-                                Units.degreesToRadians(540), Units.degreesToRadians(720));
-
-
-                        // Since AutoBuilder is configured, we can use it to build pathfinding commands
-                        Command pathfindingCommand = AutoBuilder.pathfindThenFollowPath(
-                                path,
-                                constraints,
-                                0.0 // Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate.
-                        );
-                        return pathfindingCommand;
+                        PathOnTheFly.PathConfig pathConfig = new PathOnTheFly.PathConfig(3,4,Rotation2d.fromDegrees(540),Rotation2d.fromDegrees(540),0,0);
+                        return getToPath(name, pathConfig);
                 }
                 public static Command getToPath(String name, PathConfig config){
                         PathPlannerPath path = PathPlannerPath.fromPathFile(name);
@@ -57,37 +45,60 @@ public class PathOnTheFly {
                 }
         }
         public static class AutoToPoint{
-                public static Command getToPoint(double x, double y, double degrees){
-                        Pose2d targetPose = new Pose2d(x, y, Rotation2d.fromDegrees(degrees));
-                        // Create the constraints to use while pathfinding
-                        PathConstraints constraints = new PathConstraints(
-                                3.0, 4.0,
-                                Units.degreesToRadians(540), Units.degreesToRadians(720));
-
-
-                        // Since AutoBuilder is configured, we can use it to build pathfinding commands
-                        Command pathfindingCommand = AutoBuilder.pathfindToPose(
-                                targetPose,
-                                constraints,
-                                0.0, // Goal end velocity in meters/sec
-                                0.0 // Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate.
-                        );
-                        return pathfindingCommand;
-                }
-                public static Command getToPoint(double x, double y, double degrees, PathConfig config){
-                        Pose2d targetPose = new Pose2d(x, y, Rotation2d.fromDegrees(degrees));
+                public static Command getToPoint(Pose2d pose, PathConfig config, boolean flip){
                         // Create the constraints to use while pathfinding
                         PathConstraints constraints = new PathConstraints(
                                 config.maxVelocity, config.maxAcceleration,
                                 Units.degreesToRadians(config.maxAngularVelocity.getDegrees()), Units.degreesToRadians(config.maxAngularAcceleration.getDegrees()));
                         // Since AutoBuilder is configured, we can use it to build pathfinding commands
-                        Command pathfindingCommand = AutoBuilder.pathfindToPose(
-                                targetPose,
-                                constraints,
-                                config.endVelocity, // Goal end velocity in meters/sec
-                                config.rotationDelay // Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate.
-                        );
-                        return pathfindingCommand;
+                        boolean flipped = false;
+                        if (flip){
+                                flipped = true;
+                        }
+                        if (flipped){
+                                return AutoBuilder.pathfindToPoseFlipped(
+                                        pose,
+                                        constraints,
+                                        config.endVelocity, // Goal end velocity in meters/sec
+                                        config.rotationDelay // Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate.
+                                );
+                        }else{
+                                return AutoBuilder.pathfindToPose(
+                                        pose,
+                                        constraints,
+                                        config.endVelocity, // Goal end velocity in meters/sec
+                                        config.rotationDelay // Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate.
+                                );
+                        }              
+                }
+                public static Command getToPoint(Pose2d pose){
+                        PathOnTheFly.PathConfig pathConfig = new PathOnTheFly.PathConfig(3,4,Rotation2d.fromDegrees(540),Rotation2d.fromDegrees(540),0,0);
+                        return getToPoint(pose, pathConfig, false); 
+                }
+                public static Command getToPoint(Pose2d pose, boolean flip){
+                        PathOnTheFly.PathConfig pathConfig = new PathOnTheFly.PathConfig(3,4,Rotation2d.fromDegrees(540),Rotation2d.fromDegrees(540),0,0);
+                        return getToPoint(pose, pathConfig, flip); 
+                }
+                public static Command getToPoint(Pose2d pose, PathConfig pathConfig){
+                        return getToPoint(pose, pathConfig, false); 
+                }
+                public static Command getToPoint(double x, double y, double degrees){
+                        PathOnTheFly.PathConfig pathConfig = new PathOnTheFly.PathConfig(3,4,Rotation2d.fromDegrees(540),Rotation2d.fromDegrees(540),0,0);
+                        Pose2d targetPose = new Pose2d(x, y, Rotation2d.fromDegrees(degrees));
+                        return getToPoint(targetPose,pathConfig, false);
+                }
+                public static Command getToPoint(double x, double y, double degrees, boolean flip){
+                        PathOnTheFly.PathConfig pathConfig = new PathOnTheFly.PathConfig(3,4,Rotation2d.fromDegrees(540),Rotation2d.fromDegrees(540),0,0);
+                        Pose2d targetPose = new Pose2d(x, y, Rotation2d.fromDegrees(degrees));
+                        return getToPoint(targetPose,pathConfig, flip);
+                }
+                public static Command getToPoint(double x, double y, double degrees, PathConfig config){
+                        Pose2d targetPose = new Pose2d(x, y, Rotation2d.fromDegrees(degrees));
+                        return getToPoint(targetPose, config, false);
+                }
+                public static Command getToPoint(double x, double y, double degrees, PathConfig config, boolean flip){
+                        Pose2d targetPose = new Pose2d(x, y, Rotation2d.fromDegrees(degrees));
+                        return getToPoint(targetPose, config, flip);
                 }
         }
         public static class PathConfig{
