@@ -16,44 +16,28 @@
     },
     {
       "anchor": {
-        "x": 1.75,
-        "y": 7.12
+        "x": 2.8675571881058293,
+        "y": 7.76491854978012
       },
       "prevControl": {
-        "x": 1.5858100115012714,
-        "y": 7.005799966388851
+        "x": 2.0753699276431443,
+        "y": 7.76491854978012
       },
       "nextControl": {
-        "x": 1.9141899884987286,
-        "y": 7.234200033611149
+        "x": 3.659744448568514,
+        "y": 7.76491854978012
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 2.8441688792209487,
-        "y": 7.74153024089524
-      },
-      "prevControl": {
-        "x": 2.051981618758264,
-        "y": 7.74153024089524
-      },
-      "nextControl": {
-        "x": 3.6363561396836337,
-        "y": 7.74153024089524
-      },
-      "isLocked": false,
-      "linkedName": null
-    },
-    {
-      "anchor": {
-        "x": 8.270256540513081,
+        "x": 8.188397459416,
         "y": 7.437482225391801
       },
       "prevControl": {
-        "x": 5.912376799549818,
-        "y": 7.60704746480718
+        "x": 3.931725242367862,
+        "y": 6.887856966597124
       },
       "nextControl": null,
       "isLocked": false,
@@ -63,40 +47,23 @@
   "rotationTargets": [
     {
       "waypointRelativePos": 1.0,
-      "rotationDegrees": 47.05,
-      "rotateFast": false
-    },
-    {
-      "waypointRelativePos": 2.0,
       "rotationDegrees": 0,
       "rotateFast": true
     }
   ],
-  "constraintZones": [
-    {
-      "name": "Shoot Preload",
-      "minWaypointRelativePos": 0,
-      "maxWaypointRelativePos": 1.0,
-      "constraints": {
-        "maxVelocity": 5.0,
-        "maxAcceleration": 2.0,
-        "maxAngularVelocity": 540.0,
-        "maxAngularAcceleration": 720.0
-      }
-    }
-  ],
+  "constraintZones": [],
   "eventMarkers": [
     {
-      "name": "Loaded Shot",
-      "waypointRelativePos": 0.25,
+      "name": "Intake",
+      "waypointRelativePos": 1.4500000000000002,
       "command": {
-        "type": "sequential",
+        "type": "parallel",
         "data": {
           "commands": [
             {
               "type": "named",
               "data": {
-                "name": "loadAndShootThree"
+                "name": "intake"
               }
             }
           ]
@@ -112,11 +79,11 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -2.792702365713211,
+    "rotation": 3.4682292589171677,
     "rotateFast": false
   },
   "reversed": false,
-  "folder": null,
+  "folder": "S-A",
   "previewStartingState": {
     "rotation": -1.2023032113618086,
     "velocity": 0

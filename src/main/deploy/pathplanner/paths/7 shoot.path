@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 8.25075702407937,
-        "y": 5.80110613902938
+        "x": 8.223479922743321,
+        "y": 5.788606449007769
       },
       "prevControl": null,
       "nextControl": {
-        "x": 6.427317868339373,
-        "y": 6.375920009285661
+        "x": 6.400040767003325,
+        "y": 6.36342031926405
       },
       "isLocked": false,
       "linkedName": null
@@ -78,7 +78,7 @@
     "rotateFast": false
   },
   "reversed": false,
-  "folder": null,
+  "folder": "7 shoot",
   "previewStartingState": {
     "rotation": -15.945395900922906,
     "velocity": 0

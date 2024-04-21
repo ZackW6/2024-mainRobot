@@ -1,0 +1,49 @@
+{
+  "version": 1.0,
+  "startingPose": {
+    "position": {
+      "x": 1.4993411183403562,
+      "y": 7.3556231442947215
+    },
+    "rotation": 0.0
+  },
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "S-L taxi - 6"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "intake"
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 9.0
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "6 shoot"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "6 shoot to stage"
+          }
+        }
+      ]
+    }
+  },
+  "folder": "Team autos",
+  "choreoAuto": false
+}

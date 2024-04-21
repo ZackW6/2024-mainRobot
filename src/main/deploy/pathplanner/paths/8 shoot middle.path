@@ -3,43 +3,54 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 2.961110423645348,
-        "y": 5.98740707452925
+        "x": 8.20009161385844,
+        "y": 7.4608705342766815
       },
       "prevControl": null,
       "nextControl": {
-        "x": 4.013584323464943,
-        "y": 4.911544865824775
+        "x": 7.077452787384207,
+        "y": 6.560420642208806
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 8.29,
-        "y": 2.4470018170805568
+        "x": 2.9260279603180286,
+        "y": 5.975712920086808
       },
       "prevControl": {
-        "x": 7.273704890486704,
-        "y": 3.098220042593932
+        "x": 3.9887516059553447,
+        "y": 6.151208567990217
       },
       "nextControl": null,
       "isLocked": false,
       "linkedName": null
     }
   ],
-  "rotationTargets": [
-    {
-      "waypointRelativePos": 0.4,
-      "rotationDegrees": -25.40771810894858,
-      "rotateFast": false
-    }
-  ],
+  "rotationTargets": [],
   "constraintZones": [],
   "eventMarkers": [
     {
-      "name": "Intake 5",
-      "waypointRelativePos": 0.5,
+      "name": "shoot",
+      "waypointRelativePos": 0.85,
+      "command": {
+        "type": "parallel",
+        "data": {
+          "commands": [
+            {
+              "type": "named",
+              "data": {
+                "name": "loadAndShootThree"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "intake",
+      "waypointRelativePos": 0.05,
       "command": {
         "type": "parallel",
         "data": {
@@ -63,14 +74,14 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -33.31063082456074,
+    "rotation": 9.25,
     "rotateFast": false
   },
   "reversed": false,
-  "folder": null,
+  "folder": "8 shoot",
   "previewStartingState": {
-    "rotation": 0,
+    "rotation": 15.255118703057777,
     "velocity": 0
   },
-  "useDefaultConstraints": true
+  "useDefaultConstraints": false
 }

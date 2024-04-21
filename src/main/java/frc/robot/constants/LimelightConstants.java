@@ -18,11 +18,10 @@ public class LimelightConstants {
     public static final String AMP_CAM = "limelight-object";
     public static final double MAX_XY_ERROR_AMP_CAM = 1.0;
     public static final Transform3d AMP_CAM_TRANSFORM =
-        new Transform3d(new Translation3d(0,0, .5), new Rotation3d(0, Units.degreesToRadians(10), Units.degreesToRadians(0)));
+        new Transform3d(new Translation3d(0,-.101, .522), new Rotation3d(0, Units.degreesToRadians(12), Units.degreesToRadians(0)));
 
     public static final AprilTagFieldLayout K_TAG_LAYOUT = AprilTagFields.k2024Crescendo.loadAprilTagLayoutField();
-
-
+    
     // public static final double[][] ONE_APRIL_TAG_LOOKUP_TABLE = {
     //   // {distance in meters, x std deviation, y std deviation, r (in degrees//actually maybe radians) std deviation}
     //   {0, 0.001, 0.001, 999999},
@@ -63,11 +62,11 @@ public class LimelightConstants {
     public static final MultiLinearInterpolator ROTATION_LINEAR_INTERPOLATOR = new MultiLinearInterpolator(TWO_APRIL_TAG_LOOKUP_TABLE);
     public static final double[][] AUTO_LOOKUP_TABLE = {
       // {distance in meters, x std deviation, y std deviation, r (in degrees//actually maybe radians) std deviation}
-      {0, 0.5, .5, 999999},
-      {1.5, 1, 1, 999999},
-      {3, 2, 2, 999999},
-      {4.5, 5, 5, 999999},
-      {6, 10, 10, 999999}
+      {0, 0.2, .2, 999999},
+      {1.5, .3, .3, 999999},
+      {3, .4, .4, 999999},
+      {4.5, 1, 1, 999999},
+      {6, 2, 2, 999999}
     };
     public static final MultiLinearInterpolator AUTO_INTERPOLATOR = new MultiLinearInterpolator(TWO_APRIL_TAG_LOOKUP_TABLE);
 

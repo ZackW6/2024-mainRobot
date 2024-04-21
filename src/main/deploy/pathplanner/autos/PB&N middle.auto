@@ -1,0 +1,61 @@
+{
+  "version": 1.0,
+  "startingPose": {
+    "position": {
+      "x": 1.49,
+      "y": 7.370817211943212
+    },
+    "rotation": 0
+  },
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "S-A Taxi - Shoot - 8"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "8 shoot middle"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "8 shoot middle to 7"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "7 shoot"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "7 shoot to 6"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "6 shoot"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "6 shoot to center"
+          }
+        }
+      ]
+    }
+  },
+  "folder": "PB autos",
+  "choreoAuto": false
+}

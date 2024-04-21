@@ -14,31 +14,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "S-L taxi - 6"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "6 shoot"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "6 shoot to 7"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "7 shoot"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "7 shoot to 5"
+            "pathName": "S-L taxi - 5"
           }
         },
         {
@@ -46,10 +22,22 @@
           "data": {
             "pathName": "5 shoot US"
           }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "5 shoot US to 6"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "6 shoot"
+          }
         }
       ]
     }
   },
-  "folder": null,
+  "folder": "Team autos",
   "choreoAuto": false
 }

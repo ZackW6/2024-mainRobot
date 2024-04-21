@@ -47,7 +47,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.commands.FactoryCommands;
-import frc.robot.commands.OnTheFlyAutos;
 import frc.robot.constants.GeneralConstants;
 import frc.robot.constants.LimelightConstants;
 import frc.robot.generated.TunerConstants;
@@ -56,6 +55,7 @@ import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Arm.ArmState;
 import frc.robot.util.PathOnTheFly;
 import frc.robot.util.PathOnTheFly.AutoToPoint;
+import frc.robot.util.PathOnTheFly.AutoToPath;
 import frc.robot.util.PathOnTheFly.PathConfig;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
@@ -88,8 +88,7 @@ public class RobotContainer {
   private final Intake intake = new Intake();
   // private final Candle candle = new Candle();
   private final FactoryCommands groupCommands = new FactoryCommands(arm, shooter, intake, drivetrain, driverController);
-  private final OnTheFlyAutos onTheFlyAutos = new OnTheFlyAutos(arm, shooter, intake, drivetrain, driverController);
-
+ 
   private void configureBindings() {
     /* Setup Default Commands */
 
@@ -97,9 +96,9 @@ public class RobotContainer {
     intake.setDefaultCommand(intake.stop());
     // candle.setDefaultCommand(candle.idleLED());
     drivetrain.setDefaultCommand(
-        drivetrain.applyRequest(() -> drive.withVelocityX(-driverController.getLeftY() * 0.90 * MaxSpeed)
-            .withVelocityY(-driverController.getLeftX() * 0.90 * MaxSpeed)
-            .withRotationalRate(-driverController.getRightX() *2/3 * MaxAngularRate)
+        drivetrain.applyRequest(() -> drive.withVelocityX(-driverController.getLeftY() * 1.00 * MaxSpeed)
+            .withVelocityY(-driverController.getLeftX() * 1.00 * MaxSpeed)
+            .withRotationalRate(-driverController.getRightX() * 2/3 * MaxAngularRate)
     ));
 
     /* Controller Bindings */
@@ -109,25 +108,32 @@ public class RobotContainer {
     driverController.leftBumper().onTrue(groupCommands.shoot());
     driverController.rightTrigger(.5).whileTrue(drivetrain.applyRequest(() -> brake));
     driverController.leftTrigger(.5).whileTrue(groupCommands.getInRange())
-    .onTrue(Commands.runOnce(()->shooter.setIdleSpeed(60)))
+    .onTrue(Commands.runOnce(()->shooter.setIdleSpeed(70)))
     .onFalse(Commands.runOnce(()->shooter.setIdleSpeed(0)));
 
     driverController.rightStick().whileTrue(groupCommands.alignToCorner());
     driverController.a().whileTrue(groupCommands.alignToAmp());//.and(() -> driverController.x().getAsBoolean());
-    driverController.b().whileTrue(groupCommands.alignToPiece());
+    // driverController.b().whileTrue(Commands.either(Commands.none(), groupCommands.alignToPiece(),()-> intake.isPiecePresent()));
+    // driverController.x().whileTrue(AutoToPath.getToPath("Feed Shoot", new PathConfig(2,2,Rotation2d.fromDegrees(120),Rotation2d.fromDegrees(120),0,0)).andThen(groupCommands.loadAndShootAutoTertiary()));
+    // driverController.x().onTrue(Commands.runOnce(()->shooter.setIdleSpeed(60))).onFalse(Commands.runOnce(()->shooter.setIdleSpeed(0)));
+
+    // operatorController.y().whileTrue(AutoToPoint.getToPoint(8.47,1.03,-25.16, new PathConfig(2,2,Rotation2d.fromDegrees(120),Rotation2d.fromDegrees(120),0,0),true));
+    // operatorController.leftTrigger().whileTrue(AutoToPath.getToPath("To Amp", new PathConfig(2,2,Rotation2d.fromDegrees(120),Rotation2d.fromDegrees(120),0,0)));
     // driverController.getHID().setRumble(RumbleType.kBothRumble, 1);
     operatorController.a().onTrue(groupCommands.switchModes());
     // operatorController.y().onTrue(groupCommands.wheelRadiusCommand());
-    operatorController.x().whileTrue(intake.setVelocity(15));
+    operatorController.leftTrigger().whileTrue(intake.setVelocity(-5));
+    operatorController.rightTrigger().whileTrue(intake.setVelocity(10));
+    // operatorController.x().whileTrue(Commands.deadline(Commands.waitSeconds(.1),intake.setVelocity(-5)).andThen(intake.setVelocity(10)));
     // operatorController.y().whileTrue(getAutoToPoint().andThen(groupCommands.loadAndShoot()));
-    operatorController.leftBumper().onTrue(Commands.runOnce(()->shooter.setIdleSpeed(60)));
+    operatorController.leftBumper().onTrue(Commands.runOnce(()->shooter.setIdleSpeed(70)));
     operatorController.rightBumper().onTrue(Commands.runOnce(()->shooter.setIdleSpeed(0)));
     
     if (Utils.isSimulation()) {
       drivetrain.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
     }
     drivetrain.registerTelemetry(logger::telemeterize);
-    // driverController.getHID().se\tRumble(RumbleType.kBothRumble, 1);
+    // driverController.getHID().setRumble(RumbleType.kBothRumble, 1);
     Supplier<Pose2d> teamID = ()->{
       if (DriverStation.getAlliance().isPresent()){
         if(DriverStation.getAlliance().get().equals(Alliance.Red)){
@@ -136,9 +142,9 @@ public class RobotContainer {
       }
       return LimelightConstants.K_TAG_LAYOUT.getTagPose(7).get().toPose2d();
     };
-    new Trigger(()-> drivetrain.getDistanceFromPoseMeters(teamID.get()) > 1.95072 && drivetrain.getDistanceFromPoseMeters(teamID.get()) < 2.7432)
-      .whileTrue(Commands.runOnce(()->driverController.getHID().setRumble(RumbleType.kBothRumble, 1)))
-      .whileFalse(Commands.runOnce(()->driverController.getHID().setRumble(RumbleType.kBothRumble, 0)));
+    // new Trigger(()-> drivetrain.getDistanceFromPoseMeters(teamID.get()) > 1.95072 && drivetrain.getDistanceFromPoseMeters(teamID.get()) < 2.7432)
+    //   .whileTrue(Commands.runOnce(()->driverController.getHID().setRumble(RumbleType.kBothRumble, 1)))
+    //   .whileFalse(Commands.runOnce(()->driverController.getHID().setRumble(RumbleType.kBothRumble, 0)));
     new Trigger(()->DriverStation.isTeleop()).and(()->{
       var alliance = DriverStation.getAlliance();
       if (!alliance.isPresent()){
@@ -159,13 +165,14 @@ public class RobotContainer {
 
     PathOnTheFly.PathConfig pathConfig = new PathOnTheFly.PathConfig(5,5,Rotation2d.fromDegrees(540),Rotation2d.fromDegrees(540),0,0);
     PathOnTheFly.addConfig(pathConfig,0);
-    autoChooser.addOption("Conditional Auto", onTheFlyAutos.getAutonomousCommandSpecial());
-    autoChooser.addOption("OnTheFlyAuto", onTheFlyAutos.onTheFlyAutoPiecePose());
+
+    // autoChooser.addOption("Conditional Auto", onTheFlyAutos.getAutonomousCommandSpecial());
+    // autoChooser.addOption("OnTheFlyAuto", onTheFlyAutos.onTheFlyAutoPiecePose());
   }
 
   public void configureAutonomousCommands() {
     NamedCommands.registerCommand("intake", groupCommands.intakeMainAuto());
-    NamedCommands.registerCommand("setIdleSpeed", Commands.runOnce(()->shooter.setAutoIdleSpeed(40)));
+    NamedCommands.registerCommand("setIdleSpeed", Commands.runOnce(()->shooter.setAutoIdleSpeed(46)));
     NamedCommands.registerCommand("loadAndShoot", groupCommands.loadAndShootAuto());
     NamedCommands.registerCommand("loadAndShootLinear", groupCommands.loadAndShoot());
     NamedCommands.registerCommand("loadAndShootThree", groupCommands.loadAndShootAutoSecondary());

@@ -56,7 +56,7 @@ public class Intake extends SubsystemBase{
     }
 
     public Command setVelocity(double rps){
-        speed=rps;
+        speed = rps;
         return this.run(() -> intakeMotor.setControl(torqueCurrentFOC.withVelocity(rps))).alongWith(Commands.runOnce(()->speed=rps));
     }
 
@@ -71,7 +71,6 @@ public class Intake extends SubsystemBase{
     @Override
     public void periodic() {
         // System.out.println(speed+ " INTAKE SPEED");
-
         // System.out.println("GET LIMIT SWITCH: "+getLimitSwitch());
     }
     

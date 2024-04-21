@@ -3,9 +3,26 @@
   "robotLength": 0.76,
   "holonomicMode": true,
   "pathFolders": [
+    "1 shoot",
+    "2 shoot",
+    "3 shoot",
+    "4 shoot",
+    "5 shoot",
+    "6 shoot",
+    "7 shoot",
+    "8 shoot",
+    "Continuous Paths",
+    "S-A",
+    "S-C",
+    "S-L",
+    "Tele op",
     "Test Paths"
   ],
   "autoFolders": [
+    "4 piece",
+    "5 piece",
+    "Team autos",
+    "PB autos",
     "Test Autos"
   ],
   "defaultMaxVel": 5.0,

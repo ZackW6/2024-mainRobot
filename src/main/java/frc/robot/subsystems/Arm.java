@@ -70,13 +70,13 @@ public class Arm extends SubsystemBase {
   // private GenericEntry armD;
   // private GenericEntry angleTarget;
   //angle, velocity, current, temp
-  private GenericEntry armCurrent;
-  private GenericEntry armVelocity;
-  private GenericEntry armTemp;
-  private GenericEntry armAngle;
-  private final VoltageOut m_sysidControl = new VoltageOut(0);
+  // private GenericEntry armCurrent;
+  // private GenericEntry armVelocity;
+  // private GenericEntry armTemp;
+  // private GenericEntry armAngle;
+  // private final VoltageOut m_sysidControl = new VoltageOut(0);
   private final CurrentLimitsConfigs m_currentLimits = new CurrentLimitsConfigs();
-  private SysIdRoutine m_SysIdRoutine;
+  // private SysIdRoutine m_SysIdRoutine;
   private TalonFXConfiguration talonFXConfigs = new TalonFXConfiguration();
   private ArmState currentArmState = ArmState.Speaker; 
   public enum ArmState {

@@ -2,8 +2,8 @@
   "version": 1.0,
   "startingPose": {
     "position": {
-      "x": 1.494174579798092,
-      "y": 7.370817211943212
+      "x": 1.28,
+      "y": 5.54
     },
     "rotation": 0
   },
@@ -14,18 +14,12 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Ram Tech Auto"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "7 shoot"
+            "pathName": "S-A 4 piece"
           }
         }
       ]
     }
   },
-  "folder": null,
+  "folder": "4 piece",
   "choreoAuto": false
 }

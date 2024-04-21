@@ -1,0 +1,52 @@
+{
+  "version": 1.0,
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 9.625472932656079,
+        "y": 0.8774782395170491
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 9.303730911499827,
+        "y": 1.0822231620710272
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 9.11,
+        "y": 1.16
+      },
+      "prevControl": {
+        "x": 9.431742021156252,
+        "y": 0.9650048356628789
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": null
+    }
+  ],
+  "rotationTargets": [],
+  "constraintZones": [],
+  "eventMarkers": [],
+  "globalConstraints": {
+    "maxVelocity": 5.0,
+    "maxAcceleration": 5.0,
+    "maxAngularVelocity": 540.0,
+    "maxAngularAcceleration": 720.0
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": -37.0,
+    "rotateFast": false
+  },
+  "reversed": false,
+  "folder": "Tele op",
+  "previewStartingState": {
+    "rotation": -37.0,
+    "velocity": 0
+  },
+  "useDefaultConstraints": true
+}
