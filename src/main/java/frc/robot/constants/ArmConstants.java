@@ -1,8 +1,18 @@
 package frc.robot.constants;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.util.Units;
 
 public class ArmConstants{
+
+        //ONLY IN SIM
+        public static final double ARM_WEIGHT_KG = 3;
+        public static final double ARM_LENGTH_METERS = .4;
+        public static final double ARM_REDUCTION = 32;
+        public static final double MAX_ARM_ANGLE_RAD = Units.degreesToRadians(180);
+        public static final double MIN_ARM_ANGLE_RAD = Units.degreesToRadians(-180);
+        public static final double ARM_ENCODER_DIST_PER_PULSE = 2.0 * Math.PI / 4096;
+
         public static final int ARM_MOTOR_ID = 10;
         public static final int CAN_CODER_ID = 10;
 

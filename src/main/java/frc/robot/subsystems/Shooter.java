@@ -19,6 +19,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.networktables.NetworkTable;
@@ -30,11 +31,15 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.CommandSwerveDrivetrain;
+import frc.robot.Robot;
+import frc.robot.constants.IntakeConstants;
 import frc.robot.constants.ShooterConstants;
+import frc.robot.simulationUtil.FlyWheelSim;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.Voltage;
 
@@ -44,86 +49,88 @@ public class Shooter extends SubsystemBase{
     private final TalonFX leftShooterMotor;
     private final TalonFX  rightShooterMotor;
 
-    private boolean doDefault = true;
-    private boolean flywheelDisabled = false;
     private double targetFlywheelSpeedL;
     private double targetFlywheelSpeedR;
     private double IdleSpeed = 0;
-    private double autoIdleSpeed = 75;
 
-    private final MotionMagicVelocityTorqueCurrentFOC velocityRequest = new MotionMagicVelocityTorqueCurrentFOC(0).withSlot(0);
+    private final MotionMagicVelocityTorqueCurrentFOC velocityRequestL = new MotionMagicVelocityTorqueCurrentFOC(0).withSlot(0);
+    private final MotionMagicVelocityTorqueCurrentFOC velocityRequestR = new MotionMagicVelocityTorqueCurrentFOC(0).withSlot(0);
 
+    private final FlywheelSim fSimL = new FlywheelSim(DCMotor.getFalcon500(1), 1, .0062);
+    private final FlyWheelSim flywheelSimL;
+    private final FlywheelSim fSimR = new FlywheelSim(DCMotor.getFalcon500(1), 1, .0062);
+    private final FlyWheelSim flywheelSimR;
 
     public Shooter(){
         
         leftShooterMotor = new TalonFX(ShooterConstants.LEFT_SHOOTER_MOTOR_ID);
         rightShooterMotor = new TalonFX(ShooterConstants.RIGHT_SHOOTER_MOTOR_ID);
+
+        flywheelSimL = new FlyWheelSim(leftShooterMotor, fSimL);
+        flywheelSimL.addSimImage("Left Shooter Sim",4);
+        flywheelSimL.addDirectionColor();
+
+        flywheelSimR = new FlyWheelSim(rightShooterMotor, fSimR);
+        flywheelSimR.addSimImage("Right Shooter Sim",4);
+        flywheelSimR.addDirectionColor();
+
         configMotors();
 
         ShuffleboardTab shuffleboardTab = Shuffleboard.getTab("Shooter");
         shuffleboardTab.addNumber("Left Flywheel Speed",
-                () -> Units.radiansPerSecondToRotationsPerMinute(getLeftFlywheelVelocity()));
+                () -> getLeftFlywheelVelocity());
         shuffleboardTab.addNumber("Right Flywheel Speed",
-                () -> Units.radiansPerSecondToRotationsPerMinute(getRightFlywheelVelocity()));
-        shuffleboardTab.addNumber("Target Flywheel Speed",
-                () -> Units.radiansPerSecondToRotationsPerMinute(getTargetFlywheelSpeedL()));
+                () -> getRightFlywheelVelocity());
+        shuffleboardTab.addNumber("Left Target Flywheel Speed",
+                () -> getTargetFlywheelSpeedL());
+        shuffleboardTab.addNumber("Right Target Flywheel Speed",
+                () -> getTargetFlywheelSpeedR());
         shuffleboardTab.addBoolean("Is Left Flywheel at Speed", this::isLeftFlywheelAtTargetSpeed);
         shuffleboardTab.addBoolean("Is Right Flywheel at Speed", this::isLeftFlywheelAtTargetSpeed);
         shuffleboardTab.addNumber("Idle Speed",
                 () -> IdleSpeed);
-    }    
+    }
 
     @Override
     public void periodic() {
-        // TODO: TO MAKE THIS WORK TURN TO FALSE
-        if (flywheelDisabled || (doDefault && IdleSpeed == 0) && !DriverStation.isAutonomousEnabled()) {
-            leftShooterMotor.stopMotor();
-            rightShooterMotor.stopMotor();
-        } else {
-            if (doDefault){
-                if (DriverStation.isTeleop()){
-                    leftShooterMotor.setControl(velocityRequest.withVelocity(IdleSpeed));
-                    rightShooterMotor.setControl(velocityRequest.withVelocity(IdleSpeed));
-                }else if(DriverStation.isAutonomous()){
-                    leftShooterMotor.setControl(velocityRequest.withVelocity(autoIdleSpeed));
-                    rightShooterMotor.setControl(velocityRequest.withVelocity(autoIdleSpeed));
-                }
-            }else{
-                leftShooterMotor.setControl(velocityRequest.withVelocity(targetFlywheelSpeedL));
-                rightShooterMotor.setControl(velocityRequest.withVelocity(targetFlywheelSpeedR));
-            }
+        if (Robot.isSimulation()){
+            flywheelSimL.simulationPeriodic();
+            flywheelSimR.simulationPeriodic();
         }
     }
-    public void setIdleSpeed(double speed){
-        IdleSpeed = speed;
-    }
-    public double getIdleSpeed(){
-        return IdleSpeed;
-    }
-    public void setAutoIdleSpeed(double speed){
-        autoIdleSpeed = speed;
+    /**
+     * 0 stops the motors with a coast
+     * @param Rvelocity
+     * @param Lvelocity
+     */
+    public void setIdleSpeed(double Rvelocity, double Lvelocity){
+        if (Rvelocity == 0 && Lvelocity == 0){
+            setDefaultCommand(stopMotors());
+            IdleSpeed = 0;
+        }else{
+            setDefaultCommand(shootVelocity(Rvelocity, Lvelocity));
+            IdleSpeed = (Rvelocity+Lvelocity)/2;
+        }
     }
 
-    @Deprecated
     public Command shootVelocity(double Rvelocity, double Lvelocity){
-        return this.run(() -> {
-            leftShooterMotor.setControl(velocityRequest.withVelocity(Lvelocity).withAcceleration(1000));
-            rightShooterMotor.setControl(velocityRequest.withVelocity(Rvelocity).withAcceleration(1000));
+        this.targetFlywheelSpeedL = Lvelocity;
+        this.targetFlywheelSpeedR = Rvelocity;
+        return this.runOnce(() -> {
+            leftShooterMotor.setControl(velocityRequestL.withVelocity(Lvelocity));
+            rightShooterMotor.setControl(velocityRequestR.withVelocity(Rvelocity));
+            this.targetFlywheelSpeedL = Lvelocity;
+            this.targetFlywheelSpeedR = Rvelocity;
         });
     }
 
-    @Deprecated
     public Command stopMotors(){
         return this.runOnce(() -> {
             leftShooterMotor.stopMotor();
             rightShooterMotor.stopMotor();
+            this.targetFlywheelSpeedL = 0;
+            this.targetFlywheelSpeedR = 0;
         });
-    }
-
-    public void setTargetFlywheelSpeed(double targetFlywheelSpeedL,double targetFlywheelSpeedR) {
-        // System.out.println(targetFlywheelSpeedL+"FLYWHEELSPEED");
-        this.targetFlywheelSpeedL = targetFlywheelSpeedL;
-        this.targetFlywheelSpeedR = targetFlywheelSpeedR;
     }
 
     public double getTargetFlywheelSpeedL() {
@@ -150,20 +157,8 @@ public class Shooter extends SubsystemBase{
         return Math.abs(getRightFlywheelVelocity() - targetFlywheelSpeedR) < ShooterConstants.FLYWHEEL_ALLOWABLE_ERROR;
     }
 
-    public void disableFlywheel() {
-        flywheelDisabled = true;
-    }
-
-    public void enableFlywheel() {
-        flywheelDisabled = false;
-    }
-    
-    public void enableDefault(){
-        doDefault = true;
-    }
-
-    public void disableDefault(){
-        doDefault = false;
+    public boolean isShooterAtTargetSpeed(){
+        return isRightFlywheelAtTargetSpeed() && isLeftFlywheelAtTargetSpeed();
     }
 
     private void configMotors(){
@@ -196,6 +191,7 @@ public class Shooter extends SubsystemBase{
         
         rightShooterMotor.getConfigurator().apply(talonFXConfigs);
         leftShooterMotor.getConfigurator().apply(talonFXConfigs);
+
         leftShooterMotor.setInverted(true);
     }
 }

@@ -1,15 +1,8 @@
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Seconds;
-import static edu.wpi.first.units.Units.Volts;
-
-import java.security.cert.TrustAnchor;
-import java.sql.Driver;
-import java.util.Optional;
 import java.util.function.Supplier;
 
-import org.photonvision.EstimatedRobotPose;
-import org.photonvision.PhotonUtils;
+import org.photonvision.simulation.VisionSystemSim;
 
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveDrivetrain;
@@ -22,52 +15,28 @@ import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
 import com.pathplanner.lib.util.PIDConstants;
 import com.pathplanner.lib.util.ReplanningConfig;
 
-import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableEntry;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.units.Measure;
-import edu.wpi.first.units.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
-import frc.robot.LimelightHelpers.LimelightResults;
-import frc.robot.LimelightHelpers.PoseEstimate;
-import frc.robot.LimelightHelpers.RawFiducial;
 import frc.robot.constants.LimelightConstants;
-import frc.robot.util.MultiLinearInterpolator;
-// import frc.robot.constants.VisionConstants;
-import frc.robot.generated.TunerConstants;
-// import frc.robot.subsystems.Vision;
-import frc.robot.util.ModifiedSignalLogger;
 
 /**
  * Class that extends the Phoenix SwerveDrivetrain class and implements subsystem
  * so it can be used in command-based projects easily.
  */
+
 public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsystem {
     private static final double kSimLoopPeriod = 0.005; // 5 ms
     private Notifier m_simNotifier = null;
     private double m_lastSimTime;
-    private double lastTime = DriverStation.getMatchTime();
     private final SwerveRequest.ApplyChassisSpeeds autoRequest = new SwerveRequest.ApplyChassisSpeeds();
 
     public CommandSwerveDrivetrain(SwerveDrivetrainConstants driveTrainConstants, double OdometryUpdateFrequency, SwerveModuleConstants... modules) {
@@ -104,11 +73,6 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
 
     @Override
     public void periodic(){
-        // System.out.println(getDistanceFromPieceVertical());
-        // if (isPiecePresent()){
-        //     System.out.println(getPiecePose().get());
-        // }
-        // System.out.println(Rotation2d.fromDegrees(-LimelightHelpers.getTX("limelight-object")));
 
         if (/*DriverStation.isTeleopEnabled() && */!Robot.isSimulation()){
             updateVisionPose(LimelightConstants.LIMELIGHT_NAME);
@@ -179,33 +143,83 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
         return rotation;
     }
     public Rotation2d getAngleFromCorner() {
-        Pose2d tagLocation = new Pose2d(0,8.1026,new Rotation2d());
+        Pose2d pose = new Pose2d(0,8.1026,new Rotation2d());
         if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get().equals(Alliance.Red)){
-            tagLocation = new Pose2d(16.4846,8.1026,new Rotation2d());
+            pose = new Pose2d(16.4846,8.1026,new Rotation2d());
         }
-        return getAngleFromPose(tagLocation);
+        return getAngleFromPose(pose);
     }
+
     public Rotation2d getPoseAngle(Pose2d pose) {
         double deltaX = pose.getX() - getPose().getX();
         double deltaY = pose.getY() - getPose().getY();
         double angleRadians = ((Math.atan(deltaY/deltaX)));
         return Rotation2d.fromRadians(angleRadians);
     }
+
     public double getDistanceFromPoseMeters(Pose2d pose) {
         return Math.sqrt(Math.pow(pose.getX()-getPose().getX(),2)+Math.pow(pose.getY()-getPose().getY(),2));
     }
 
-
     public void seedFieldRelative(double degrees) {
         try {
             m_stateLock.writeLock().lock();
-
             m_fieldRelativeOffset = new Rotation2d(Units.degreesToRadians(getState().Pose.getRotation().getDegrees()+degrees));
         } finally {
             m_stateLock.writeLock().unlock();
         }
     }
 
+
+    private boolean isInBouds(LimelightHelpers.PoseEstimate currentPose){
+
+        boolean isInBounds = currentPose.pose.getX() > 0 && currentPose.pose.getX() < 16.4846 && currentPose.pose.getY() > 0 && currentPose.pose.getY() < 8.1026;
+
+        return isInBounds;
+    }
+    private void updateVisionPose(String limelightName){
+        double maxRotationalAcceleration = 60;
+
+        LimelightHelpers.PoseEstimate botPose = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelightName);
+        if(botPose.tagCount == 0) {
+            return;
+        }
+        LimelightHelpers.SetRobotOrientation(limelightName, m_odometry.getEstimatedPosition().getRotation().getDegrees(), 0, 0, 0, 0, 0);
+        if(!isInBouds(botPose)) {
+            return;
+        }
+        if(Math.abs(Units.radiansToDegrees(getState().speeds.omegaRadiansPerSecond)) > maxRotationalAcceleration){
+
+            double[] rotationInterpolation = LimelightConstants.ONE_APRIL_TAG_LINEAR_INTERPOLATOR.get(botPose.avgTagDist);
+            addVisionMeasurement(
+                botPose.pose,
+                botPose.timestampSeconds,VecBuilder.fill(rotationInterpolation[0],rotationInterpolation[1],999999));
+            return;
+        }
+        
+        double[] linearInterpolation = LimelightConstants.ONE_APRIL_TAG_LINEAR_INTERPOLATOR.get(botPose.avgTagDist);
+        addVisionMeasurement(
+            botPose.pose,
+            botPose.timestampSeconds,VecBuilder.fill(linearInterpolation[0],linearInterpolation[1],999999));
+        
+    }
+    public Rotation2d getYawOffsetDegrees(){
+        return m_fieldRelativeOffset;
+    }
+    /**
+     * all in meters
+     * @param pose
+     * @param expected
+     * @param error
+     * @return
+     */
+    public static boolean poseWithinRange(Pose2d pose, Pose2d expected, double error){
+        if (pose.getX()<expected.getX()+error && pose.getX()>expected.getX()-error && pose.getY()<expected.getY()+error && pose.getY()>expected.getY()-error){
+            return true;
+        }
+        return false;
+    }
+}
     // private double[] currentVisionPose(String limelightName) {
     //     return LimelightHelpers.getBotPose_wpiBlue(limelightName);
     // }
@@ -316,106 +330,3 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     //         System.out.println("Could not add vision measurement - no tags present");
     //     }
     // }
-    private boolean isInBouds(LimelightHelpers.PoseEstimate currentPose){
-
-        boolean isInBounds = currentPose.pose.getX() > 0 && currentPose.pose.getX() < 16.4846 && currentPose.pose.getY() > 0 && currentPose.pose.getY() < 8.1026;
-
-        return isInBounds;
-    }
-    private void updateVisionPose(String limelightName){
-        double maxRotationalAcceleration = 60;
-        // double currentTime = Timer.getFPGATimestamp();
-
-        LimelightHelpers.PoseEstimate botPose = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(limelightName);
-        if(botPose.tagCount == 0) {
-            return;
-        }
-                //  System.out.println(Timer.getFPGATimestamp() - currentTime);
-        LimelightHelpers.SetRobotOrientation(limelightName, m_odometry.getEstimatedPosition().getRotation().getDegrees(), 0, 0, 0, 0, 0);
-        if(Math.abs(Units.radiansToDegrees(getState().speeds.omegaRadiansPerSecond)) > maxRotationalAcceleration) // if our angular velocity is greater than 720 degrees per second, ignore vision updates
-        {
-            return;
-        }
-        
-        if(!isInBouds(botPose)) {
-            // System.out.println("Not in bounds");
-            return;
-        }
-        addVisionMeasurement(
-            botPose.pose,
-            botPose.timestampSeconds,VecBuilder.fill(.6,.6,999999));
-        
-    }
-    public Rotation2d getYawOffsetDegrees(){
-        return m_fieldRelativeOffset;
-    }
-    public Rotation2d getRotationFromPiece(String limelightName){
-        return Rotation2d.fromDegrees(-LimelightHelpers.getTX(limelightName));        
-    }
-    public boolean isPiecePresent(){
-        if (LimelightHelpers.getTA(LimelightConstants.AMP_CAM) != 0){
-            return true;
-        }
-        return false;
-    }
-    public double getDistanceFromPieceVertical(){
-        if (LimelightHelpers.getTA(LimelightConstants.AMP_CAM) != 0){
-            NetworkTable table = NetworkTableInstance.getDefault().getTable(LimelightConstants.AMP_CAM);
-            NetworkTableEntry ty = table.getEntry("ty");
-            double targetOffsetAngle_Vertical = ty.getDouble(0.0);
-            // how many degrees back is your limelight rotated from perfectly vertical?
-            double limelightMountAngleDegrees = Units.radiansToDegrees(LimelightConstants.AMP_CAM_TRANSFORM.getRotation().getY()); 
-
-            // distance from the center of the Limelight lens to the floor
-            double limelightLensHeightInches = Units.metersToInches(LimelightConstants.AMP_CAM_TRANSFORM.getZ()); 
-
-            // distance from the target to the floor
-            double goalHeightInches = 1; 
-
-            double angleToGoalDegrees = -limelightMountAngleDegrees + targetOffsetAngle_Vertical;
-
-            double angleToGoalRadians = angleToGoalDegrees * (3.14159 / 180.0);
-            return  Units.inchesToMeters((goalHeightInches - limelightLensHeightInches) / Math.tan(angleToGoalRadians))+LimelightConstants.AMP_CAM_TRANSFORM.getY();
-        }
-        return 0;
-    }
-    public double getDistanceFromPieceHorizontal(){
-        if (LimelightHelpers.getTA(LimelightConstants.AMP_CAM) != 0){
-            NetworkTable table = NetworkTableInstance.getDefault().getTable(LimelightConstants.AMP_CAM);
-            NetworkTableEntry tx = table.getEntry("tx");
-            double targetOffsetAngle_Vertical = tx.getDouble(0.0);
-            
-            // what is the yaw of your limelight
-            double limelightMountAngleDegrees = Units.radiansToDegrees(LimelightConstants.AMP_CAM_TRANSFORM.getRotation().getZ()); 
-
-            double angleToGoalDegrees = limelightMountAngleDegrees + targetOffsetAngle_Vertical;
-
-            double angleToGoalRadians = angleToGoalDegrees * (3.14159 / 180.0);
-            return getDistanceFromPieceVertical()*Math.tan(angleToGoalRadians);//+LimelightConstants.AMP_CAM_TRANSFORM.getX();
-        }
-        return 0;
-    }
-    // public Optional<Pose2d> getPiecePose(){
-    //     if (LimelightHelpers.getTA(LimelightConstants.AMP_CAM) != 0){
-    //         double x = getDistanceFromPieceVertical();
-    //         double y = getDistanceFromPieceHorizontal();
-    //         double xn = x*Math.cos(getPose().getRotation().getRadians())- y*Math.sin(getPose().getRotation().getRadians());
-    //         double yn = x*Math.sin(getPose().getRotation().getRadians())+ y*Math.cos(getPose().getRotation().getRadians());
-    //         return Optional.of(new Pose2d(xn+getPose().getX(),yn+getPose().getY(),new Rotation2d()));
-    //     }
-    //     return null;
-    // }
-    // /**
-    //  * all in meters
-    //  * @param pose
-    //  * @param expected
-    //  * @param error
-    //  * @return
-    //  */
-    // public static boolean poseWithinRange(Pose2d pose, Pose2d expected, double error){
-    //     if (pose.getX()<expected.getX()+error && pose.getX()>expected.getX()-error && pose.getY()<expected.getY()+error && pose.getY()>expected.getY()-error){
-    //         return true;
-    //     }
-    //     return false;
-    // }
-}

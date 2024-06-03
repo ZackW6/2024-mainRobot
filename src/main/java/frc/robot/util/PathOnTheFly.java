@@ -19,11 +19,11 @@ import edu.wpi.first.wpilibj2.command.Command;
  * Helper class for making on the fly paths
  */
 public class PathOnTheFly {
+        private static PathConfig defaultPathConfig = new PathOnTheFly.PathConfig();
         private static PathConfig[] configs = new PathConfig[4];
         public static class AutoToPath{
                 public static Command getToPath(String name){
-                        PathOnTheFly.PathConfig pathConfig = new PathOnTheFly.PathConfig(3,4,Rotation2d.fromDegrees(540),Rotation2d.fromDegrees(540),0,0);
-                        return getToPath(name, pathConfig);
+                        return getToPath(name, defaultPathConfig);
                 }
                 public static Command getToPath(String name, PathConfig config){
                         PathPlannerPath path = PathPlannerPath.fromPathFile(name);
@@ -72,25 +72,21 @@ public class PathOnTheFly {
                         }              
                 }
                 public static Command getToPoint(Pose2d pose){
-                        PathOnTheFly.PathConfig pathConfig = new PathOnTheFly.PathConfig(3,4,Rotation2d.fromDegrees(540),Rotation2d.fromDegrees(540),0,0);
-                        return getToPoint(pose, pathConfig, false); 
+                        return getToPoint(pose, defaultPathConfig, false); 
                 }
                 public static Command getToPoint(Pose2d pose, boolean flip){
-                        PathOnTheFly.PathConfig pathConfig = new PathOnTheFly.PathConfig(3,4,Rotation2d.fromDegrees(540),Rotation2d.fromDegrees(540),0,0);
-                        return getToPoint(pose, pathConfig, flip); 
+                        return getToPoint(pose, defaultPathConfig, flip); 
                 }
                 public static Command getToPoint(Pose2d pose, PathConfig pathConfig){
                         return getToPoint(pose, pathConfig, false); 
                 }
                 public static Command getToPoint(double x, double y, double degrees){
-                        PathOnTheFly.PathConfig pathConfig = new PathOnTheFly.PathConfig(3,4,Rotation2d.fromDegrees(540),Rotation2d.fromDegrees(540),0,0);
                         Pose2d targetPose = new Pose2d(x, y, Rotation2d.fromDegrees(degrees));
-                        return getToPoint(targetPose,pathConfig, false);
+                        return getToPoint(targetPose,defaultPathConfig, false);
                 }
                 public static Command getToPoint(double x, double y, double degrees, boolean flip){
-                        PathOnTheFly.PathConfig pathConfig = new PathOnTheFly.PathConfig(3,4,Rotation2d.fromDegrees(540),Rotation2d.fromDegrees(540),0,0);
                         Pose2d targetPose = new Pose2d(x, y, Rotation2d.fromDegrees(degrees));
-                        return getToPoint(targetPose,pathConfig, flip);
+                        return getToPoint(targetPose,defaultPathConfig, flip);
                 }
                 public static Command getToPoint(double x, double y, double degrees, PathConfig config){
                         Pose2d targetPose = new Pose2d(x, y, Rotation2d.fromDegrees(degrees));

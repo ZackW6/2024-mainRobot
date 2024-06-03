@@ -1,7 +1,7 @@
 package frc.robot.constants;
 
 import edu.wpi.first.math.util.Units;
-import frc.robot.util.MultiLinearInterpolator;
+// import frc.robot.util.MultiLinearInterpolator;
 
 public class ShooterConstants {
     public static final double FLYWHEEL_ALLOWABLE_ERROR = 1.5;//ONLY ONE BEING USED
@@ -22,7 +22,7 @@ public class ShooterConstants {
     public static final double kS = 6.624; // Add 0.25 V output to overcome static friction
     public static final double kV = .06325; // A velocity target of 1 rps results in 0.12 V output
     public static final double kA = 2; // An acceleration of 1 rps/s requires 0.01 V output
-    public static final double kP = 8; // This will need to be tuned after feedforward
+    public static final double kP = 20;//8; // This will need to be tuned after feedforward
     public static final double kI = 0.2; // For flywheels, this should be 0
     public static final double kD = 0; // For flywheels, this should be 0
 
@@ -45,5 +45,5 @@ public class ShooterConstants {
       {2.5908, 42.5},
       {2.7432, 36.9}
     };
-    public static final MultiLinearInterpolator SHOOTER_DISTANCE_LINEAR_INTERPOLATOR = new MultiLinearInterpolator(SHOOTER_DISTANCE_LOOKUP_TABLE);
+    // public static final MultiLinearInterpolator SHOOTER_DISTANCE_LINEAR_INTERPOLATOR = new MultiLinearInterpolator(SHOOTER_DISTANCE_LOOKUP_TABLE);
 }

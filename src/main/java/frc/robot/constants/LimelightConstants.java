@@ -5,7 +5,11 @@ import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
+import edu.wpi.first.math.interpolation.Interpolator;
+import edu.wpi.first.math.interpolation.InverseInterpolator;
 import edu.wpi.first.math.util.Units;
+// import frc.robot.util.MultiLinearInterpolator;
 import frc.robot.util.MultiLinearInterpolator;
 
 public class LimelightConstants {
@@ -22,33 +26,16 @@ public class LimelightConstants {
 
     public static final AprilTagFieldLayout K_TAG_LAYOUT = AprilTagFields.k2024Crescendo.loadAprilTagLayoutField();
     
-    // public static final double[][] ONE_APRIL_TAG_LOOKUP_TABLE = {
-    //   // {distance in meters, x std deviation, y std deviation, r (in degrees//actually maybe radians) std deviation}
-    //   {0, 0.001, 0.001, 999999},
-    //   {1.5, 0.01, 0.01, 999999},
-    //   {3, 0.7, 0.7, 999999},
-    //   {4.5, 3, 3, 999999},
-    //   {6, 8, 8, 999999}
-    // };
     public static final double[][] ONE_APRIL_TAG_LOOKUP_TABLE = {
       // {distance in meters, x std deviation, y std deviation, r (in degrees//actually maybe radians) std deviation}
-      {0, 0.0, 0.0, 999999},
-      {1.5, 0, 0.0, 999999},
-      {3, .25, .25, 999999},
-      {4.5, 1, 1, 999999},
-      {6, 2, 2, 999999}
+      {0, 0.0, 0.0},
+      {1.5, 0.0, 0.0},
+      {3, .25, .25},
+      {4.5, 1, 1},
+      {6, 2, 2}
     };
+    
     public static final MultiLinearInterpolator ONE_APRIL_TAG_LINEAR_INTERPOLATOR = new MultiLinearInterpolator(ONE_APRIL_TAG_LOOKUP_TABLE);
-
-    public static final double[][] TWO_APRIL_TAG_LOOKUP_TABLE = {
-      // {distance in meters, x std deviation, y std deviation, r (in degrees) std deviation}
-      {0, 0.001, 0.001, 999999},
-      {1.5, 0.01, 0.01, 999999},
-      {3, 0.4, 0.4, 999999},
-      {4.5, 2, 2, 999999},
-      {6, 6, 6, 999999}
-    };
-    public static final MultiLinearInterpolator TWO_APRIL_TAG_LINEAR_INTERPOLATOR = new MultiLinearInterpolator(TWO_APRIL_TAG_LOOKUP_TABLE);
 
     public static final double[][] ROTATION_LOOKUP_TABLE = {
       // {distance in meters, x std deviation, y std deviation, r (in degrees) std deviation}
@@ -59,15 +46,17 @@ public class LimelightConstants {
       {6, 1000}
     };
     
-    public static final MultiLinearInterpolator ROTATION_LINEAR_INTERPOLATOR = new MultiLinearInterpolator(TWO_APRIL_TAG_LOOKUP_TABLE);
+    public static final MultiLinearInterpolator ROTATION_LINEAR_INTERPOLATOR = new MultiLinearInterpolator(ROTATION_LOOKUP_TABLE);
+
     public static final double[][] AUTO_LOOKUP_TABLE = {
       // {distance in meters, x std deviation, y std deviation, r (in degrees//actually maybe radians) std deviation}
-      {0, 0.2, .2, 999999},
+      {0, .2, .2, 999999},
       {1.5, .3, .3, 999999},
       {3, .4, .4, 999999},
       {4.5, 1, 1, 999999},
       {6, 2, 2, 999999}
     };
-    public static final MultiLinearInterpolator AUTO_INTERPOLATOR = new MultiLinearInterpolator(TWO_APRIL_TAG_LOOKUP_TABLE);
+
+    public static final MultiLinearInterpolator AUTO_INTERPOLATOR = new MultiLinearInterpolator(AUTO_LOOKUP_TABLE);
 
 }

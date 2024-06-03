@@ -34,15 +34,21 @@ import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
+import com.ctre.phoenix6.sim.CANcoderSimState;
+import com.ctre.phoenix6.sim.ChassisReference;
+import com.ctre.phoenix6.sim.TalonFXSimState;
 
-
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.Voltage;
 import edu.wpi.first.wpilibj.AnalogEncoder;
 import edu.wpi.first.wpilibj.CAN;
+import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.motorcontrol.PWMSparkMax;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -52,48 +58,66 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Robot;
 import frc.robot.constants.ArmConstants;
+import frc.robot.simulationUtil.ArmSim;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
-
+import edu.wpi.first.wpilibj.simulation.BatterySim;
+import edu.wpi.first.wpilibj.simulation.EncoderSim;
+import edu.wpi.first.wpilibj.simulation.RoboRioSim;
+import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
+import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj.util.Color8Bit;
 
 import static edu.wpi.first.units.Units.Volts;
 
 
 public class Arm extends SubsystemBase {
-  /** Creates a new Arm. */
   private final TalonFX armMotor;
   private final CANcoder encoder;
-
-  private ShuffleboardTab tab = Shuffleboard.getTab("Arm");
-  // private GenericEntry armFeedForward;
-  // private GenericEntry armP;
-  // private GenericEntry armI;
-  // private GenericEntry armD;
-  // private GenericEntry angleTarget;
-  //angle, velocity, current, temp
-  // private GenericEntry armCurrent;
-  // private GenericEntry armVelocity;
-  // private GenericEntry armTemp;
-  // private GenericEntry armAngle;
-  // private final VoltageOut m_sysidControl = new VoltageOut(0);
+  
   private final CurrentLimitsConfigs m_currentLimits = new CurrentLimitsConfigs();
-  // private SysIdRoutine m_SysIdRoutine;
   private TalonFXConfiguration talonFXConfigs = new TalonFXConfiguration();
-  private ArmState currentArmState = ArmState.Speaker; 
   public enum ArmState {
-    Speaker,
-    Amp,
-    Intake,
-    AmpMove,
-    IntakeShoot
-  } 
+    Speaker(.47),
+    Amp(.29),
+    Intake(-.088),
+    AmpMove(.21);
+    private double rotation;
+    ArmState(double rotation){
+      this.rotation = rotation;
+    }
+    public double getRotation(){
+      return rotation;
+    }
+  }
 
-
+  private final SingleJointedArmSim singleJointedArmSim =
+      new SingleJointedArmSim(
+          DCMotor.getFalcon500(1),
+          ArmConstants.ARM_REDUCTION,
+          SingleJointedArmSim.estimateMOI(ArmConstants.ARM_LENGTH_METERS, ArmConstants.ARM_WEIGHT_KG),
+          ArmConstants.ARM_LENGTH_METERS,
+          ArmConstants.MIN_ARM_ANGLE_RAD,
+          ArmConstants.MAX_ARM_ANGLE_RAD,
+          true,
+          Units.rotationsToRadians(.47)
+          );
+  private final ArmSim armSim;
+  // Create a Mechanism2d display of an Arm with a fixed ArmTower and moving Arm.
   public Arm() {
-
     armMotor = new TalonFX(ArmConstants.ARM_MOTOR_ID);
     encoder = new CANcoder(ArmConstants.CAN_CODER_ID);
 
+    armSim = new ArmSim(armMotor, singleJointedArmSim);
+    armSim.addSimImage("Arm Sim");
+    armSim.configureCANCoder(encoder, ChassisReference.Clockwise_Positive,ArmConstants.ANGLE_OFFSET.getRotations()+.25);
+
     configMotor();
+
+    ShuffleboardTab tab = Shuffleboard.getTab("Arm");
 
     tab.addNumber("armCurrent", ()->armMotor.getTorqueCurrent().getValueAsDouble());
 
@@ -103,60 +127,16 @@ public class Arm extends SubsystemBase {
 
     tab.addNumber("armAngle", ()->getArmDegrees());
   }
-  MotionMagicTorqueCurrentFOC m_request = new MotionMagicTorqueCurrentFOC(.47);
 
-  private void setArmDegree(ArmState armPosition, boolean isActive){
-   double rotSet;
-      switch (armPosition){
-        case Intake:
-          rotSet=-.088;//-0.07; // -0.098
-          break;
-        case Speaker:
-          rotSet=.47;//.490; // 0.477
-          break;
-        case Amp:
-          rotSet=.29; // 0.255
-          break;
-        case AmpMove:
-          rotSet= .21;
-          break;
-        case IntakeShoot:
-          rotSet= .27;
-          break;
-        default:
-          rotSet=.4422222222;
-          break;
-      }
-      armMotor.setControl(m_request.withPosition(rotSet).withSlot(0));
-  }
-  public ArmState getCurrentArmState(){
-    return currentArmState;
+  MotionMagicTorqueCurrentFOC m_request = new MotionMagicTorqueCurrentFOC(ArmState.Speaker.getRotation());
+
+  public Command setArmRotation(ArmState armState){
+    return this.run(()->armMotor.setControl(m_request.withPosition(armState.getRotation()).withSlot(0)));
   }
 
-
-  @Override
-  public void periodic() {
-    if (currentArmState == ArmState.Speaker) {
-      lastMainState = ArmState.Speaker;
-      setArmDegree(ArmState.Speaker, true);
-    } else if (currentArmState == ArmState.Amp){
-      lastMainState = ArmState.Amp;
-      setArmDegree(ArmState.Amp, true);
-    }else if (currentArmState == ArmState.Intake){
-      setArmDegree(ArmState.Intake, true);
-    }else if (currentArmState == ArmState.AmpMove){
-      setArmDegree(ArmState.AmpMove, true);
-    }else if(currentArmState == ArmState.IntakeShoot){
-      setArmDegree(ArmState.IntakeShoot, true);
-    }
+  public Command setArmDefault(ArmState state){
+    return Commands.runOnce(()->setDefaultCommand(this.runOnce(()->armMotor.setControl(m_request.withPosition(state.getRotation()).withSlot(0)))));
   }
-
-  private ArmState lastMainState = ArmState.Speaker;
-
-  public ArmState lastMainState(){
-    return lastMainState;
-  }
-
 
   private void configMotor(){
     talonFXConfigs = new TalonFXConfiguration();
@@ -181,6 +161,7 @@ public class Arm extends SubsystemBase {
     slot0Configs.kD = ArmConstants.kD; // A velocity error of 1 rps results in 0.1 V output
     slot0Configs.kG = ArmConstants.kG;
     slot0Configs.GravityType = GravityTypeValue.Arm_Cosine;
+
     Slot1Configs slot1Configs = talonFXConfigs.Slot1;
     slot1Configs.kS = ArmConstants.kS; // Add 0.25 V output to overcome static friction
     slot1Configs.kV = ArmConstants.kV; // A velocity target of 1 rps results in 0.12 V output
@@ -230,23 +211,18 @@ public class Arm extends SubsystemBase {
     return armMotor.getClosedLoopReference().getValueAsDouble();
   }
 
-  public Boolean isArmInAmpState() {
-      return currentArmState == ArmState.Amp;
-  }
-  public Boolean isArmInSpeakerState() {
-      return currentArmState == ArmState.Speaker;
-  }
-  public Boolean isArmInIntakeState() {
-      return currentArmState == ArmState.Intake;
-  }
-
-  public void setCurrentArmState(ArmState armState) {
-    currentArmState = armState;
-  }
   public boolean isArmAtAngle(){
-    if (armMotor.getClosedLoopReference().getValueAsDouble()<=getRotationTarget()+.03 || armMotor.getClosedLoopReference().getValueAsDouble()<=getRotationTarget()-.03){
+    if (Units.degreesToRotations(getArmDegrees())<=getRotationTarget()+.03 && Units.degreesToRotations(getArmDegrees())>=getRotationTarget()-.03){
       return true;
-    } 
+    }
     return false;
   }
+
+  public void periodic(){
+    if (Robot.isSimulation()){
+      armSim.simulationPeriodic();
+    }
+  }
+
+  
 }

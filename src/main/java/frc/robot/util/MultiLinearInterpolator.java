@@ -1,51 +1,44 @@
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
+
 package frc.robot.util;
 
-import java.util.Arrays;
+import edu.wpi.first.math.Nat;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.Vector;
+import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
+import edu.wpi.first.math.interpolation.Interpolator;
+import edu.wpi.first.math.interpolation.InverseInterpolator;
+import edu.wpi.first.math.numbers.N3;
 
-import edu.wpi.first.wpilibj.DriverStation;
+/** Add your docs here. */
+public class MultiLinearInterpolator {
 
-public final class MultiLinearInterpolator {
+    private InterpolatingTreeMap<Double,Double>[] multiLinearInterpolator;
 
-  private final double[][] lookupTable;
-  
-  /**
-   * Handles finding values through a lookup table in a linear fashion.
-   * @param lookupTable an array containing {x, y1, y2, ...yn} points, the x values must be in ascending order.
-   */
-  public MultiLinearInterpolator(double[][] lookupTable) {
-    this.lookupTable = lookupTable;
-  }
-
-  /**
-   * Returns multiple linearly-interpolated values from the lookup table corresponding to the given input value.
-   * @return A double array containing each linearly interpolated value. It will be as long as the lookup
-   * table rows minus 1.
-   */
-  public double[] getLookupValue(double inputXValue) {  
-    // Check if inputXValue is less than the table's first value, if it is, return the lowest y values
-    if (inputXValue < lookupTable[0][0]) {
-      return Arrays.copyOfRange(lookupTable[0], 1, lookupTable[0].length);  
-    } // Check if inputXValue is greater than the table's last value, if it is, return the greatest y values
-    else if (inputXValue > lookupTable[lookupTable.length - 1][0]) {
-      return Arrays.copyOfRange(lookupTable[lookupTable.length - 1], 1, lookupTable[0].length);
-    }
-  
-    for(int i = 0; i < lookupTable.length; i++) {
-      if (inputXValue == lookupTable[i][0]) {
-        return Arrays.copyOfRange(lookupTable[i], 1, lookupTable[0].length);
-      } else if (inputXValue > lookupTable[i][0] && inputXValue < lookupTable[i + 1][0]) {
-        double[] interpolatedValues = new double[lookupTable[0].length - 1];
-        for(int j = 1; j < lookupTable[0].length; j++) {
-          double slope = (lookupTable[i + 1][j] - lookupTable[i][j]) / (lookupTable[i + 1][0] - lookupTable[i][0]);
-          double yIntercept = lookupTable[i][j];
-          interpolatedValues[j - 1] = slope * (inputXValue - lookupTable[i][0]) + yIntercept;
+    /**
+     * key values first, followed by corresponding values for each row, must have at least two layers
+     * @param matrix
+     */
+    public MultiLinearInterpolator(double[][] matrix){
+        if (matrix.length<2){
+            throw new IllegalArgumentException("Matrix should have at least two layers for interpolation");
         }
-        return interpolatedValues;
-      }
+        multiLinearInterpolator = new InterpolatingTreeMap[matrix[0].length-1];
+
+        for (int i = 0; i<multiLinearInterpolator.length;i++){
+            multiLinearInterpolator[i] = new InterpolatingTreeMap<Double,Double>(InverseInterpolator.forDouble(), Interpolator.forDouble());
+            for (int y = 0; y<matrix.length;y++){
+                multiLinearInterpolator[i].put(matrix[y][0],matrix[y][i+1]);
+            }
+        }
     }
-      
-    // This should never be reached, but returns the first value to be safe
-    DriverStation.reportError("There was a problem with the MultiLinearInterpolator", true);
-    return Arrays.copyOfRange(lookupTable[0], 1, lookupTable[0].length);   
-  }
+    public double[] get(double key){
+        double[] values = new double[multiLinearInterpolator.length];
+        for(int i = 0; i<multiLinearInterpolator.length;i++){
+            values[i] = multiLinearInterpolator[i].get(key);
+        }
+        return values;
+    }
 }
