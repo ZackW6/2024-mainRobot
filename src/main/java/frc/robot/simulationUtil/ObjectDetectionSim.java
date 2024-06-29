@@ -13,19 +13,24 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.numbers.N2;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Robot;
+import frc.robot.util.PoseEX;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 
 /** Simple sim to test object detection related ideas*/
 public class ObjectDetectionSim {
     private final Transform3d transform3d;
     private final Vector<N2> fieldOfView;
     private final ArrayList<Pose3d> possibleObjects;
+    private final Supplier<Pose2d> robotPose;
     /**
      * @param transform from center of robot
      * @param FOV horizontal and vertical FOV in degrees
@@ -34,6 +39,7 @@ public class ObjectDetectionSim {
         this.transform3d = transform;
         this.fieldOfView = FOV;
         this.possibleObjects = new ArrayList<Pose3d>();
+        this.robotPose = robotPose;
     }
 
     public void addObjectPose(Pose3d pose){
@@ -49,27 +55,60 @@ public class ObjectDetectionSim {
     }
 
     public boolean isPiecePresent(){
-        if (getClosestVisiblePiece()!=null){
-            return true;
+        if (getClosestVisiblePiece().isEmpty()){
+            return false;
         }
-        return false;
+        return true;
     }
-
-    private Optional<Pose3d> getClosestVisiblePiece(){
-        ArrayList<Pose3d> objects;
+    
+    public Optional<Pose3d> getClosestVisiblePiece(){
+        ArrayList<Pose3d> objects = new ArrayList<Pose3d>();
+        Pose3d cameraPose = new Pose3d(robotPose.get()).transformBy(transform3d);
         for (Pose3d pose : possibleObjects){
-            if (pose.getX()>0){
-                
+            Rotation2d yawFromPiece = PoseEX.getYawFromPose(cameraPose.toPose2d(), pose.toPose2d());
+            Rotation2d pitchFromPiece = PoseEX.getPitchFromPose(cameraPose, pose);
+            // System.out.println(pitchFromPiece.getDegrees()+" PICTH");
+            double dist = Math.sqrt(Math.pow(pose.toPose2d().getX()-cameraPose.getX(),2)+Math.pow(pose.toPose2d().getY()-cameraPose.getY(),2));
+            if (pitchFromPiece.getRadians()<Units.degreesToRadians(fieldOfView.get(1)/2)
+                    && pitchFromPiece.getRadians()>-Units.degreesToRadians(fieldOfView.get(1)/2)
+                    && yawFromPiece.getRadians()<Units.degreesToRadians(fieldOfView.get(0)/2)
+                    && yawFromPiece.getRadians()>-Units.degreesToRadians(fieldOfView.get(0)/2)
+                    && dist<6){
+                objects.add(pose);
             }
         }
-        return null;
+        if (objects.size()!=0){
+            double minDist = Integer.MAX_VALUE;
+            Pose3d minObject = objects.get(0);
+            for (Pose3d pose : objects){
+                double curDist = Math.sqrt(Math.pow(cameraPose.getX()-pose.getX(),2)+Math.pow(cameraPose.getX()-pose.getY(),2)+Math.pow(cameraPose.getX()-pose.getZ(),2));
+                if (curDist<minDist){
+                    minDist = curDist;
+                    minObject = pose;
+                }
+            }
+            return Optional.of(minObject);
+        }
+        return Optional.empty();
+        
     }
 
     public Rotation2d getHorizontalRotationFromTarget(){
-        return Rotation2d.fromDegrees(0);
+        Pose3d cameraPose = new Pose3d(robotPose.get()).transformBy(transform3d);
+        try {
+            return PoseEX.getYawFromPose(cameraPose.toPose2d(),getClosestVisiblePiece().get().toPose2d());
+        } catch (Exception e) {
+            return Rotation2d.fromDegrees(0);
+        }
+        
     }
     
     public Rotation2d getVerticalRotationFromTarget(){
-        return Rotation2d.fromDegrees(0);
+        Pose3d cameraPose = new Pose3d(robotPose.get()).transformBy(transform3d);
+        try {
+            return PoseEX.getPitchFromPose(cameraPose,getClosestVisiblePiece().get());
+        } catch (Exception e) {
+            return Rotation2d.fromDegrees(0);
+        }
     }
 }

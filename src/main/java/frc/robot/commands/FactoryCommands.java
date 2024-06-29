@@ -5,6 +5,7 @@
 package frc.robot.commands;
 
 import java.util.Currency;
+import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -16,7 +17,9 @@ import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest.SwerveControlRequestPar
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
@@ -25,6 +28,7 @@ import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
+import edu.wpi.first.wpilibj2.command.DeferredCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
@@ -46,6 +50,7 @@ import frc.robot.subsystems.ObjectDetection;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.Arm.ArmState;
 import frc.robot.util.PathOnTheFly;
+import frc.robot.util.PoseEX;
 import frc.robot.util.PathOnTheFly.AutoToPoint;
 
 public class FactoryCommands extends SubsystemBase{
@@ -71,7 +76,7 @@ public class FactoryCommands extends SubsystemBase{
   }
 
   public Command align() {
-    return Commands.either(alignToAmp(), getInRange(), ()->(getState() == State.Amp));
+    return Commands.either(alignToAmp(), getToSpeakerCommand()/*getInRange()*/, ()->(getState() == State.Amp));
   }
 
   public Command speakerShoot(double LSpeed, double RSpeed){
@@ -135,7 +140,6 @@ public class FactoryCommands extends SubsystemBase{
       .withRotationalRate(Units.degreesToRadians(rotationalVelocity.getAsDouble())));
   }
 
-  
   private double correctYaw(double x, double setpoint){
     if (x>180+setpoint){
       x-=360;
@@ -157,7 +161,7 @@ public class FactoryCommands extends SubsystemBase{
         return -thetaControllerSpeaker.calculate(drivetrain.getAngleFromCorner().getDegrees()+180,0);//+7;
       }
     };
-    return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble()) 
+    return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble())
       .withVelocityY(yAxis.getAsDouble())
       .withRotationalRate(Units.degreesToRadians(rotationalVelocity.getAsDouble())));
   }
@@ -167,7 +171,7 @@ public class FactoryCommands extends SubsystemBase{
   public Command alignToPiece() {
     DoubleSupplier distanceSpeed = ()-> -distanceControllerPiece.calculate(limelightObject.getDistanceFromPieceVertical(), .5)+.5;
     DoubleSupplier shareableNum = ()->(drivetrain.getYawOffsetDegrees().getDegrees()-drivetrain.getPose().getRotation().getDegrees()+limelightObject.getHorizontalRotationFromPiece().getDegrees()-90)*Math.PI/180;
-    DoubleSupplier xAxis = () -> 
+    DoubleSupplier xAxis = () ->
       (-Math.sin(shareableNum.getAsDouble()))*distanceSpeed.getAsDouble()
       /Math.max(Math.max(Math.abs(xboxController.getLeftX()* TunerConstants.kSpeedAt12VoltsMps), Math.abs(xboxController.getLeftY()* TunerConstants.kSpeedAt12VoltsMps)),1)
       -xboxController.getLeftY() * TunerConstants.kSpeedAt12VoltsMps;
@@ -177,7 +181,7 @@ public class FactoryCommands extends SubsystemBase{
       -xboxController.getLeftX() * TunerConstants.kSpeedAt12VoltsMps;
     thetaControllerSpeaker.reset();
     
-    DoubleSupplier rotationalVelocity = () -> -thetaControllerPiece.calculate(-limelightObject.getHorizontalRotationFromPiece().getDegrees(),0);
+    DoubleSupplier rotationalVelocity = () -> thetaControllerPiece.calculate(-limelightObject.getHorizontalRotationFromPiece().getDegrees(),0);
 
     return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble())
           .withVelocityY(yAxis.getAsDouble())
@@ -185,16 +189,19 @@ public class FactoryCommands extends SubsystemBase{
   }
   private final PIDController distanceControllerSpeaker = new PIDController(1.7, 0, 0.2);
 
-  private final Pose2d speakerPose;
-  {
-     Pose2d pose = LimelightConstants.K_TAG_LAYOUT.getTagPose(7).get().toPose2d();
-    if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get().equals(Alliance.Red)){
-      pose = LimelightConstants.K_TAG_LAYOUT.getTagPose(4).get().toPose2d();
-    }
-    speakerPose = pose;
-  }
 
-  public Command getInRange() {
+  // Pose2d speakerPose = LimelightConstants.K_TAG_LAYOUT.getTagPose(7).get().toPose2d();
+  // {
+  //   if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get().equals(Alliance.Red)){
+  //     speakerPose = LimelightConstants.K_TAG_LAYOUT.getTagPose(4).get().toPose2d();
+  //   }
+  // }
+  public DeferredCommand getInRange() {
+    Pose2d speakerPose = LimelightConstants.K_TAG_LAYOUT.getTagPose(7).get().toPose2d();
+    if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get().equals(Alliance.Red)){
+      speakerPose = LimelightConstants.K_TAG_LAYOUT.getTagPose(4).get().toPose2d();
+    }
+  
     Pose2d alignPose = speakerPose;
 
     DoubleSupplier distanceSpeed = ()-> -distanceControllerSpeaker.calculate(drivetrain.getDistanceFromPoseMeters(alignPose), 2.395);
@@ -226,23 +233,44 @@ public class FactoryCommands extends SubsystemBase{
       }
     };
 
-    return drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble()) 
+    return new DeferredCommand(()->drivetrain.applyRequest(() -> drive.withVelocityX(xAxis.getAsDouble()) 
           .withVelocityY(yAxis.getAsDouble())
-          .withRotationalRate(Units.degreesToRadians(rotationalVelocity.getAsDouble())));
+          .withRotationalRate(Units.degreesToRadians(rotationalVelocity.getAsDouble()))),Set.of(drivetrain));
+  }
+  public Command getToPiecePoseCommand(){
+    return Commands.either(Commands.defer(()->AutoToPoint.getToPoint(limelightObject.getPiecePose(),PathOnTheFly.getConfig(0)),Set.of(drivetrain))
+      ,Commands.none(),()->limelightObject.isPiecePresent());
+  }
+  public Command getToPieceCommand(){
+    return Commands.either(Commands.defer(()->getToPiecePoseCommand().until(()->PoseEX.getDistanceFromPoseMeters(limelightObject.getPiecePose(),drivetrain.getPose())<1).andThen(alignToPiece()),Set.of(drivetrain))
+      ,Commands.none(),()->limelightObject.isPiecePresent());
+  }
+  public DeferredCommand getToSpeakerCommand(){
+    Supplier<Pose2d> speakerPose = ()->{
+      if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get().equals(Alliance.Red)){
+        return LimelightConstants.K_TAG_LAYOUT.getTagPose(4).get().toPose2d();
+      }
+      return LimelightConstants.K_TAG_LAYOUT.getTagPose(7).get().toPose2d();
+    };
+    DoubleSupplier turn = ()->{
+      if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get().equals(Alliance.Red)){
+        return 180;
+      }
+      return 0;
+    };
+    return new DeferredCommand(()->
+      AutoToPoint.getToPoint(PoseEX.getInbetweenPose2d(speakerPose.get(), drivetrain.getPose(), 2)
+      .transformBy(new Transform2d(0,0,PoseEX.getPoseAngle(drivetrain.getPose(),speakerPose.get())
+      .plus(Rotation2d.fromDegrees(turn.getAsDouble())))),PathOnTheFly.getConfig(0))
+      .until(()->PoseEX.getDistanceFromPoseMeters(speakerPose.get(),drivetrain.getPose())<4).andThen(getInRange()),Set.of(drivetrain));
   }
 
-  public Command getToPieceCommand(){
-    if (limelightObject.isPiecePresent()){
-      return AutoToPoint.getToPoint(limelightObject.getPiecePose().get(),PathOnTheFly.getConfig(0));
-    }
-    return Commands.none();
-  }
   public enum State{
-    
     Amp,
     Speaker,
     Intake;
   }
+
   State state = State.Speaker;
   public Command switchState(State newState){
     switch (newState) {
@@ -260,7 +288,32 @@ public class FactoryCommands extends SubsystemBase{
     return state;
   }
 
+  double initPosition;
+  double initGyro;
+  double driveBaseRadius;
+  public DeferredCommand findWheelRadius(){
+    return new DeferredCommand(()->Commands.deadline(Commands.waitSeconds(60),
+      Commands.runOnce(()->{
+        initPosition = Units.rotationsToRadians(drivetrain.getModule(0).getDriveMotor().getPosition().getValueAsDouble());
+        initGyro = Units.degreesToRadians(drivetrain.getPigeon2().getYaw().getValueAsDouble());
+        driveBaseRadius = TunerConstants.driveBaseRadius;
+      }).andThen(
+      drivetrain.applyRequest(() -> drive.withVelocityX(0)
+      .withVelocityY(0)
+      .withRotationalRate(Units.degreesToRadians(360)))))
+      .andThen(Commands.defer(()->Commands.print("Wheel Radius Inches: " +
+      "\n"+
+      Math.abs((Math.abs(initGyro)-Math.abs(Units.degreesToRadians(drivetrain.getPigeon2().getYaw().getValueAsDouble()))))+
+      "\n"+
+      Math.abs(Math.abs(initPosition)-Math.abs(Units.rotationsToRadians(drivetrain.getModule(0).getDriveMotor().getPosition().getValueAsDouble())))+
+      "\n"+
+      (Math.abs((Math.abs(initGyro)-Math.abs(Units.degreesToRadians(drivetrain.getPigeon2().getYaw().getValueAsDouble()))))
+      *driveBaseRadius/Math.abs(Math.abs(initPosition)-Math.abs(Units.rotationsToRadians(drivetrain.getModule(0).getDriveMotor().getPosition().getValueAsDouble()))))
+      ),Set.of()))
+      ,Set.of(drivetrain));
+  }
+
   public void periodic(){
-    
+
   }
 }

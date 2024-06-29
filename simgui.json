@@ -75,6 +75,11 @@
       }
     }
   },
+  "NetworkTables": {
+    "Persistent Values": {
+      "open": false
+    }
+  },
   "NetworkTables Info": {
     "visible": true
   }

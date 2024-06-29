@@ -18,6 +18,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.DoubleArrayPublisher;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -26,6 +27,7 @@ import frc.robot.LimelightHelpers;
 import frc.robot.Robot;
 import frc.robot.constants.LimelightConstants;
 import frc.robot.simulationUtil.ObjectDetectionSim;
+import frc.robot.util.PoseEX;
 
 public class ObjectDetection extends SubsystemBase {
     private String limelightName;
@@ -33,18 +35,40 @@ public class ObjectDetection extends SubsystemBase {
     private Supplier<Pose2d> robotPose = null;
     private ObjectDetectionSim objectDetectionSim;
 
-    private Consumer<Pose2d> m_telemetryFunction = null;
+    private Consumer<ObjectDetectionState> m_telemetryFunction = null;
 
     /** Creates a new ObjectDetection. */
     public ObjectDetection(String limelightName, Transform3d limelightTransform, Supplier<Pose2d> robotPose) {
         this.limelightName = limelightName;
-        this.limelightTransform = limelightTransform; 
+        this.limelightTransform = limelightTransform;
         this.robotPose = robotPose;
         objectDetectionSim = new ObjectDetectionSim(limelightTransform, VecBuilder.fill(63.3,49.7), VecBuilder.fill(3,7), robotPose);
-        objectDetectionSim.addObjectPose(new Pose3d(5,5,1,new Rotation3d(0,0,0)));
+        objectDetectionSim.addObjectPose(new Pose3d(3,4,0,new Rotation3d(0,0,0)));
+        objectDetectionSim.addObjectPose(new Pose3d(3,5.5,0,new Rotation3d(0,0,0)));
+        objectDetectionSim.addObjectPose(new Pose3d(3,7,0,new Rotation3d(0,0,0)));
+        objectDetectionSim.addObjectPose(new Pose3d(8.5,7,0,new Rotation3d(0,0,0)));
+        objectDetectionSim.addObjectPose(new Pose3d(8.5,5.5,0,new Rotation3d(0,0,0)));
+        objectDetectionSim.addObjectPose(new Pose3d(8.5,4,0,new Rotation3d(0,0,0)));
+        objectDetectionSim.addObjectPose(new Pose3d(8.5,2.5,0,new Rotation3d(0,0,0)));
+        objectDetectionSim.addObjectPose(new Pose3d(8.5,1,0,new Rotation3d(0,0,0)));
+        objectDetectionSim.addObjectPose(new Pose3d(14,4,0,new Rotation3d(0,0,0)));
+        objectDetectionSim.addObjectPose(new Pose3d(14,5.5,0,new Rotation3d(0,0,0)));
+        objectDetectionSim.addObjectPose(new Pose3d(14,7,0,new Rotation3d(0,0,0)));
     }
 
-    public void registerTelemetry(Consumer<Pose2d> telemetryFunction) {
+    public static class ObjectDetectionState{
+
+        public Pose2d seenPose;
+
+        public Pose2d intendedPose;
+
+        public ObjectDetectionState(Pose2d seenPose, Pose2d intendedPose){
+            this.seenPose = seenPose;
+            this.intendedPose = intendedPose;
+        }
+
+    }
+    public void registerTelemetry(Consumer<ObjectDetectionState> telemetryFunction) {
         m_telemetryFunction = telemetryFunction;
     }
 
@@ -57,11 +81,10 @@ public class ObjectDetection extends SubsystemBase {
         // System.out.println(Rotation2d.fromDegrees(-LimelightHelpers.getTX("limelight-object")));
         if (m_telemetryFunction!=null){
             try {
-                m_telemetryFunction.accept(getPiecePose().get());
+                m_telemetryFunction.accept(new ObjectDetectionState(getPiecePose(),objectDetectionSim.getClosestVisiblePiece().get().toPose2d()));
             } catch (Exception e) {
-                m_telemetryFunction.accept(new Pose2d(-1,-1, new Rotation2d()));
+                m_telemetryFunction.accept(new ObjectDetectionState(new Pose2d(-1,-1, new Rotation2d()),new Pose2d(-1,-1, new Rotation2d())));
             }
-            
         }
     }
 
@@ -103,12 +126,12 @@ public class ObjectDetection extends SubsystemBase {
             double limelightLensHeightInches = Units.metersToInches(limelightTransform.getZ()); 
 
             // distance from the target to the floor
-            double goalHeightInches = 1; 
+            double goalHeightInches = 1;
 
             double angleToGoalDegrees = -limelightMountAngleDegrees + targetOffsetAngle_Vertical;
 
-            double angleToGoalRadians = angleToGoalDegrees * (3.14159 / 180.0);
-            return  Units.inchesToMeters((goalHeightInches - limelightLensHeightInches) / Math.tan(angleToGoalRadians))+limelightTransform.getY();
+            double angleToGoalRadians = Units.degreesToRadians(angleToGoalDegrees);
+            return  Units.inchesToMeters((goalHeightInches - limelightLensHeightInches) / Math.tan(angleToGoalRadians))-limelightTransform.getY();
         }
         return 0;
     }
@@ -121,20 +144,23 @@ public class ObjectDetection extends SubsystemBase {
 
             double angleToGoalDegrees = limelightMountAngleDegrees + targetOffsetAngle_Horizontal;
 
-            double angleToGoalRadians = angleToGoalDegrees * (3.14159 / 180.0);
-            return getDistanceFromPieceVertical()*Math.tan(angleToGoalRadians);//+LimelightConstants.AMP_CAM_TRANSFORM.getX();
+            double angleToGoalRadians = Units.degreesToRadians(angleToGoalDegrees);
+            return getDistanceFromPieceVertical()*Math.tan(angleToGoalRadians);
         }
         return 0;
     }
-    public Optional<Pose2d> getPiecePose(){
-        if (isPiecePresent() && robotPose != null){
+    public Pose2d getPiecePose(){
+        if (isPiecePresent()){
             Pose2d pose = robotPose.get();
             double x = getDistanceFromPieceVertical();
             double y = getDistanceFromPieceHorizontal();
             double xn = x*Math.cos(pose.getRotation().getRadians())- y*Math.sin(pose.getRotation().getRadians());
             double yn = x*Math.sin(pose.getRotation().getRadians())+ y*Math.cos(pose.getRotation().getRadians());
-            return Optional.of(new Pose2d(xn+pose.getX(),yn+pose.getY(),new Rotation2d()));
+            return new Pose2d(xn+pose.getX(),yn+pose.getY(),Rotation2d.fromDegrees(PoseEX.getYawFromPose(pose, new Pose2d(xn+pose.getX(),yn+pose.getY(), new Rotation2d())).getDegrees()+robotPose.get().getRotation().getDegrees()));
         }
-        return null;
+        return new Pose2d(-1,-1,new Rotation2d());
+    }
+    public ObjectDetectionSim getSim(){
+        return objectDetectionSim;
     }
 }

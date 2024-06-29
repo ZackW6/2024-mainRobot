@@ -39,7 +39,7 @@ public class TunerConstants {
 
     // The stator current at which the wheels start to slip;
     // This needs to be tuned to your individual robot
-    private static final double kSlipCurrentA = 300;
+    private static final double kSlipCurrentA = 300;//TODO do not use like this
 
     // Theoretical free speed (m/s) at 12v applied output;
     // This needs to be tuned to your individual robot
@@ -92,6 +92,7 @@ public class TunerConstants {
 
 
     // Front Left
+    public static final double driveBaseRadius = 9.375;
     private static final int kFrontLeftDriveMotorId = 2;
     private static final int kFrontLeftSteerMotorId = 1;
     private static final int kFrontLeftEncoderId = 1;

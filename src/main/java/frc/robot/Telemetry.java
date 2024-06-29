@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
+import frc.robot.subsystems.ObjectDetection.ObjectDetectionState;
 
 public class Telemetry {
     private final double MaxSpeed;
@@ -57,6 +58,7 @@ public class Telemetry {
     // StructPublisher<Rotation2d> visionRotation = vision
     // .getStructTopic("visionRotation",Rotation2d.struct).publish();
     private final DoubleArrayPublisher piecePose = table.getDoubleArrayTopic("piecePose").publish();
+    private final DoubleArrayPublisher pieceIntendedPose = table.getDoubleArrayTopic("pieceIntendedPose").publish();
     private final DoubleArrayPublisher robotPose = table.getDoubleArrayTopic("robotPose").publish();
     private final StringPublisher fieldTypePub = table.getStringTopic(".type").publish();
     
@@ -143,11 +145,16 @@ public class Telemetry {
             SmartDashboard.putData("Module " + i, m_moduleMechanisms[i]);
         }
     }
-    public void registerPieceTelemetry(Pose2d pose){
+    public void registerPieceTelemetry(ObjectDetectionState state){
         piecePose.set(new double[] {
-            pose.getX(),
-            pose.getY(),
-            pose.getRotation().getDegrees()
+            state.seenPose.getX(),
+            state.seenPose.getY(),
+            90
+        });
+        pieceIntendedPose.set(new double[] {
+            state.intendedPose.getX(),
+            state.intendedPose.getY(),
+            90
         });
     }
 }

@@ -78,7 +78,7 @@ public class PathOnTheFly {
                         return getToPoint(pose, defaultPathConfig, flip); 
                 }
                 public static Command getToPoint(Pose2d pose, PathConfig pathConfig){
-                        return getToPoint(pose, pathConfig, false); 
+                        return getToPoint(pose, pathConfig, false);
                 }
                 public static Command getToPoint(double x, double y, double degrees){
                         Pose2d targetPose = new Pose2d(x, y, Rotation2d.fromDegrees(degrees));

@@ -4,6 +4,7 @@
 
 package frc.robot.commands;
 
+import java.util.Set;
 import java.util.function.BooleanSupplier;
 
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -48,14 +49,18 @@ public class OnTheFlyAutos {
     this.limelightObjectDetection = limelightCam;
     this.groupCommands = groupCommands;
   }
-    public Command getVariable45() {
-    if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get().equals(Alliance.Red)){
-      drivetrain.seedFieldRelative(new Pose2d(new Translation2d(15.09,7.37), Rotation2d.fromDegrees(180)));
-    }else{
-      drivetrain.seedFieldRelative(new Pose2d(new Translation2d(1.49,7.37), Rotation2d.fromDegrees(0)));
-    }
+  public Command getConditionalAuto() {
+    // if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get().equals(Alliance.Red)){
+    //   drivetrain.seedFieldRelative(new Pose2d(new Translation2d(15.09,7.37), Rotation2d.fromDegrees(180)));
+    // }else{
+    //   drivetrain.seedFieldRelative(new Pose2d(new Translation2d(1.49,7.37), Rotation2d.fromDegrees(0)));
+    // }
     
-    return AutoBuilder.followPath(PathPlannerPath.fromPathFile("S-A 4.5 piece continuous")).andThen(Commands.either(
+    return Commands.defer(()->Commands.either(
+      Commands.runOnce(()->drivetrain.seedFieldRelative(new Pose2d(new Translation2d(15.09,7.37), Rotation2d.fromDegrees(180))))
+      , Commands.runOnce(()->drivetrain.seedFieldRelative(new Pose2d(new Translation2d(1.49,7.37), Rotation2d.fromDegrees(0))))
+      , ()->(DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get().equals(Alliance.Red))),Set.of(drivetrain))
+      .andThen(AutoBuilder.followPath(PathPlannerPath.fromPathFile("S-A 4.5 piece continuous"))).andThen(Commands.either(
       AutoBuilder.pathfindThenFollowPath(
             PathPlannerPath.fromPathFile("6 shoot"),
             new PathConstraints(
@@ -66,36 +71,37 @@ public class OnTheFlyAutos {
   }
 
   public Command getOnTheFlyAuto() {
-    if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get().equals(Alliance.Red)){
-      drivetrain.seedFieldRelative(new Pose2d(new Translation2d(15.07,7.37), Rotation2d.fromDegrees(180)));
-    }else{
-      drivetrain.seedFieldRelative(new Pose2d(new Translation2d(1.49,7.37), Rotation2d.fromDegrees(0)));
-    }
     Command optionOne = new SequentialCommandGroup(Commands.deadline(groupCommands.intake(),groupCommands.alignToPiece()));
     Command optionTwo = new SequentialCommandGroup(AutoToPoint.getToPoint(new Pose2d(7.72,6.24,Rotation2d.fromDegrees(-37.12)),PathOnTheFly.getConfig(0),true),Commands.deadline(groupCommands.intake(),groupCommands.alignToPiece()));
-    BooleanSupplier reason = ()->limelightObjectDetection.isPiecePresent() && CommandSwerveDrivetrain.poseWithinRange(limelightObjectDetection.getPiecePose().get(),new Pose2d(8.29,7.42,new Rotation2d()),.2);
+    BooleanSupplier reason = ()->limelightObjectDetection.isPiecePresent() && CommandSwerveDrivetrain.poseWithinRange(limelightObjectDetection.getPiecePose(),new Pose2d(8.29,7.42,new Rotation2d()),.2);
     
-    return Commands.sequence(AutoToPoint.getToPoint(new Pose2d(7.11,7.44,Rotation2d.fromDegrees(0)),PathOnTheFly.getConfig(0),true)
+    return Commands.defer(()->Commands.either(
+      Commands.runOnce(()->drivetrain.seedFieldRelative(new Pose2d(new Translation2d(15.09,7.37), Rotation2d.fromDegrees(180))))
+      , Commands.runOnce(()->drivetrain.seedFieldRelative(new Pose2d(new Translation2d(1.49,7.37), Rotation2d.fromDegrees(0))))
+      , ()->(DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get().equals(Alliance.Red))),Set.of(drivetrain))
+      .andThen(Commands.sequence(AutoToPoint.getToPoint(new Pose2d(7.11,7.44,Rotation2d.fromDegrees(0)),PathOnTheFly.getConfig(0),true)
     ,Commands.either(optionOne, optionTwo, reason)
     ,AutoToPoint.getToPoint(new Pose2d(5.19,6.18,Rotation2d.fromDegrees(-172.21)),PathOnTheFly.getConfig(0),true)
     ,Commands.deadline(Commands.waitSeconds(3),groupCommands.getInRange())
-    ,groupCommands.speakerShoot(60,80));
+    ,groupCommands.speakerShoot(60,80)));
   }
 
-  public Command onTheFlyAutoPiecePose() {
-    if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get().equals(Alliance.Red)){
-      drivetrain.seedFieldRelative(new Pose2d(new Translation2d(15.07,7.37), Rotation2d.fromDegrees(180)));
-    }else{
-      drivetrain.seedFieldRelative(new Pose2d(new Translation2d(1.49,7.37), Rotation2d.fromDegrees(0)));
-    }
-    Command optionOne = new SequentialCommandGroup(Commands.deadline(groupCommands.intake(),groupCommands.getToPieceCommand()));
-    Command optionTwo = new SequentialCommandGroup(AutoToPoint.getToPoint(new Pose2d(7.72,6.24,Rotation2d.fromDegrees(-37.12)),PathOnTheFly.getConfig(0),true),Commands.deadline(Commands.race(groupCommands.intake(), Commands.waitSeconds(2)),groupCommands.getToPieceCommand()));
-    BooleanSupplier reason = ()->limelightObjectDetection.isPiecePresent() && CommandSwerveDrivetrain.poseWithinRange(limelightObjectDetection.getPiecePose().get(),new Pose2d(8.29,7.42,new Rotation2d()),.2);
+  // public Command onTheFlyAutoPiecePose() {
+  //   Command optionOne = new SequentialCommandGroup(Commands.deadline(groupCommands.intake(),groupCommands.getToPieceCommand()));
+  //   Command optionTwo = new SequentialCommandGroup(AutoToPoint.getToPoint(new Pose2d(7.72,6.24,Rotation2d.fromDegrees(-37.12)),PathOnTheFly.getConfig(0),true),Commands.deadline(Commands.race(groupCommands.intake(), Commands.waitSeconds(2)),groupCommands.getToPieceCommand()));
+  //   BooleanSupplier reason = ()->limelightObjectDetection.isPiecePresent() && CommandSwerveDrivetrain.poseWithinRange(limelightObjectDetection.getPiecePose(),new Pose2d(8.29,7.42,new Rotation2d()),1);
     
-    return Commands.sequence(AutoToPoint.getToPoint(new Pose2d(7.11,7.44,Rotation2d.fromDegrees(0)),PathOnTheFly.getConfig(0),true)
-    ,Commands.either(optionOne, optionTwo, reason)
-    ,AutoToPoint.getToPoint(new Pose2d(5.19,6.18,Rotation2d.fromDegrees(-172.21)),PathOnTheFly.getConfig(0),true)
-    ,Commands.deadline(Commands.waitSeconds(3),groupCommands.getInRange())
-    ,groupCommands.speakerShoot(60,80));
+  //   return Commands.defer(()->Commands.either(
+  //     Commands.runOnce(()->drivetrain.seedFieldRelative(new Pose2d(new Translation2d(15.09,7.37), Rotation2d.fromDegrees(180))))
+  //     , Commands.runOnce(()->drivetrain.seedFieldRelative(new Pose2d(new Translation2d(1.49,7.37), Rotation2d.fromDegrees(0))))
+  //     , ()->(DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get().equals(Alliance.Red))),Set.of(drivetrain))
+  //     .andThen(Commands.sequence(AutoToPoint.getToPoint(new Pose2d(7.11,7.44,Rotation2d.fromDegrees(0)),PathOnTheFly.getConfig(0),true)
+  //   ,Commands.either(optionOne, optionTwo, reason)
+  //   ,AutoToPoint.getToPoint(new Pose2d(5.19,6.18,Rotation2d.fromDegrees(-172.21)),PathOnTheFly.getConfig(0),true)
+  //   ,Commands.deadline(Commands.waitSeconds(3),groupCommands.getInRange())
+  //   ,groupCommands.speakerShoot(60,80)));
+  // }
+  public Command onTheFlyAutoPiecePose(){
+    return Commands.none();
   }
 }

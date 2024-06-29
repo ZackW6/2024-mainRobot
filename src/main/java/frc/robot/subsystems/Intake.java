@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
@@ -50,13 +51,14 @@ import frc.robot.constants.ArmConstants;
 import frc.robot.constants.IntakeConstants;
 import frc.robot.constants.ShooterConstants;
 import frc.robot.simulationUtil.FlyWheelSim;
+import frc.robot.simulationUtil.LimitSwitchSimable;
 
 
 public class Intake extends SubsystemBase{
     private final TalonFX intakeMotor;
 
-    private final DigitalInput limitSwicth1;
-    private final DigitalInput limitSwicth2;
+    private final LimitSwitchSimable limitSwicth1;
+    private final LimitSwitchSimable limitSwicth2;
 
     private final double intakeSpeed = 23.0;//In rps
     private final double outtakeSpeed = -60.0;
@@ -66,8 +68,11 @@ public class Intake extends SubsystemBase{
 
     public Intake(){
         intakeMotor = new TalonFX(IntakeConstants.INTAKE_MOTOR_ID);
-        limitSwicth1 = new DigitalInput(IntakeConstants.LIMIT_SWITCH_ID_1);
-        limitSwicth2 = new DigitalInput(IntakeConstants.LIMIT_SWITCH_ID_2);
+        limitSwicth1 = new LimitSwitchSimable(IntakeConstants.LIMIT_SWITCH_ID_1);
+        limitSwicth2 = new LimitSwitchSimable(IntakeConstants.LIMIT_SWITCH_ID_2);
+
+        limitSwicth1.setSimInverse(true);
+        limitSwicth2.setSimInverse(true);
 
         flywheelSim = new FlyWheelSim(intakeMotor, fSim);
         flywheelSim.addSimImage("Intake Sim",4);
@@ -81,12 +86,13 @@ public class Intake extends SubsystemBase{
 
         configMotors();
     }
+
     private final MotionMagicVelocityTorqueCurrentFOC torqueCurrentFOC = new MotionMagicVelocityTorqueCurrentFOC(0);
 
     public Command intakePiece(){
         if (Robot.isSimulation()){
-            return setVelocity(intakeSpeed).andThen(Commands.waitSeconds(2000)).until(() -> getLimitSwitch())
-                .finallyDo(()->stop());
+            return setVelocity(intakeSpeed).until(() -> getLimitSwitch())
+            .finallyDo(()->stop());
         }
         return setVelocity(intakeSpeed).until(() -> getLimitSwitch())
             .finallyDo(()->stop());
@@ -105,6 +111,11 @@ public class Intake extends SubsystemBase{
 
     public boolean getLimitSwitch(){
         return (!limitSwicth1.get() || !limitSwicth2.get());
+    }
+
+    public void setSimLimitSwitch(boolean bool){
+        limitSwicth1.setSimValue(bool);
+        limitSwicth2.setSimValue(bool);
     }
 
     public double getVelocity(){
@@ -156,5 +167,4 @@ public class Intake extends SubsystemBase{
 
         intakeMotor.getConfigurator().apply(talonFXConfigs);
     }
-    
 }

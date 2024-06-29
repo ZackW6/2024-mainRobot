@@ -50,6 +50,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.commands.FactoryCommands;
+import frc.robot.commands.OnTheFlyAutos;
 import frc.robot.commands.Toggle;
 import frc.robot.constants.GeneralConstants;
 import frc.robot.constants.LimelightConstants;
@@ -86,7 +87,6 @@ public class RobotContainer {
   private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
   private final Telemetry logger = new Telemetry(MaxSpeed);
 
-
   public static Rotation2d autoAngleOffset;
   /* Subsystems */
   private final Arm arm = new Arm();
@@ -96,7 +96,7 @@ public class RobotContainer {
   private final ObjectDetection limelightObject = new ObjectDetection(LimelightConstants.AMP_CAM, LimelightConstants.AMP_CAM_TRANSFORM, ()->drivetrain.getPose());
   // private final Candle candle = new Candle();
   private final FactoryCommands groupCommands = new FactoryCommands(arm, shooter, intake, drivetrain, limelightObject, driverController);
- 
+  private final OnTheFlyAutos onTheFlyAutos = new OnTheFlyAutos(arm, shooter, intake, drivetrain, limelightObject, driverController, groupCommands);
   private void configureBindings() {
     /* Setup Default Commands */
      Command initState = groupCommands.switchState(State.Speaker);
@@ -112,12 +112,13 @@ public class RobotContainer {
     drivetrain.setDefaultCommand(
         drivetrain.applyRequest(() -> drive.withVelocityX(-driverController.getLeftY() * 1.00 * MaxSpeed)
             .withVelocityY(-driverController.getLeftX() * 1.00 * MaxSpeed)
-            .withRotationalRate(-driverController.getRightX() * 2/3 * MaxAngularRate)
+            .withRotationalRate(-driverController.getRightX()/*driverController.getRawAxis(2)*/ * 2/3 * MaxAngularRate)
     ));
 
     /* Controller Bindings */
 
     driverController.y().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldRelative()));
+    driverController.y().onTrue(groupCommands.findWheelRadius());
     driverController.rightBumper().whileTrue(groupCommands.intake());//.whileFalse(Commands.runOnce(()->arm.setArmRotation(arm.lastMainState())));
     driverController.leftBumper().onTrue(groupCommands.shoot());
     driverController.rightTrigger(.5).whileTrue(drivetrain.applyRequest(() -> brake));
@@ -126,8 +127,8 @@ public class RobotContainer {
     .onFalse(Commands.runOnce(()->shooter.setIdleSpeed(0,0)));
     driverController.rightStick().whileTrue(groupCommands.alignToCorner());
     driverController.a().whileTrue(groupCommands.alignToAmp());//.and(() -> driverController.x().getAsBoolean());
-    // driverController.b().whileTrue(Commands.either(Commands.none(), groupCommands.alignToPiece(),()-> intake.isPiecePresent()));
-    // driverController.x().whileTrue(AutoToPath.getToPath("Feed Shoot", new PathConfig(2,2,Rotation2d.fromDegrees(120),Rotation2d.fromDegrees(120),0,0)).andThen(groupCommands.loadAndShootAutoTertiary()));
+    driverController.b().whileTrue(groupCommands.getToPieceCommand());//Commands.either(Commands.none(), groupCommands.alignToPiece(),()-> intake.isPiecePresent()));
+    driverController.x().whileTrue(AutoToPoint.getToPoint(new Pose2d(9,1.2,Rotation2d.fromDegrees(145)), new PathConfig(4,4,Rotation2d.fromDegrees(120),Rotation2d.fromDegrees(120),0,0)).andThen(groupCommands.shoot()));
     // driverController.x().onTrue(Commands.runOnce(()->shooter.setIdleSpeed(60))).onFalse(Commands.runOnce(()->shooter.setIdleSpeed(0)));
 
     // operatorController.y().whileTrue(AutoToPoint.getToPoint(8.47,1.03,-25.16, new PathConfig(2,2,Rotation2d.fromDegrees(120),Rotation2d.fromDegrees(120),0,0),true));
@@ -145,7 +146,7 @@ public class RobotContainer {
     operatorController.rightBumper().onTrue(Commands.runOnce(()->shooter.setIdleSpeed(0,0)));
     
     if (Utils.isSimulation()) {
-      drivetrain.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
+      drivetrain.seedFieldRelative(new Pose2d(new Translation2d(3,1), Rotation2d.fromDegrees(90)));
     }
     drivetrain.registerTelemetry(logger::telemeterize);
     limelightObject.registerTelemetry(logger::registerPieceTelemetry);
@@ -161,17 +162,18 @@ public class RobotContainer {
 
   public RobotContainer() {
     drivetrain.configurePathPlanner();
-    configureBindings();
-    configureAutonomousCommands();
+    PathOnTheFly.PathConfig pathConfig = new PathOnTheFly.PathConfig(5,5,Rotation2d.fromDegrees(720),Rotation2d.fromDegrees(720),0,0);
+    PathOnTheFly.addConfig(pathConfig,0);
 
+    configureAutonomousCommands();
     autoChooser = AutoBuilder.buildAutoChooser();
     SmartDashboard.putData("Auto Chooser", autoChooser);
 
-    PathOnTheFly.PathConfig pathConfig = new PathOnTheFly.PathConfig(5,5,Rotation2d.fromDegrees(540),Rotation2d.fromDegrees(540),0,0);
-    PathOnTheFly.addConfig(pathConfig,0);
+    configureBindings();
 
-    // autoChooser.addOption("Conditional Auto", onTheFlyAutos.getAutonomousCommandSpecial());
-    // autoChooser.addOption("OnTheFlyAuto", onTheFlyAutos.onTheFlyAutoPiecePose());
+    autoChooser.addOption("Conditional Auto", onTheFlyAutos.getConditionalAuto());
+    autoChooser.addOption("OnTheFlyFindAuto", onTheFlyAutos.getOnTheFlyAuto());
+    autoChooser.addOption("OnTheFlyPoseAuto", onTheFlyAutos.onTheFlyAutoPiecePose());
   }
 
   public void configureAutonomousCommands() {

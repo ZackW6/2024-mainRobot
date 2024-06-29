@@ -7,7 +7,7 @@ public class ArmConstants{
 
         //ONLY IN SIM
         public static final double ARM_WEIGHT_KG = 3;
-        public static final double ARM_LENGTH_METERS = .4;
+        public static final double ARM_LENGTH_METERS = .3;
         public static final double ARM_REDUCTION = 32;
         public static final double MAX_ARM_ANGLE_RAD = Units.degreesToRadians(180);
         public static final double MIN_ARM_ANGLE_RAD = Units.degreesToRadians(-180);

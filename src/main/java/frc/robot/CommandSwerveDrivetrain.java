@@ -27,6 +27,7 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.constants.LimelightConstants;
+import frc.robot.util.PoseEX;
 
 /**
  * Class that extends the Phoenix SwerveDrivetrain class and implements subsystem
@@ -73,7 +74,6 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
 
     @Override
     public void periodic(){
-
         if (/*DriverStation.isTeleopEnabled() && */!Robot.isSimulation()){
             updateVisionPose(LimelightConstants.LIMELIGHT_NAME);
         }
@@ -124,23 +124,7 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
         return Rotation2d.fromDegrees(m_pigeon2.getYaw().getValueAsDouble());
     }
     public Rotation2d getAngleFromPose(Pose2d pose) {
-        double deltaX;
-        double deltaY;
-        deltaX = pose.getX() - getPose().getX();
-        deltaY = pose.getY() - getPose().getY();
-
-        double angleRadians = ((Math.atan(deltaY/deltaX)));
-
-        // Convert the angle to Rotation2d
-        Rotation2d rotation = Rotation2d.fromRadians(angleRadians - getPose().getRotation().getRadians());
-        if (getPose().getX()>pose.getX()){
-            if (rotation.getDegrees()>0){
-                rotation = Rotation2d.fromDegrees(Units.radiansToDegrees(angleRadians) - getPose().getRotation().getDegrees()-180);
-            }else{
-                rotation = Rotation2d.fromDegrees(Units.radiansToDegrees(angleRadians) - getPose().getRotation().getDegrees()+180);
-            }
-        }
-        return rotation;
+        return PoseEX.getYawFromPose(getPose(), pose);
     }
     public Rotation2d getAngleFromCorner() {
         Pose2d pose = new Pose2d(0,8.1026,new Rotation2d());
@@ -151,14 +135,11 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     }
 
     public Rotation2d getPoseAngle(Pose2d pose) {
-        double deltaX = pose.getX() - getPose().getX();
-        double deltaY = pose.getY() - getPose().getY();
-        double angleRadians = ((Math.atan(deltaY/deltaX)));
-        return Rotation2d.fromRadians(angleRadians);
+        return PoseEX.getPoseAngle(getPose(), pose);
     }
 
     public double getDistanceFromPoseMeters(Pose2d pose) {
-        return Math.sqrt(Math.pow(pose.getX()-getPose().getX(),2)+Math.pow(pose.getY()-getPose().getY(),2));
+        return PoseEX.getDistanceFromPoseMeters(getPose(), pose);
     }
 
     public void seedFieldRelative(double degrees) {
