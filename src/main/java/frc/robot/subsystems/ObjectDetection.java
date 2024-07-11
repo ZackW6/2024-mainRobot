@@ -30,6 +30,7 @@ import frc.robot.simulationUtil.ObjectDetectionSim;
 import frc.robot.util.PoseEX;
 
 public class ObjectDetection extends SubsystemBase {
+    
     private String limelightName;
     private Transform3d limelightTransform;
     private Supplier<Pose2d> robotPose = null;
@@ -43,17 +44,17 @@ public class ObjectDetection extends SubsystemBase {
         this.limelightTransform = limelightTransform;
         this.robotPose = robotPose;
         objectDetectionSim = new ObjectDetectionSim(limelightTransform, VecBuilder.fill(63.3,49.7), VecBuilder.fill(3,7), robotPose);
-        objectDetectionSim.addObjectPose(new Pose3d(3,4,0,new Rotation3d(0,0,0)));
-        objectDetectionSim.addObjectPose(new Pose3d(3,5.5,0,new Rotation3d(0,0,0)));
-        objectDetectionSim.addObjectPose(new Pose3d(3,7,0,new Rotation3d(0,0,0)));
-        objectDetectionSim.addObjectPose(new Pose3d(8.5,7,0,new Rotation3d(0,0,0)));
-        objectDetectionSim.addObjectPose(new Pose3d(8.5,5.5,0,new Rotation3d(0,0,0)));
-        objectDetectionSim.addObjectPose(new Pose3d(8.5,4,0,new Rotation3d(0,0,0)));
-        objectDetectionSim.addObjectPose(new Pose3d(8.5,2.5,0,new Rotation3d(0,0,0)));
-        objectDetectionSim.addObjectPose(new Pose3d(8.5,1,0,new Rotation3d(0,0,0)));
-        objectDetectionSim.addObjectPose(new Pose3d(14,4,0,new Rotation3d(0,0,0)));
-        objectDetectionSim.addObjectPose(new Pose3d(14,5.5,0,new Rotation3d(0,0,0)));
-        objectDetectionSim.addObjectPose(new Pose3d(14,7,0,new Rotation3d(0,0,0)));
+        objectDetectionSim.addObjectPose(new Pose3d(2.88,4.1,0,new Rotation3d(0,0,0)));
+        objectDetectionSim.addObjectPose(new Pose3d(2.88,5.6,0,new Rotation3d(0,0,0)));
+        objectDetectionSim.addObjectPose(new Pose3d(2.88,7.1,0,new Rotation3d(0,0,0)));
+        objectDetectionSim.addObjectPose(new Pose3d(8.27,7.4,0,new Rotation3d(0,0,0)));
+        objectDetectionSim.addObjectPose(new Pose3d(8.27,5.7,0,new Rotation3d(0,0,0)));
+        objectDetectionSim.addObjectPose(new Pose3d(8.27,4.1,0,new Rotation3d(0,0,0)));
+        objectDetectionSim.addObjectPose(new Pose3d(8.27,2.4,0,new Rotation3d(0,0,0)));
+        objectDetectionSim.addObjectPose(new Pose3d(8.27,.8,0,new Rotation3d(0,0,0)));
+        objectDetectionSim.addObjectPose(new Pose3d(13.661,4.1,0,new Rotation3d(0,0,0)));
+        objectDetectionSim.addObjectPose(new Pose3d(13.661,5.6,0,new Rotation3d(0,0,0)));
+        objectDetectionSim.addObjectPose(new Pose3d(13.661,7.1,0,new Rotation3d(0,0,0)));
     }
 
     public static class ObjectDetectionState{
@@ -68,6 +69,7 @@ public class ObjectDetection extends SubsystemBase {
         }
 
     }
+
     public void registerTelemetry(Consumer<ObjectDetectionState> telemetryFunction) {
         m_telemetryFunction = telemetryFunction;
     }
@@ -118,45 +120,76 @@ public class ObjectDetection extends SubsystemBase {
 
     public double getDistanceFromPieceVertical(){
         if (isPiecePresent()){
-            double targetOffsetAngle_Vertical = getVerticalRotationFromPiece().getDegrees();
+            double targetOffsetAngle_Vertical = getVerticalRotationFromPiece().getRadians();
             // how many degrees back is your limelight rotated from perfectly vertical?
-            double limelightMountAngleDegrees = Units.radiansToDegrees(limelightTransform.getRotation().getY()); 
+            double limelightMountAngleDegrees = limelightTransform.getRotation().getY();
 
             // distance from the center of the Limelight lens to the floor
-            double limelightLensHeightInches = Units.metersToInches(limelightTransform.getZ()); 
+            double limelightLensHeightMeters = limelightTransform.getZ();
 
             // distance from the target to the floor
-            double goalHeightInches = 1;
+            double goalHeightMeters = 0;
 
-            double angleToGoalDegrees = -limelightMountAngleDegrees + targetOffsetAngle_Vertical;
+            double angleToGoalRadians = limelightMountAngleDegrees + targetOffsetAngle_Vertical;
 
-            double angleToGoalRadians = Units.degreesToRadians(angleToGoalDegrees);
-            return  Units.inchesToMeters((goalHeightInches - limelightLensHeightInches) / Math.tan(angleToGoalRadians))-limelightTransform.getY();
+            return  (limelightLensHeightMeters-goalHeightMeters) / -(Math.sin(angleToGoalRadians));
         }
         return 0;
     }
+
     public double getDistanceFromPieceHorizontal(){
         if (isPiecePresent()){
-            double targetOffsetAngle_Horizontal = getHorizontalRotationFromPiece().getDegrees();
-            
+            double targetOffsetAngle_Horizontal = getHorizontalRotationFromPiece().getRadians();
+
             // what is the yaw of your limelight
-            double limelightMountAngleDegrees = Units.radiansToDegrees(limelightTransform.getRotation().getZ()); 
+            double limelightMountAngleRadians = limelightTransform.getRotation().getZ(); 
 
-            double angleToGoalDegrees = limelightMountAngleDegrees + targetOffsetAngle_Horizontal;
-
-            double angleToGoalRadians = Units.degreesToRadians(angleToGoalDegrees);
+            double angleToGoalRadians = limelightMountAngleRadians + targetOffsetAngle_Horizontal;
             return getDistanceFromPieceVertical()*Math.tan(angleToGoalRadians);
         }
         return 0;
     }
+
     public Pose2d getPiecePose(){
         if (isPiecePresent()){
-            Pose2d pose = robotPose.get();
-            double x = getDistanceFromPieceVertical();
-            double y = getDistanceFromPieceHorizontal();
-            double xn = x*Math.cos(pose.getRotation().getRadians())- y*Math.sin(pose.getRotation().getRadians());
-            double yn = x*Math.sin(pose.getRotation().getRadians())+ y*Math.cos(pose.getRotation().getRadians());
-            return new Pose2d(xn+pose.getX(),yn+pose.getY(),Rotation2d.fromDegrees(PoseEX.getYawFromPose(pose, new Pose2d(xn+pose.getX(),yn+pose.getY(), new Rotation2d())).getDegrees()+robotPose.get().getRotation().getDegrees()));
+            Pose3d initialPose = new Pose3d(robotPose.get()).transformBy(limelightTransform);
+            double initialPitch = initialPose.getRotation().getY(); // Initial pose's pitch in radians
+            double pitch = Math.toRadians(getVerticalRotationFromPiece().getDegrees()); // Target pitch in radians
+            double yaw = Math.toRadians(getHorizontalRotationFromPiece().getDegrees()); // Target yaw in radians
+        
+            // Calculate total pitch and yaw
+            double totalPitch = initialPitch + pitch;
+            double totalYaw = initialPose.getRotation().getZ() + yaw;
+        
+            // Calculate direction vector components
+            double dx = Math.cos(totalPitch) * Math.cos(totalYaw);
+            double dy = Math.cos(totalPitch) * Math.sin(totalYaw);
+            double dz = Math.sin(totalPitch);
+
+            // Initial position
+            double x0 = initialPose.getX();
+            double y0 = initialPose.getY();
+            double z0 = initialPose.getZ();
+        
+            // Calculate distance to the floor
+            double t = z0 / -dz;
+        
+            // Calculate new position
+            double newX = x0 + t * dx;
+            double newY = y0 + t * dy;
+            double newZ = 0; // Object is resting on the floor
+        
+            // Create new orientation (pitch and yaw)
+            Rotation3d newRotation = new Rotation3d(totalPitch, 0, totalYaw);
+        
+            // Create and return new pose
+            return new Pose3d(newX, newY, newZ, newRotation).toPose2d();
+            // Pose2d pose = robotPose.get();
+            // double x = getDistanceFromPieceVertical();
+            // double y = getDistanceFromPieceHorizontal();
+            // double xn = x*Math.cos(pose.getRotation().getRadians())- y*Math.sin(pose.getRotation().getRadians());
+            // double yn = x*Math.sin(pose.getRotation().getRadians())+ y*Math.cos(pose.getRotation().getRadians());
+            // return new Pose2d(xn+pose.getX(),yn+pose.getY(),Rotation2d.fromDegrees(PoseEX.getYawFromPose(pose, new Pose2d(xn+pose.getX(),yn+pose.getY(), new Rotation2d())).getDegrees()+robotPose.get().getRotation().getDegrees()));
         }
         return new Pose2d(-1,-1,new Rotation2d());
     }

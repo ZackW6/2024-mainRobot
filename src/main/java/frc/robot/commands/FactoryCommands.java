@@ -13,6 +13,8 @@ import java.util.function.Supplier;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest.SwerveControlRequestParameters;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.path.PathPlannerPath;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -40,6 +42,8 @@ import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.CommandSwerveDrivetrain;
 import frc.robot.commands.FactoryCommands.State;
+import frc.robot.commands.PathOnTheFly.AutoToPoint;
+import frc.robot.commands.PathOnTheFly.PathConfig;
 import frc.robot.constants.LimelightConstants;
 import frc.robot.constants.ShooterConstants;
 import frc.robot.generated.TunerConstants;
@@ -49,9 +53,7 @@ import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.ObjectDetection;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.Arm.ArmState;
-import frc.robot.util.PathOnTheFly;
 import frc.robot.util.PoseEX;
-import frc.robot.util.PathOnTheFly.AutoToPoint;
 
 public class FactoryCommands extends SubsystemBase{
   private Arm arm;
@@ -205,15 +207,8 @@ public class FactoryCommands extends SubsystemBase{
     Pose2d alignPose = speakerPose;
 
     DoubleSupplier distanceSpeed = ()-> -distanceControllerSpeaker.calculate(drivetrain.getDistanceFromPoseMeters(alignPose), 2.395);
-    DoubleSupplier redOrBlueSide = ()->{
-      if (drivetrain.getPose().getX()>alignPose.getX()){
-        return 90;
-      }else{
-        return -90;
-      }
-    };
 
-    DoubleSupplier shareableNum = ()->(drivetrain.getYawOffsetDegrees().getDegrees()-drivetrain.getPoseAngle(alignPose).getDegrees()+redOrBlueSide.getAsDouble())*Math.PI/180;
+    DoubleSupplier shareableNum = ()->(drivetrain.getYawOffsetDegrees().getDegrees()-drivetrain.getPoseAngle(alignPose).getDegrees()-90)*Math.PI/180;
     DoubleSupplier xAxis = () -> 
       (-Math.sin(shareableNum.getAsDouble()))*distanceSpeed.getAsDouble()
       /Math.max(Math.max(Math.abs(xboxController.getLeftX()* TunerConstants.kSpeedAt12VoltsMps), Math.abs(xboxController.getLeftY()* TunerConstants.kSpeedAt12VoltsMps)),1)
@@ -237,13 +232,21 @@ public class FactoryCommands extends SubsystemBase{
           .withVelocityY(yAxis.getAsDouble())
           .withRotationalRate(Units.degreesToRadians(rotationalVelocity.getAsDouble()))),Set.of(drivetrain));
   }
+
   public Command getToPiecePoseCommand(){
-    return Commands.either(Commands.defer(()->AutoToPoint.getToPoint(limelightObject.getPiecePose(),PathOnTheFly.getConfig(0)),Set.of(drivetrain))
+    return getToPiecePoseCommand(new PathOnTheFly.PathConfig(5,5,Rotation2d.fromDegrees(720),Rotation2d.fromDegrees(720),0,0));
+  }
+
+  public Command getToPiecePoseCommand(PathConfig config){
+    return Commands.either(Commands.defer(()->AutoToPoint.getToPoint(PoseEX.getInbetweenPose2d(drivetrain.getPose(), limelightObject.getPiecePose(), .5).transformBy(new Transform2d(0,0,PoseEX.getPoseAngle(drivetrain.getPose(),limelightObject.getPiecePose()))),config),Set.of(drivetrain))
       ,Commands.none(),()->limelightObject.isPiecePresent());
   }
+
   public Command getToPieceCommand(){
-    return Commands.either(Commands.defer(()->getToPiecePoseCommand().until(()->PoseEX.getDistanceFromPoseMeters(limelightObject.getPiecePose(),drivetrain.getPose())<1).andThen(alignToPiece()),Set.of(drivetrain))
+    return Commands.either(Commands.defer(()->getToPiecePoseCommand(),Set.of(drivetrain))
       ,Commands.none(),()->limelightObject.isPiecePresent());
+    // return Commands.either(Commands.defer(()->getToPiecePoseCommand().until(()->PoseEX.getDistanceFromPoseMeters(limelightObject.getPiecePose(),drivetrain.getPose())<1).andThen(alignToPiece()),Set.of(drivetrain))
+    //   ,Commands.none(),()->limelightObject.isPiecePresent());
   }
   public DeferredCommand getToSpeakerCommand(){
     Supplier<Pose2d> speakerPose = ()->{
@@ -252,16 +255,10 @@ public class FactoryCommands extends SubsystemBase{
       }
       return LimelightConstants.K_TAG_LAYOUT.getTagPose(7).get().toPose2d();
     };
-    DoubleSupplier turn = ()->{
-      if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get().equals(Alliance.Red)){
-        return 180;
-      }
-      return 0;
-    };
     return new DeferredCommand(()->
-      AutoToPoint.getToPoint(PoseEX.getInbetweenPose2d(speakerPose.get(), drivetrain.getPose(), 2)
+      AutoToPoint.getToPoint(PoseEX.getInbetweenPose2d(drivetrain.getPose(),speakerPose.get(), 2)
       .transformBy(new Transform2d(0,0,PoseEX.getPoseAngle(drivetrain.getPose(),speakerPose.get())
-      .plus(Rotation2d.fromDegrees(turn.getAsDouble())))),PathOnTheFly.getConfig(0))
+      .plus(Rotation2d.fromDegrees(180)))),new PathOnTheFly.PathConfig(5,5,Rotation2d.fromDegrees(720),Rotation2d.fromDegrees(720),0,0))
       .until(()->PoseEX.getDistanceFromPoseMeters(speakerPose.get(),drivetrain.getPose())<4).andThen(getInRange()),Set.of(drivetrain));
   }
 
@@ -311,6 +308,19 @@ public class FactoryCommands extends SubsystemBase{
       *driveBaseRadius/Math.abs(Math.abs(initPosition)-Math.abs(Units.rotationsToRadians(drivetrain.getModule(0).getDriveMotor().getPosition().getValueAsDouble()))))
       ),Set.of()))
       ,Set.of(drivetrain));
+  }
+
+  public Command autoFindNote(){
+    Command spin1 = drivetrain.applyRequest(() -> drive.withVelocityX(0)
+      .withVelocityY(0)
+      .withRotationalRate(Units.degreesToRadians(120))).until(()->(limelightObject.isPiecePresent() && limelightObject.getPiecePose().getX()<8.27));
+    Command spin2 = drivetrain.applyRequest(() -> drive.withVelocityX(0)
+      .withVelocityY(0)
+      .withRotationalRate(Units.degreesToRadians(120))).until(()->(limelightObject.isPiecePresent() && limelightObject.getPiecePose().getX()>8.27));
+    return Commands.either(spin1
+      ,spin2
+      , ()->DriverStation.getAlliance().get() == Alliance.Blue)
+      .andThen(Commands.parallel(intakeMainAuto(), getToPiecePoseCommand()));
   }
 
   public void periodic(){

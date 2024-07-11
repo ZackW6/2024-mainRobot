@@ -20,6 +20,9 @@ import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
+import com.choreo.lib.Choreo;
+import com.choreo.lib.ChoreoTrajectory;
+import com.choreo.lib.ChoreoTrajectoryState;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveModule.DriveRequestType;
@@ -38,6 +41,9 @@ import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.commands.FactoryCommands.State;
+import frc.robot.commands.PathOnTheFly.AutoToPath;
+import frc.robot.commands.PathOnTheFly.AutoToPoint;
+import frc.robot.commands.PathOnTheFly.PathConfig;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -49,8 +55,10 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+import frc.robot.commands.ConditionalAutos;
 import frc.robot.commands.FactoryCommands;
-import frc.robot.commands.OnTheFlyAutos;
+import frc.robot.commands.PathOnTheFly;
+// import frc.robot.commands.PIDTuningCommand;
 import frc.robot.commands.Toggle;
 import frc.robot.constants.GeneralConstants;
 import frc.robot.constants.LimelightConstants;
@@ -59,10 +67,7 @@ import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Elevator;
 // import frc.robot.subsystems.Candle;
 import frc.robot.subsystems.Arm.ArmState;
-import frc.robot.util.PathOnTheFly;
-import frc.robot.util.PathOnTheFly.AutoToPoint;
-import frc.robot.util.PathOnTheFly.AutoToPath;
-import frc.robot.util.PathOnTheFly.PathConfig;
+import frc.robot.util.ChoreoEX;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.ObjectDetection;
 import frc.robot.subsystems.Shooter;
@@ -96,8 +101,10 @@ public class RobotContainer {
   private final ObjectDetection limelightObject = new ObjectDetection(LimelightConstants.AMP_CAM, LimelightConstants.AMP_CAM_TRANSFORM, ()->drivetrain.getPose());
   // private final Candle candle = new Candle();
   private final FactoryCommands groupCommands = new FactoryCommands(arm, shooter, intake, drivetrain, limelightObject, driverController);
-  private final OnTheFlyAutos onTheFlyAutos = new OnTheFlyAutos(arm, shooter, intake, drivetrain, limelightObject, driverController, groupCommands);
+  private final ConditionalAutos onTheFlyAutos = new ConditionalAutos(arm, shooter, intake, drivetrain, limelightObject, driverController, groupCommands);
   private void configureBindings() {
+    // Command pid = new PIDTuningCommand(()->arm.getArmDegrees(), arm::setArmP,0,100000, arm);
+    // driverController.a().onTrue(pid);
     /* Setup Default Commands */
      Command initState = groupCommands.switchState(State.Speaker);
      initState.initialize();
@@ -118,7 +125,7 @@ public class RobotContainer {
     /* Controller Bindings */
 
     driverController.y().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldRelative()));
-    driverController.y().onTrue(groupCommands.findWheelRadius());
+    // driverController.y().onTrue(groupCommands.findWheelRadius());
     driverController.rightBumper().whileTrue(groupCommands.intake());//.whileFalse(Commands.runOnce(()->arm.setArmRotation(arm.lastMainState())));
     driverController.leftBumper().onTrue(groupCommands.shoot());
     driverController.rightTrigger(.5).whileTrue(drivetrain.applyRequest(() -> brake));
@@ -147,6 +154,7 @@ public class RobotContainer {
     
     if (Utils.isSimulation()) {
       drivetrain.seedFieldRelative(new Pose2d(new Translation2d(3,1), Rotation2d.fromDegrees(90)));
+      drivetrain.seedFieldRelative(drivetrain.getPose().getRotation().getDegrees()-90);
     }
     drivetrain.registerTelemetry(logger::telemeterize);
     limelightObject.registerTelemetry(logger::registerPieceTelemetry);
@@ -162,6 +170,8 @@ public class RobotContainer {
 
   public RobotContainer() {
     drivetrain.configurePathPlanner();
+    ChoreoEX.setDrivetrain(drivetrain);
+
     PathOnTheFly.PathConfig pathConfig = new PathOnTheFly.PathConfig(5,5,Rotation2d.fromDegrees(720),Rotation2d.fromDegrees(720),0,0);
     PathOnTheFly.addConfig(pathConfig,0);
 
@@ -170,14 +180,13 @@ public class RobotContainer {
     SmartDashboard.putData("Auto Chooser", autoChooser);
 
     configureBindings();
-
+    autoChooser.addOption("ChoreoPath", ChoreoEX.getChoreoGroupPath(true,new String[]{"shootPreAmp","intake4","shoot4M","intake5","shoot5M","intake6","shoot6M","intake7","shoot7M"}));
     autoChooser.addOption("Conditional Auto", onTheFlyAutos.getConditionalAuto());
-    autoChooser.addOption("OnTheFlyFindAuto", onTheFlyAutos.getOnTheFlyAuto());
-    autoChooser.addOption("OnTheFlyPoseAuto", onTheFlyAutos.onTheFlyAutoPiecePose());
   }
 
   public void configureAutonomousCommands() {
     NamedCommands.registerCommand("intake", groupCommands.intakeMainAuto());
+    
     NamedCommands.registerCommand("setIdleSpeed", Commands.runOnce(()->shooter.setIdleSpeed(46,46)));
     NamedCommands.registerCommand("loadAndShoot", groupCommands.speakerShoot(60,80));
     NamedCommands.registerCommand("loadAndShootLinear", groupCommands.speakerShoot(60,80));

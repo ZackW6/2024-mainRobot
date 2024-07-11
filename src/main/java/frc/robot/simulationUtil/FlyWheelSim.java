@@ -45,22 +45,26 @@ public class FlyWheelSim {
     private MechanismLigament2d[] spokes;
 
 
-    public void addSimImage(String name, int numOfSpokes){
+    public void addSimImage(String name, double imageWidth, double imageHeight, double[] pivotPlacement, double spokeLength, int numOfSpokes){
         this.name = name;
-        mech2d = new Mechanism2d(60, 60);
-        pivot = mech2d.getRoot(name+" Pivot", 30, 30);
+        mech2d = new Mechanism2d(imageWidth, imageHeight);
+        pivot = mech2d.getRoot(name+" Pivot", pivotPlacement[0], pivotPlacement[1]);
         spokes = new MechanismLigament2d[numOfSpokes];
 
         for (int i = 0; i < spokes.length;i++){
             spokes[i] = pivot.append(
             new MechanismLigament2d(
                 name+" Spoke "+i,
-                10,
+                spokeLength,
                 Units.radiansToDegrees(currentRad)+(360/spokes.length)*i,
                 6,
-                new Color8Bit(Color.kPurple)));
+                new Color8Bit(Color.kAqua)));
         }
         SmartDashboard.putData(name, mech2d);
+    }
+
+    public void setNewPivotPosition(double[] pivotPlacement){
+
     }
 
 

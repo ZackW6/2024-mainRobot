@@ -70,12 +70,11 @@ public class Intake extends SubsystemBase{
         intakeMotor = new TalonFX(IntakeConstants.INTAKE_MOTOR_ID);
         limitSwicth1 = new LimitSwitchSimable(IntakeConstants.LIMIT_SWITCH_ID_1);
         limitSwicth2 = new LimitSwitchSimable(IntakeConstants.LIMIT_SWITCH_ID_2);
-
         limitSwicth1.setSimInverse(true);
         limitSwicth2.setSimInverse(true);
 
         flywheelSim = new FlyWheelSim(intakeMotor, fSim);
-        flywheelSim.addSimImage("Intake Sim",4);
+        flywheelSim.addSimImage("Intake Sim",1,1,new double[]{.5,.35},.05,4);
         flywheelSim.addDirectionColor();
 
         ShuffleboardTab shuffleboardTab = Shuffleboard.getTab("Intake");
@@ -91,8 +90,8 @@ public class Intake extends SubsystemBase{
 
     public Command intakePiece(){
         if (Robot.isSimulation()){
-            return setVelocity(intakeSpeed).until(() -> getLimitSwitch())
-            .finallyDo(()->stop());
+            return Commands.deadline(Commands.waitSeconds(2000),setVelocity(intakeSpeed)).until(() -> getLimitSwitch())
+            .finallyDo(()->stop()).finallyDo(()->System.out.println("eneded  "+getLimitSwitch()));
         }
         return setVelocity(intakeSpeed).until(() -> getLimitSwitch())
             .finallyDo(()->stop());

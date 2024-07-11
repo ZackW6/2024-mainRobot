@@ -112,7 +112,7 @@ public class Arm extends SubsystemBase {
     encoder = new CANcoder(ArmConstants.CAN_CODER_ID);
 
     armSim = new ArmSim(armMotor, singleJointedArmSim);
-    armSim.addSimImage("Arm Sim");
+    armSim.addSimImage("Arm Sim",1,1,new double[]{.8,.2},.2,-90,.3);
     armSim.configureCANCoder(encoder, ChassisReference.Clockwise_Positive,ArmConstants.ANGLE_OFFSET.getRotations()+.25);
 
     configMotor();
@@ -137,7 +137,7 @@ public class Arm extends SubsystemBase {
   public Command setArmDefault(ArmState state){
     return Commands.runOnce(()->setDefaultCommand(this.runOnce(()->armMotor.setControl(m_request.withPosition(state.getRotation()).withSlot(0)))));
   }
-
+  
   private void configMotor(){
     talonFXConfigs = new TalonFXConfiguration();
     CANcoderConfiguration canCoderConfigs = new CANcoderConfiguration();
@@ -156,9 +156,9 @@ public class Arm extends SubsystemBase {
     slot0Configs.kS = ArmConstants.kS; // Add 0.25 V output to overcome static friction
     slot0Configs.kV = ArmConstants.kV; // A velocity target of 1 rps results in 0.12 V output
     slot0Configs.kA = ArmConstants.kA; // An acceleration of 1 rps/s requires 0.01 V output
-    slot0Configs.kP = ArmConstants.kP; // A position error of 2.5 rotations results in 12 V output
-    slot0Configs.kI = ArmConstants.kI; // no output for integrated error
-    slot0Configs.kD = ArmConstants.kD; // A velocity error of 1 rps results in 0.1 V output
+    slot0Configs.kP = 4080.564;//ArmConstants.kP; // A position error of 2.5 rotations results in 12 V output
+    slot0Configs.kI = 0;//70800.082;//ArmConstants.kI; // no output for integrated error
+    slot0Configs.kD = 60.082;//ArmConstants.kD; // A velocity error of 1 rps results in 0.1 V output
     slot0Configs.kG = ArmConstants.kG;
     slot0Configs.GravityType = GravityTypeValue.Arm_Cosine;
 
@@ -223,6 +223,4 @@ public class Arm extends SubsystemBase {
       armSim.simulationPeriodic();
     }
   }
-
-  
 }

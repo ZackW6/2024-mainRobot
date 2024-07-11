@@ -43,17 +43,17 @@ public class ArmSim{
         motorSim = motor.getSimState();
     }
 
-    public void addSimImage(String name){
-        mech2d = new Mechanism2d(60, 60);
-        armPivot = mech2d.getRoot(name+ " ArmPivot", 30, 30);
-        armTower = armPivot.append(new MechanismLigament2d(name+" ArmTower", 30, -90));
+    public void addSimImage(String name, double imageWidth, double imageHeight, double[] pivotPlacement, double armTowerLength, double armTowerAngle, double armLength){
+        mech2d = new Mechanism2d(imageWidth, imageHeight);
+        armPivot = mech2d.getRoot(name+ " ArmPivot", pivotPlacement[0], pivotPlacement[1]);
+        armTower = armPivot.append(new MechanismLigament2d(name+" ArmTower", armTowerLength, armTowerAngle));
         arm = armPivot.append(
           new MechanismLigament2d(
               name + " Arm",
-              30,
+              armLength,
               Units.radiansToDegrees(armSim.getAngleRads()),
               6,
-              new Color8Bit(Color.kYellow)));
+              new Color8Bit(Color.kPurple)));
         armTower.setColor(new Color8Bit(Color.kBlue));
         SmartDashboard.putData(name, mech2d);
     }

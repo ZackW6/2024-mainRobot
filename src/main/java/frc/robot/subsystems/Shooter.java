@@ -67,11 +67,11 @@ public class Shooter extends SubsystemBase{
         rightShooterMotor = new TalonFX(ShooterConstants.RIGHT_SHOOTER_MOTOR_ID);
 
         flywheelSimL = new FlyWheelSim(leftShooterMotor, fSimL);
-        flywheelSimL.addSimImage("Left Shooter Sim",4);
+        flywheelSimL.addSimImage("Left Shooter Sim",1,1,new double[]{.2,.4},.1,4);
         flywheelSimL.addDirectionColor();
 
         flywheelSimR = new FlyWheelSim(rightShooterMotor, fSimR);
-        flywheelSimR.addSimImage("Right Shooter Sim",4);
+        flywheelSimR.addSimImage("Right Shooter Sim",1,1,new double[]{.2,.4},.1,4);
         flywheelSimR.addDirectionColor();
 
         configMotors();

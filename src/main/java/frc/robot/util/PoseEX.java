@@ -9,6 +9,7 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 
 /** Add your docs here. */
@@ -18,7 +19,10 @@ public class PoseEX {
         double deltaX = comparingPose.getX() - mainPose.getX();
         double deltaY = comparingPose.getY() - mainPose.getY();
         double angleRadians = ((Math.atan(deltaY/deltaX)));
-        return Rotation2d.fromRadians(angleRadians);
+        if (deltaX>0){
+            return Rotation2d.fromRadians(angleRadians);
+        }
+        return Rotation2d.fromRadians(angleRadians+Math.PI);
     }
     
     public static double getDistanceFromPoseMeters(Pose2d mainPose, Pose2d comparingPose) {
@@ -53,31 +57,21 @@ public class PoseEX {
         deltaZ = comparingPose.getZ() - mainPose.getZ();
         
         double angleZ = ((Math.atan(deltaZ/deltaDist)));
-        return Rotation2d.fromRadians(angleZ + mainPose.getRotation().getY());
+        return Rotation2d.fromRadians(angleZ - mainPose.getRotation().getY());
     }
 
     public static Pose2d getInbetweenPose2d(Pose2d mainPose, Pose2d comparingPose, double distFrom){
-        double rise = mainPose.getY()-comparingPose.getY();
-        double run = mainPose.getX()-comparingPose.getX();
-        if (rise < 0){
-            if (run < 0){
-                run = -run;
-                rise = -rise;
-            }
-        }else{
-            if (run < 0){
-                rise = -rise;
-                run = -run;
-            }
-        }
-        if (run == 0){
-            run = .0001;
-        }
+
+        double rise = comparingPose.getY()-mainPose.getY();
+        double run = comparingPose.getX()-mainPose.getX();
         
         double amount = Math.sqrt((rise*rise)+(run*run));
         double newRise = rise*(distFrom/amount);
         double newRun = run*(distFrom/amount);
-        Pose2d returnPose = mainPose.transformBy(new Transform2d(newRun,newRise,Rotation2d.fromDegrees(-mainPose.getRotation().getDegrees())));
+
+        double newX = comparingPose.getX() - newRun;
+        double newY = comparingPose.getY() - newRise;
+        Pose2d returnPose = new Pose2d(newX, newY, comparingPose.getRotation().rotateBy(Rotation2d.fromDegrees(-comparingPose.getRotation().getDegrees())));
         return returnPose;
     }
 }
