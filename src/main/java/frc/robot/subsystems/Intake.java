@@ -91,7 +91,7 @@ public class Intake extends SubsystemBase{
     public Command intakePiece(){
         if (Robot.isSimulation()){
             return Commands.deadline(Commands.waitSeconds(2000),setVelocity(intakeSpeed)).until(() -> getLimitSwitch())
-            .finallyDo(()->stop()).finallyDo(()->System.out.println("eneded  "+getLimitSwitch()));
+            .finallyDo(()->stop());
         }
         return setVelocity(intakeSpeed).until(() -> getLimitSwitch())
             .finallyDo(()->stop());

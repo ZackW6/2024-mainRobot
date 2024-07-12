@@ -23,11 +23,13 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.CommandSwerveDrivetrain;
 import frc.robot.commands.PathOnTheFly.AutoToPoint;
+import frc.robot.constants.LimelightConstants;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.ObjectDetection;
 import frc.robot.subsystems.Shooter;
 import frc.robot.util.ChoreoEX;
+import frc.robot.util.PoseEX;
 
 /** Add your docs here. */
 public class ConditionalAutos {
@@ -58,7 +60,10 @@ public class ConditionalAutos {
     BooleanSupplier condition = ()->intake.isPiecePresent();
     Command continueAt8 = 
       Commands.either(ChoreoEX.getChoreoPath("shoot8M")
-      ,groupCommands.autoFindNote().andThen(groupCommands.getInRange()).andThen(groupCommands.speakerShoot(60,80)), condition);
+      ,groupCommands.autoFindNote().andThen(Commands.deadline(Commands.waitSeconds(2000).until(()->(
+        PoseEX.getDistanceFromPoseMeters(drivetrain.getPose(), LimelightConstants.K_TAG_LAYOUT.getTagPose(4).get().toPose2d())<3.7 || 
+        PoseEX.getDistanceFromPoseMeters(drivetrain.getPose(), LimelightConstants.K_TAG_LAYOUT.getTagPose(7).get().toPose2d())<3.7))
+        .andThen(groupCommands.speakerShoot(60,80)),groupCommands.getToSpeakerCommand())), condition);
     Command continueAt7 = 
       Commands.either(ChoreoEX.getChoreoGroupPath(false, new String[]{"shoot7M","intake8"})
       ,ChoreoEX.getChoreoPath("ifNo7Then8"), condition).andThen(continueAt8);

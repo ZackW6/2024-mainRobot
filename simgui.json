@@ -1,6 +1,11 @@
 {
   "HALProvider": {
     "Other Devices": {
+      "Pigeon 2 (v6)[0]": {
+        "header": {
+          "open": true
+        }
+      },
       "Talon FX (v6)[8]/Rotor Sensor": {
         "header": {
           "open": true

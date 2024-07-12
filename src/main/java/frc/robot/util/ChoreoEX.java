@@ -90,7 +90,6 @@ public class ChoreoEX {
         if (getChoreoPath(false, names[0]).getName().equals("InstantCommand")){
             return Commands.none();
         }
-        System.out.println(Commands.none().getName());
         SequentialCommandGroup sequence = new SequentialCommandGroup(Commands.none());
         
         sequence.addCommands(getChoreoPath(presetStart, names[0]));

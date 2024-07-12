@@ -57,6 +57,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.commands.ConditionalAutos;
 import frc.robot.commands.FactoryCommands;
+import frc.robot.commands.OnTheFlyAutos;
 import frc.robot.commands.PathOnTheFly;
 // import frc.robot.commands.PIDTuningCommand;
 import frc.robot.commands.Toggle;
@@ -101,14 +102,16 @@ public class RobotContainer {
   private final ObjectDetection limelightObject = new ObjectDetection(LimelightConstants.AMP_CAM, LimelightConstants.AMP_CAM_TRANSFORM, ()->drivetrain.getPose());
   // private final Candle candle = new Candle();
   private final FactoryCommands groupCommands = new FactoryCommands(arm, shooter, intake, drivetrain, limelightObject, driverController);
-  private final ConditionalAutos onTheFlyAutos = new ConditionalAutos(arm, shooter, intake, drivetrain, limelightObject, driverController, groupCommands);
+
+  private final ConditionalAutos conditionalAutos = new ConditionalAutos(arm, shooter, intake, drivetrain, limelightObject, driverController, groupCommands);
+  private final OnTheFlyAutos onTheFlyAutos = new OnTheFlyAutos(arm, shooter, intake, drivetrain, limelightObject, driverController, groupCommands);
   private void configureBindings() {
     // Command pid = new PIDTuningCommand(()->arm.getArmDegrees(), arm::setArmP,0,100000, arm);
     // driverController.a().onTrue(pid);
     /* Setup Default Commands */
-     Command initState = groupCommands.switchState(State.Speaker);
-     initState.initialize();
-     initState.schedule();
+    Command initState = groupCommands.switchState(State.Speaker);
+    initState.initialize();
+    initState.schedule();
 
     shooter.setIdleSpeed(0, 0);
 
@@ -181,7 +184,8 @@ public class RobotContainer {
 
     configureBindings();
     autoChooser.addOption("ChoreoPath", ChoreoEX.getChoreoGroupPath(true,new String[]{"shootPreAmp","intake4","shoot4M","intake5","shoot5M","intake6","shoot6M","intake7","shoot7M"}));
-    autoChooser.addOption("Conditional Auto", onTheFlyAutos.getConditionalAuto());
+    autoChooser.addOption("Conditional Auto", conditionalAutos.getConditionalAuto());
+    autoChooser.addOption("OnTheFly Auto", onTheFlyAutos.getOnTheFlyAuto(new Pose2d(1.4818934202194214,7.29,Rotation2d.fromDegrees(0)),1,2,4,7,8,3,0));
   }
 
   public void configureAutonomousCommands() {

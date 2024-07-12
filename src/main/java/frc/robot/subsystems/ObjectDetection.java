@@ -149,7 +149,6 @@ public class ObjectDetection extends SubsystemBase {
         }
         return 0;
     }
-
     public Pose2d getPiecePose(){
         if (isPiecePresent()){
             Pose3d initialPose = new Pose3d(robotPose.get()).transformBy(limelightTransform);
@@ -193,6 +192,7 @@ public class ObjectDetection extends SubsystemBase {
         }
         return new Pose2d(-1,-1,new Rotation2d());
     }
+
     public ObjectDetectionSim getSim(){
         return objectDetectionSim;
     }

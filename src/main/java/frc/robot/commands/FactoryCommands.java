@@ -31,6 +31,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.DeferredCommand;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
@@ -238,8 +239,17 @@ public class FactoryCommands extends SubsystemBase{
   }
 
   public Command getToPiecePoseCommand(PathConfig config){
-    return Commands.either(Commands.defer(()->AutoToPoint.getToPoint(PoseEX.getInbetweenPose2d(drivetrain.getPose(), limelightObject.getPiecePose(), .5).transformBy(new Transform2d(0,0,PoseEX.getPoseAngle(drivetrain.getPose(),limelightObject.getPiecePose()))),config),Set.of(drivetrain))
+    return Commands.either(getToPoseAndPoint(limelightObject.getPiecePose(), config)
       ,Commands.none(),()->limelightObject.isPiecePresent());
+  }
+
+  public Command getToPoseAndPoint(Pose2d pose, PathConfig config){
+    return Commands.defer(()->
+      AutoToPoint.getToPoint(PoseEX.getInbetweenPose2d(drivetrain.getPose(), pose, 0)
+      .transformBy(new Transform2d(0,0,PoseEX.getPoseAngle(drivetrain.getPose(),pose))),config).until(()->(PoseEX.getDistanceFromPoseMeters(drivetrain.getPose(), limelightObject.getPiecePose())<2.5)),Set.of())
+      .andThen(Commands.defer(()->AutoToPoint.getToPoint(PoseEX.getInbetweenPose2d(drivetrain.getPose(), pose, .5)
+      .transformBy(new Transform2d(0,0,PoseEX.getPoseAngle(drivetrain.getPose(),pose))),config)
+      ,Set.of(drivetrain)));
   }
 
   public Command getToPieceCommand(){
@@ -320,7 +330,7 @@ public class FactoryCommands extends SubsystemBase{
     return Commands.either(spin1
       ,spin2
       , ()->DriverStation.getAlliance().get() == Alliance.Blue)
-      .andThen(Commands.parallel(intakeMainAuto(), getToPiecePoseCommand()));
+      .andThen(Commands.defer(()->Commands.parallel(intakeMainAuto(), getToPiecePoseCommand()),Set.of()));
   }
 
   public void periodic(){

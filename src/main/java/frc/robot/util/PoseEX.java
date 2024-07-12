@@ -23,6 +23,11 @@ public class PoseEX {
             return Rotation2d.fromRadians(angleRadians);
         }
         return Rotation2d.fromRadians(angleRadians+Math.PI);
+
+    }
+
+    public static Pose2d mirrorPose(Pose2d initPose){
+        return new Pose2d(16.54-initPose.getX(),initPose.getY(),Rotation2d.fromDegrees(180-initPose.getRotation().getDegrees()));
     }
     
     public static double getDistanceFromPoseMeters(Pose2d mainPose, Pose2d comparingPose) {
@@ -71,7 +76,7 @@ public class PoseEX {
 
         double newX = comparingPose.getX() - newRun;
         double newY = comparingPose.getY() - newRise;
-        Pose2d returnPose = new Pose2d(newX, newY, comparingPose.getRotation().rotateBy(Rotation2d.fromDegrees(-comparingPose.getRotation().getDegrees())));
+        Pose2d returnPose = new Pose2d(newX, newY, new Rotation2d());
         return returnPose;
     }
 }

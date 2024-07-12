@@ -69,7 +69,7 @@ public class PathOnTheFly {
                                         config.endVelocity, // Goal end velocity in meters/sec
                                         config.rotationDelay // Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate.
                                 );
-                        }              
+                        }
                 }
                 public static Command getToPoint(Pose2d pose){
                         return getToPoint(pose, defaultPathConfig, false); 
